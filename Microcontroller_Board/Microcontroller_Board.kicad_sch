@@ -9967,6 +9967,16 @@
 	)
 	(wire
 		(pts
+			(xy 269.24 77.47) (xy 278.13 77.47)
+		)
+		(stroke
+			(width 0)
+			(type default)
+		)
+		(uuid "392dfa4d-7a99-4c8f-be44-6c67ab071b08")
+	)
+	(wire
+		(pts
 			(xy 271.78 193.04) (xy 271.78 195.58)
 		)
 		(stroke
@@ -10497,16 +10507,6 @@
 	)
 	(wire
 		(pts
-			(xy 273.05 77.47) (xy 278.13 77.47)
-		)
-		(stroke
-			(width 0)
-			(type default)
-		)
-		(uuid "68086d41-ed97-4f1a-972e-220a38b8161f")
-	)
-	(wire
-		(pts
 			(xy 104.14 254) (xy 104.14 262.89)
 		)
 		(stroke
@@ -10767,7 +10767,7 @@
 	)
 	(wire
 		(pts
-			(xy 144.78 149.86) (xy 151.13 149.86)
+			(xy 142.24 149.86) (xy 151.13 149.86)
 		)
 		(stroke
 			(width 0)
@@ -11197,7 +11197,7 @@
 	)
 	(wire
 		(pts
-			(xy 144.78 144.78) (xy 151.13 144.78)
+			(xy 142.24 144.78) (xy 151.13 144.78)
 		)
 		(stroke
 			(width 0)
@@ -11327,7 +11327,7 @@
 	)
 	(wire
 		(pts
-			(xy 273.05 82.55) (xy 278.13 82.55)
+			(xy 269.24 82.55) (xy 278.13 82.55)
 		)
 		(stroke
 			(width 0)
@@ -12335,7 +12335,7 @@
 		)
 		(uuid "023cbea5-d69c-41ee-bbb4-4449fc62f150")
 	)
-	(label "LC1_CLK"
+	(label "A7"
 		(at 369.57 182.88 0)
 		(effects
 			(font
@@ -12385,8 +12385,8 @@
 		)
 		(uuid "0b2ffccb-ffed-431b-adf5-d0cf070f5cf5")
 	)
-	(label "RX7"
-		(at 144.78 144.78 0)
+	(label "LC1_CLK"
+		(at 142.24 144.78 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -12425,7 +12425,7 @@
 		)
 		(uuid "1bdffe4d-1009-4a76-89e6-7356fd062102")
 	)
-	(label "LC4_CLK"
+	(label "A4"
 		(at 369.57 190.5 0)
 		(effects
 			(font
@@ -12555,7 +12555,7 @@
 		)
 		(uuid "3f36b119-2951-4596-a73b-2cb3e626142f")
 	)
-	(label "???"
+	(label "A6"
 		(at 190.5 83.82 0)
 		(effects
 			(font
@@ -12615,8 +12615,8 @@
 		)
 		(uuid "4a608eaf-24ee-462b-86b4-252152f37b48")
 	)
-	(label "TX7"
-		(at 144.78 149.86 0)
+	(label "LC1_DAT"
+		(at 142.24 149.86 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -12635,7 +12635,7 @@
 		)
 		(uuid "5275940d-f169-4d97-af1e-ae6d596f30d3")
 	)
-	(label "LC1_DAT"
+	(label "A6"
 		(at 369.57 185.42 0)
 		(effects
 			(font
@@ -12665,7 +12665,7 @@
 		)
 		(uuid "5780c94f-940e-466f-bd3c-a72580c77feb")
 	)
-	(label "LCD_DAT"
+	(label "LC2_DAT"
 		(at 121.92 110.49 0)
 		(effects
 			(font
@@ -12695,7 +12695,7 @@
 		)
 		(uuid "686fa013-1a80-4471-a3d5-9845c2cc95ac")
 	)
-	(label "TX2"
+	(label "LC4_CLK"
 		(at 285.75 180.34 0)
 		(effects
 			(font
@@ -12715,7 +12715,7 @@
 		)
 		(uuid "6ac9adee-0b44-427a-8d92-1294baf66b3d")
 	)
-	(label "???"
+	(label "A14"
 		(at 220.98 90.17 0)
 		(effects
 			(font
@@ -12745,7 +12745,7 @@
 		)
 		(uuid "74578564-1df6-4df0-90d0-af221b002381")
 	)
-	(label "LC4_DAT"
+	(label "A5"
 		(at 369.57 187.96 0)
 		(effects
 			(font
@@ -12785,8 +12785,8 @@
 		)
 		(uuid "7ecb6935-78b9-4501-929a-ef117a174d16")
 	)
-	(label "TX2"
-		(at 273.05 82.55 0)
+	(label "LC4_CLK"
+		(at 269.24 82.55 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -12795,7 +12795,7 @@
 		)
 		(uuid "7fe5dab4-ed64-4ea5-a3e7-18fe69b57e85")
 	)
-	(label "???"
+	(label "A5"
 		(at 190.5 88.9 0)
 		(effects
 			(font
@@ -12985,7 +12985,7 @@
 		)
 		(uuid "acd3e294-e45c-4e7c-bfed-8dcf4dbe8ee8")
 	)
-	(label "RX2"
+	(label "LC4_DAT"
 		(at 285.75 176.53 0)
 		(effects
 			(font
@@ -13015,7 +13015,7 @@
 		)
 		(uuid "b712dcfb-12f2-4600-a4d3-93b11025b2e8")
 	)
-	(label "A14"
+	(label "A7"
 		(at 190.5 78.74 0)
 		(effects
 			(font
@@ -13065,7 +13065,7 @@
 		)
 		(uuid "c12f0b5f-2a24-4399-afbe-4ec2d2acc152")
 	)
-	(label "???"
+	(label "A4"
 		(at 99.06 142.24 0)
 		(effects
 			(font
@@ -13085,8 +13085,8 @@
 		)
 		(uuid "c28b4994-5022-4d1e-83c0-bcd80c2206dd")
 	)
-	(label "RX2"
-		(at 273.05 77.47 0)
+	(label "LC4_DAT"
+		(at 269.24 77.47 0)
 		(effects
 			(font
 				(size 1.27 1.27)
@@ -13095,7 +13095,7 @@
 		)
 		(uuid "c394ab09-dc66-4cfe-b3c0-0fe4bb404b05")
 	)
-	(label "RX7"
+	(label "LC1_CLK"
 		(at 284.48 224.79 0)
 		(effects
 			(font
@@ -13195,7 +13195,7 @@
 		)
 		(uuid "e1bcda5f-c50a-49b1-b016-fe8a73029dbc")
 	)
-	(label "TX7"
+	(label "LC1_DAT"
 		(at 284.48 229.87 0)
 		(effects
 			(font
@@ -13255,7 +13255,7 @@
 		)
 		(uuid "ebf1cd34-d4bd-4bd8-8533-79f02bba51bf")
 	)
-	(label "???"
+	(label "ST_POT"
 		(at 99.06 147.32 0)
 		(effects
 			(font
@@ -13265,7 +13265,7 @@
 		)
 		(uuid "f0f87ce2-f353-4212-94b7-07d0bf30daf2")
 	)
-	(label "???"
+	(label "OUT1B"
 		(at 220.98 85.09 0)
 		(effects
 			(font
