@@ -6,11 +6,11 @@ Servo excavationSystemPWM;
 Servo excavationBeltPWM;
 
 // CAN IDs from your system
-#define REAR_LEFT_MOTOR_CAN_ID 0x48 
-#define FRONT_LEFT_MOTOR_CAN_ID 0x78  
-#define FRONT_RIGHT_MOTOR_CAN_ID 0x16 
-#define REAR_RIGHT_MOTOR_CAN_ID 0x67 
-#define DEPOSITION_MOTOR_CAN_ID 0x34
+#define REAR_LEFT_MOTOR_CAN_ID 0x34
+#define FRONT_LEFT_MOTOR_CAN_ID 0x4c  
+#define FRONT_RIGHT_MOTOR_CAN_ID 0x78 
+#define REAR_RIGHT_MOTOR_CAN_ID 0x48
+#define DEPOSITION_MOTOR_CAN_ID 0x67
 #define EXCAVATION_BELT_MOTOR_CAN_ID 0x68
 
 // PWM pins
@@ -24,6 +24,17 @@ Servo excavationBeltPWM;
 #define MOTOR_DEPOSITION 5
 #define MOTOR_EXCAVATION_BELT 6
 #define MOTOR_EXCAVATION_SYSTEM 7
+
+// Continuous CAN messaging variables
+#define CAN_MESSAGE_INTERVAL 50  // Send CAN messages every 50ms
+struct MotorState {
+  float speed;
+  uint32_t canId;
+  bool active;
+};
+
+MotorState motorStates[7];  // Array to track all motor states
+unsigned long lastCANMessageTime = 0;
 
 // Function prototypes
 CAN_message_t craftMessage(int typeofmsg, float val, uint8_t id);
@@ -40,13 +51,17 @@ void continuousMotorControl(int motorId, float speed);
 float getSpeedInput();
 void runExcavationTest();
 void runFullRobotTest();
+void initializeMotorStates();
+void updateMotorState(int motorId, float speed);
+void sendContinuousCANMessages();
+void processMotorUpdates();
 
 void setup() {
   Serial.begin(115200);
   while (!Serial) delay(10); // Wait for Serial
   
   Serial.println("==== Motor Test Program ====");
-  Serial.println("Testing CAN and PWM motors");
+  Serial.println("Testing CAN and PWM motors with continuous messaging");
   
   // Initialize CAN
   can1.begin();
@@ -56,14 +71,21 @@ void setup() {
   excavationSystemPWM.attach(EXCAVATION_SYSTEM_PWM_PIN);
   excavationSystemPWM.writeMicroseconds(1500); // Neutral
   
+  // Initialize motor states for continuous messaging
+  initializeMotorStates();
+  
   delay(1000);
 }
 
 void loop() {
+  // Process continuous motor updates in background
+  processMotorUpdates();
+  
   displayMenu();
   
   while (!Serial.available()) {
-    delay(100);
+    processMotorUpdates(); // Keep sending CAN messages while waiting
+    delay(10);
   }
   
   int choice = Serial.parseInt();
@@ -89,7 +111,8 @@ void loop() {
       Serial.println("Press 'q' to stop");
       while (true) {
         if (Serial.available() && Serial.read() == 'q') break;
-        delay(100);
+        processMotorUpdates(); // Send continuous CAN messages
+        delay(10);
       }
       stopAllMotors();
       break;
@@ -100,7 +123,8 @@ void loop() {
       Serial.println("Press 'q' to stop");
       while (true) {
         if (Serial.available() && Serial.read() == 'q') break;
-        delay(100);
+        processMotorUpdates(); // Send continuous CAN messages
+        delay(10);
       }
       stopAllMotors();
       break;
@@ -111,7 +135,8 @@ void loop() {
       Serial.println("Press 'q' to stop");
       while (true) {
         if (Serial.available() && Serial.read() == 'q') break;
-        delay(100);
+        processMotorUpdates(); // Send continuous CAN messages
+        delay(10);
       }
       stopAllMotors();
       break;
@@ -122,7 +147,8 @@ void loop() {
       Serial.println("Press 'q' to stop");
       while (true) {
         if (Serial.available() && Serial.read() == 'q') break;
-        delay(100);
+        processMotorUpdates(); // Send continuous CAN messages
+        delay(10);
       }
       stopAllMotors();
       break;
@@ -152,7 +178,7 @@ void loop() {
 }
 
 void displayMenu() {
-  Serial.println("\n==== Motor Test Menu ====");
+  Serial.println("\n==== Motor Test Menu (Continuous CAN Messaging) ====");
   Serial.println("Individual Motors:");
   Serial.println("1: Front Left Motor (CAN ID: 0x78)");
   Serial.println("2: Front Right Motor (CAN ID: 0x16)");  // Fixed to match actual IDs
@@ -161,12 +187,12 @@ void displayMenu() {
   Serial.println("5: Deposition Motor (CAN ID: 0x34)");
   Serial.println("6: Excavation Belt Motor (CAN ID: 0x68)");
   Serial.println("7: Excavation System (PWM)");
-  Serial.println("\nGroup Movement:");
+  Serial.println("\nGroup Movement (Continuous):");
   Serial.println("8: All Wheels Forward");
   Serial.println("9: All Wheels Backward");
   Serial.println("10: Turn Left");
   Serial.println("11: Turn Right");
-  Serial.println("\nCombined Tests:");
+  Serial.println("\nCombined Tests (Continuous):");
   Serial.println("12: Excavation System + Belt");
   Serial.println("13: Full Robot Test");
   Serial.println("\n0: Stop All Motors");
@@ -260,7 +286,8 @@ void continuousMotorControl(int motorId, float speed) {
         running = false;
       }
     }
-    delay(100);
+    processMotorUpdates(); // Send continuous CAN messages
+    delay(10);
   }
   
   // Stop the motor
@@ -272,68 +299,38 @@ void continuousMotorControl(int motorId, float speed) {
 }
 
 void setMotorSpeed(int motorId, float speed) {
-  uint32_t canId = 0;
-  
-  switch (motorId) {
-    case MOTOR_FRONT_LEFT:
-      canId = FRONT_LEFT_MOTOR_CAN_ID;
-      break;
-    case MOTOR_FRONT_RIGHT:
-      canId = FRONT_RIGHT_MOTOR_CAN_ID;
-      break;
-    case MOTOR_REAR_LEFT:
-      canId = REAR_LEFT_MOTOR_CAN_ID;
-      break;
-    case MOTOR_REAR_RIGHT:
-      canId = REAR_RIGHT_MOTOR_CAN_ID;
-      break;
-    case MOTOR_DEPOSITION:
-      canId = DEPOSITION_MOTOR_CAN_ID;
-      break;
-    case MOTOR_EXCAVATION_BELT:
-      canId = EXCAVATION_BELT_MOTOR_CAN_ID;
-      break;
-    case MOTOR_EXCAVATION_SYSTEM:
-      // PWM motor uses different control method
-      if (speed == 0) {
-        excavationSystemPWM.writeMicroseconds(1500); // Neutral
-        Serial.println("Excavation system stopped");
-      } else if (speed > 0) {
-        excavationSystemPWM.writeMicroseconds(1450); // Up
-        Serial.println("Excavation system moving up");
-      } else {
-        excavationSystemPWM.writeMicroseconds(1570); // Down
-        Serial.println("Excavation system moving down");
-      }
-      return;
-    default:
-      return;
-  }
-  
-  // For CAN motors
-  if (canId > 0) {
-    CAN_message_t msg = craftMessage(0, speed, canId);
-    int result = writeCANMessage(msg);
-    
-    if (result == 1) {
-      Serial.print("Message sent to CAN ID 0x");
-      Serial.print(canId, HEX);
-      Serial.print(" with speed ");
-      Serial.println(speed);
+  // Handle PWM motor separately
+  if (motorId == MOTOR_EXCAVATION_SYSTEM) {
+    if (speed == 0) {
+      excavationSystemPWM.writeMicroseconds(1500); // Neutral
+      Serial.println("Excavation system stopped");
+    } else if (speed > 0) {
+      excavationSystemPWM.writeMicroseconds(1450); // Up
+      Serial.println("Excavation system moving up");
     } else {
-      Serial.println("Failed to send CAN message");
+      excavationSystemPWM.writeMicroseconds(1570); // Down
+      Serial.println("Excavation system moving down");
     }
+    return;
   }
+  
+  // For CAN motors, update the motor state for continuous messaging
+  updateMotorState(motorId, speed);
+  
+  Serial.print("Motor ");
+  Serial.print(motorId);
+  Serial.print(" speed set to ");
+  Serial.println(speed);
 }
 
 void stopAllMotors() {
-  // Stop all CAN motors
-  writeCANMessage(craftMessage(0, 0, FRONT_LEFT_MOTOR_CAN_ID));
-  writeCANMessage(craftMessage(0, 0, FRONT_RIGHT_MOTOR_CAN_ID));
-  writeCANMessage(craftMessage(0, 0, REAR_LEFT_MOTOR_CAN_ID));
-  writeCANMessage(craftMessage(0, 0, REAR_RIGHT_MOTOR_CAN_ID));
-  writeCANMessage(craftMessage(0, 0, DEPOSITION_MOTOR_CAN_ID));
-  writeCANMessage(craftMessage(0, 0, EXCAVATION_BELT_MOTOR_CAN_ID));
+  // Stop all CAN motors using continuous messaging system
+  updateMotorState(MOTOR_FRONT_LEFT, 0);
+  updateMotorState(MOTOR_FRONT_RIGHT, 0);
+  updateMotorState(MOTOR_REAR_LEFT, 0);
+  updateMotorState(MOTOR_REAR_RIGHT, 0);
+  updateMotorState(MOTOR_DEPOSITION, 0);
+  updateMotorState(MOTOR_EXCAVATION_BELT, 0);
   
   // Stop PWM motor
   excavationSystemPWM.writeMicroseconds(1500); // Neutral
@@ -345,17 +342,17 @@ void moveAllWheels(float speed) {
   // Based on go_forward/backward from singlecompilation.ino
   if (speed > 0) {
     // Forward movement
-    writeCANMessage(craftMessage(0, speed, REAR_RIGHT_MOTOR_CAN_ID));
-    writeCANMessage(craftMessage(0, speed, FRONT_LEFT_MOTOR_CAN_ID));
-    writeCANMessage(craftMessage(0, -speed, REAR_LEFT_MOTOR_CAN_ID));
-    writeCANMessage(craftMessage(0, speed, FRONT_RIGHT_MOTOR_CAN_ID));
+    updateMotorState(MOTOR_REAR_RIGHT, speed);
+    updateMotorState(MOTOR_FRONT_LEFT, speed);
+    updateMotorState(MOTOR_REAR_LEFT, -speed);
+    updateMotorState(MOTOR_FRONT_RIGHT, speed);
     Serial.println("All wheels moving forward");
   } else {
     // Backward movement
-    writeCANMessage(craftMessage(0, -speed, REAR_RIGHT_MOTOR_CAN_ID));
-    writeCANMessage(craftMessage(0, -speed, FRONT_LEFT_MOTOR_CAN_ID));
-    writeCANMessage(craftMessage(0, speed, REAR_LEFT_MOTOR_CAN_ID));
-    writeCANMessage(craftMessage(0, -speed, FRONT_RIGHT_MOTOR_CAN_ID));
+    updateMotorState(MOTOR_REAR_RIGHT, -speed);
+    updateMotorState(MOTOR_FRONT_LEFT, -speed);
+    updateMotorState(MOTOR_REAR_LEFT, speed);
+    updateMotorState(MOTOR_FRONT_RIGHT, -speed);
     Serial.println("All wheels moving backward");
   }
 }
@@ -363,10 +360,10 @@ void moveAllWheels(float speed) {
 void turnLeft(float speed) {
   // Based on turn_left from singlecompilation.ino
   float absSpeed = abs(speed);
-  writeCANMessage(craftMessage(0, -absSpeed, FRONT_LEFT_MOTOR_CAN_ID));
-  writeCANMessage(craftMessage(0, absSpeed, FRONT_RIGHT_MOTOR_CAN_ID));
-  writeCANMessage(craftMessage(0, absSpeed, REAR_LEFT_MOTOR_CAN_ID));
-  writeCANMessage(craftMessage(0, absSpeed, REAR_RIGHT_MOTOR_CAN_ID));
+  updateMotorState(MOTOR_FRONT_LEFT, -absSpeed);
+  updateMotorState(MOTOR_FRONT_RIGHT, absSpeed);
+  updateMotorState(MOTOR_REAR_LEFT, absSpeed);
+  updateMotorState(MOTOR_REAR_RIGHT, absSpeed);
   Serial.print("Turning Left at speed: ");
   Serial.println(absSpeed);
 }
@@ -374,10 +371,10 @@ void turnLeft(float speed) {
 void turnRight(float speed) {
   // Based on turn_right from singlecompilation.ino
   float absSpeed = abs(speed);
-  writeCANMessage(craftMessage(0, absSpeed, FRONT_LEFT_MOTOR_CAN_ID));
-  writeCANMessage(craftMessage(0, -absSpeed, FRONT_RIGHT_MOTOR_CAN_ID));
-  writeCANMessage(craftMessage(0, -absSpeed, REAR_LEFT_MOTOR_CAN_ID));
-  writeCANMessage(craftMessage(0, -absSpeed, REAR_RIGHT_MOTOR_CAN_ID));
+  updateMotorState(MOTOR_FRONT_LEFT, absSpeed);
+  updateMotorState(MOTOR_FRONT_RIGHT, -absSpeed);
+  updateMotorState(MOTOR_REAR_LEFT, -absSpeed);
+  updateMotorState(MOTOR_REAR_RIGHT, -absSpeed);
   Serial.print("Turning Right at speed: ");
   Serial.println(absSpeed);
 }
@@ -389,8 +386,8 @@ void runExcavationTest() {
   Serial.println("Starting test - press 'q' to stop");
   Serial.println("Moving excavation system and belt...");
   
-  // Start the excavation belt
-  writeCANMessage(craftMessage(0, beltSpeed, EXCAVATION_BELT_MOTOR_CAN_ID));
+  // Start the excavation belt using continuous messaging
+  updateMotorState(MOTOR_EXCAVATION_BELT, beltSpeed);
   
   // Clear any pending input
   while (Serial.available()) Serial.read();
@@ -424,7 +421,8 @@ void runExcavationTest() {
       lastExcavationToggle = currentTime;
     }
     
-    delay(100);
+    processMotorUpdates(); // Send continuous CAN messages
+    delay(10);
   }
   
   // Stop all motors
@@ -451,9 +449,9 @@ void runFullRobotTest() {
   unsigned long lastWheelToggle = millis();
   unsigned long lastExcavationToggle = millis();
   
-  // Start belt and deposition
-  writeCANMessage(craftMessage(0, beltSpeed, EXCAVATION_BELT_MOTOR_CAN_ID));
-  writeCANMessage(craftMessage(0, depositionSpeed, DEPOSITION_MOTOR_CAN_ID));
+  // Start belt and deposition using continuous messaging
+  updateMotorState(MOTOR_EXCAVATION_BELT, beltSpeed);
+  updateMotorState(MOTOR_DEPOSITION, depositionSpeed);
   
   // Start with wheels forward
   moveAllWheels(wheelSpeed);
@@ -501,7 +499,8 @@ void runFullRobotTest() {
       lastExcavationToggle = currentTime;
     }
     
-    delay(100);
+    processMotorUpdates(); // Send continuous CAN messages
+    delay(10);
   }
   
   // Stop all motors
@@ -524,4 +523,55 @@ CAN_message_t craftMessage(int typeofmsg, float val, uint8_t id) {
 
 int writeCANMessage(CAN_message_t to_send) {
   return can1.write(to_send);
+}
+
+// Initialize motor states for continuous messaging
+void initializeMotorStates() {
+  motorStates[MOTOR_FRONT_LEFT - 1] = {0.0, FRONT_LEFT_MOTOR_CAN_ID, false};
+  motorStates[MOTOR_FRONT_RIGHT - 1] = {0.0, FRONT_RIGHT_MOTOR_CAN_ID, false};
+  motorStates[MOTOR_REAR_LEFT - 1] = {0.0, REAR_LEFT_MOTOR_CAN_ID, false};
+  motorStates[MOTOR_REAR_RIGHT - 1] = {0.0, REAR_RIGHT_MOTOR_CAN_ID, false};
+  motorStates[MOTOR_DEPOSITION - 1] = {0.0, DEPOSITION_MOTOR_CAN_ID, false};
+  motorStates[MOTOR_EXCAVATION_BELT - 1] = {0.0, EXCAVATION_BELT_MOTOR_CAN_ID, false};
+  motorStates[MOTOR_EXCAVATION_SYSTEM - 1] = {0.0, 0, false}; // PWM motor, no CAN ID
+  
+  Serial.println("Motor states initialized for continuous messaging");
+}
+
+// Update motor state for continuous messaging
+void updateMotorState(int motorId, float speed) {
+  if (motorId < 1 || motorId > 7) return;
+  
+  int index = motorId - 1;
+  motorStates[index].speed = speed;
+  motorStates[index].active = (speed != 0);
+  
+  // For debugging - show motor state changes
+  Serial.print("Motor ");
+  Serial.print(motorId);
+  Serial.print(" updated: speed=");
+  Serial.print(speed);
+  Serial.print(", active=");
+  Serial.println(motorStates[index].active ? "true" : "false");
+}
+
+// Send continuous CAN messages for all active motors
+void sendContinuousCANMessages() {
+  for (int i = 0; i < 6; i++) { // Only CAN motors (exclude PWM motor)
+    if (motorStates[i].active && motorStates[i].canId > 0) {
+      CAN_message_t msg = craftMessage(0, motorStates[i].speed, motorStates[i].canId);
+      writeCANMessage(msg);
+    }
+  }
+}
+
+// Process motor updates - call this in main loops
+void processMotorUpdates() {
+  unsigned long currentTime = millis();
+  
+  // Send CAN messages at regular intervals
+  if (currentTime - lastCANMessageTime >= CAN_MESSAGE_INTERVAL) {
+    sendContinuousCANMessages();
+    lastCANMessageTime = currentTime;
+  }
 }
