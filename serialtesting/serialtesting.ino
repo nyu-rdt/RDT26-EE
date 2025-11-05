@@ -9,6 +9,16 @@
  * - Teensy Pin 1 (TX1) -> Pi5 GPIO 15 (RXD)
  * - Teensy Pin 0 (RX1) -> Pi5 GPIO 14 (TXD)
  * - Teensy GND -> Pi5 GND
+ * 
+ * On Pi:
+    # Enable serial port (if not already enabled)
+    sudo raspi-config  # Interface Options -> Serial Port
+
+    # Test communication
+    echo "ping" > /dev/serial0
+    cat /dev/serial0
+ * 
+ * 
  */
 
 // Buffer to store incoming serial data
