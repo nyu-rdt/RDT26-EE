@@ -1,24 +1,25 @@
 #include <Arduino.h>
 /*
- * Teensy to Raspberry Pi 5 Serial Communication Test
+ * Teensy to Raspberry Pi 5 USB Serial Communication Test
  * 
- * This code communicates with a Raspberry Pi 5 over hardware UART (Serial1)
- * Teensy 4.1 Serial1 pins: TX1 = Pin 1, RX1 = Pin 0
+ * This code communicates with a Raspberry Pi 5 over USB serial
+ * Connect Teensy to Pi5 via USB cable
  * 
- * Wiring:
- * - Teensy Pin 1 (TX1) -> Pi5 GPIO 15 (RXD)
- * - Teensy Pin 0 (RX1) -> Pi5 GPIO 14 (TXD)
- * - Teensy GND -> Pi5 GND
+ * On Pi5, the Teensy will appear as /dev/ttyACM0 (or similar)
  * 
- * On Pi:
-    # Enable serial port (if not already enabled)
-    sudo raspi-config  # Interface Options -> Serial Port
-
-    # Test communication
-    echo "ping" > /dev/serial0
-    cat /dev/serial0
- * 
- * 
+ * Setup on Pi:
+ *   sudo chmod 666 /dev/ttyACM0  (grant permissions)
+ *   
+ * Test with:
+ *   screen /dev/ttyACM0 115200
+ *   or
+ *   minicom -D /dev/ttyACM0 -b 115200
+ *   
+ * Python example:
+ *   import serial
+ *   ser = serial.Serial('/dev/ttyACM0', 115200)
+ *   ser.write(b'ping\n')
+ *   print(ser.readline())
  */
 
 // Buffer to store incoming serial data
@@ -26,27 +27,26 @@ String inputString = "";
 boolean stringComplete = false;
 
 void setup() {
-  // Initialize hardware serial (Serial1) for Pi communication at 115200 baud
-  Serial1.begin(115200);
+  // Initialize USB serial for Pi communication at 115200 baud
+  Serial.begin(115200);
   
-  // Optional: Use Serial (USB) for debugging
-  Serial.begin(9600);
-  Serial.println("Teensy-Pi Serial Bridge Ready");
+  // Wait a moment for serial connection to establish
+  delay(1000);
   
   // Send startup message to Pi
-  Serial1.println("Teensy Serial Test Ready!");
-  Serial1.println("Send any message and I'll respond.");
-  Serial1.println("----------------------------------------");
+  Serial.println("Teensy Serial Test Ready!");
+  Serial.println("Send any message and I'll respond.");
+  Serial.println("----------------------------------------");
   
   // Reserve 200 bytes for the input string
   inputString.reserve(200);
 }
 
 void loop() {
-  // Check if data is available from Pi
-  while (Serial1.available() > 0) {
+  // Check if data is available from Pi over USB serial
+  while (Serial.available() > 0) {
     // Read the incoming byte
-    char inChar = (char)Serial1.read();
+    char inChar = (char)Serial.read();
     
     // Add it to the inputString
     inputString += inChar;
@@ -59,37 +59,33 @@ void loop() {
   
   // If a complete string has been received
   if (stringComplete) {
-    // Debug: Echo to USB serial
-    Serial.print("From Pi: ");
-    Serial.println(inputString);
-    
     // Echo back to Pi what was received
-    Serial1.print("Received: ");
-    Serial1.print(inputString);
+    Serial.print("Received: ");
+    Serial.print(inputString);
     
     // Trim whitespace and check for specific commands
     inputString.trim();
     
     if (inputString.equalsIgnoreCase("ping")) {
-      Serial1.println("Response: PONG");
+      Serial.println("Response: PONG");
     }
     else if (inputString.equalsIgnoreCase("status")) {
-      Serial1.println("Response: Teensy is running and healthy!");
+      Serial.println("Response: Teensy is running and healthy!");
     }
     else if (inputString.equalsIgnoreCase("help")) {
-      Serial1.println("Response: Available commands:");
-      Serial1.println("  - ping: Get a PONG response");
-      Serial1.println("  - status: Get system status");
-      Serial1.println("  - help: Show this help message");
-      Serial1.println("  - Any other text will be echoed back");
+      Serial.println("Response: Available commands:");
+      Serial.println("  - ping: Get a PONG response");
+      Serial.println("  - status: Get system status");
+      Serial.println("  - help: Show this help message");
+      Serial.println("  - Any other text will be echoed back");
     }
     else {
-      Serial1.print("Response: Echo - \"");
-      Serial1.print(inputString);
-      Serial1.println("\"");
+      Serial.print("Response: Echo - \"");
+      Serial.print(inputString);
+      Serial.println("\"");
     }
     
-    Serial1.println("----------------------------------------");
+    Serial.println("----------------------------------------");
     
     // Clear the string for next input
     inputString = "";
