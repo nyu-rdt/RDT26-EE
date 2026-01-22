@@ -7,7 +7,7 @@
  * 
  * On Pi5, the Teensy will appear as /dev/ttyACM0 (or similar)
  * 
- * Setup on Pi:
+ * Setup on Pi: 
  *   sudo chmod 666 /dev/ttyACM0  (grant permissions)
  *   
  * Test with:
