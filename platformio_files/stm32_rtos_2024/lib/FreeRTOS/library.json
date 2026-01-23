@@ -1,0 +1,18 @@
+{
+  "name": "FreeRTOS",
+  "version": "10.3.1",
+  "description": "FreeRTOS Kernel for ARM Cortex-M3/M4 (from STM32CubeF4)",
+  "frameworks": "stm32cube",
+  "platforms": "ststm32",
+  "build": {
+    "srcFilter": [
+      "+<*.c>",
+      "+<portable/GCC/ARM_CM3/port.c>",
+      "+<portable/MemMang/heap_4.c>"
+    ],
+    "includeDir": "include",
+    "flags": [
+      "-Iportable/GCC/ARM_CM3"
+    ]
+  }
+}
