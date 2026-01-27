@@ -8,27 +8,13 @@
 #include "locomotion.h"
 #include "excavation.h"
 #include "sensors.h"
+#include "system.h"
 #include <Wire.h>
 
 // State variables
 static int lastCommand = 0;
 static bool isAutonomousMode = false;
 static uint8_t dataPacket[3] = {POSITION_UNKNOWN, 0, 0};
-
-// E-Stop and relay state
-static bool eStopEngaged = true;
-static bool currentRelayStatus = false;
-
-// Command interruption state
-static byte pendingCommand = 0;
-static bool commandPending = false;
-
-// Cached weight for non-blocking reads
-static float lastWeight = 0.0f;
-static unsigned long nextWeightReadTime = 0;
-
-// Command refresh timing
-static unsigned long lastCommandRefreshTime = 0;
 
 // Forward declaration for I2C callback
 static void onRequestCallback(void);
@@ -37,10 +23,6 @@ void I2C_Init(void) {
     Wire.begin(I2C_SLAVE_ADDRESS);
     Wire.onRequest(onRequestCallback);
     Wire.setClock(400000);
-    
-    // Initialize E-Stop relay pin
-    pinMode(RELAY_PIN, INPUT_PULLUP);
-    currentRelayStatus = digitalRead(RELAY_PIN);
     
     Serial.println("I2C Slave Initialized");
 }
@@ -61,7 +43,7 @@ static void onRequestCallback(void) {
 
 void I2C_UpdateData(void) {
     float length = Sensors_GetStringLength();
-    float weight = lastWeight / 20.0f;  // Use cached weight
+    float weight = System_GetCachedWeight() / 20.0f;  // Use cached weight
     
     // Get active encoder angle
     uint8_t activeEnc = Sensors_GetActiveEncoder();
@@ -79,82 +61,13 @@ void I2C_UpdateData(void) {
     dataPacket[2] = angle_int;
 }
 
-bool I2C_CheckEStop(void) {
-    currentRelayStatus = digitalRead(RELAY_PIN);
-    
-    // E-stop activated (LOW when relay is OFF/E-stop engaged)
-    if (currentRelayStatus == LOW) {
-        if (!eStopEngaged) {
-            EmergencyStop();
-            eStopEngaged = true;
-            commandPending = false;
-            Serial.println("E-STOP ACTIVATED - Motors stopped");
-        }
-        
-        // Still allow data requests during E-stop
-        if (Wire.available()) {
-            char c = Wire.read();
-            if (int(c) == CMD_REQUEST_DATA) {
-                Sensors_Update();
-            }
-        }
-        return true;
-    }
-    
-    // Power restored
-    if (eStopEngaged) {
-        eStopEngaged = false;
-        Serial.println("Power restored - Ready to accept commands");
-    }
-    
-    return false;
-}
-
-bool I2C_IsEStopEngaged(void) {
-    return eStopEngaged;
-}
-
-void I2C_SetEStopEngaged(bool engaged) {
-    eStopEngaged = engaged;
-}
-
-bool I2C_HandleInterruptedCommand(void) {
-    if (commandPending) {
-        I2C_ProcessCommand(int(pendingCommand));
-        commandPending = false;
-        return true;
-    }
-    return false;
-}
-
-void I2C_RefreshMotorCommands(void) {
-    unsigned long currentMillis = millis();
-    
-    // Non-blocking weight reading
-    if (currentMillis >= nextWeightReadTime && !Wire.available()) {
-        lastWeight = Sensors_GetWeight();
-        nextWeightReadTime = currentMillis + 500;
-    }
-    
-    // Periodic command refresh for CAN motors
-    if (currentMillis - lastCommandRefreshTime >= COMMAND_REFRESH_INTERVAL) {
-        if (!eStopEngaged) {
-            Excavation_RefreshCommands();
-        }
-        lastCommandRefreshTime = currentMillis;
-    }
-}
-
 void I2C_ProcessCommand(int command) {
-    // Any command except data request clears E-stop state
-    if (command != CMD_REQUEST_DATA) {
-        eStopEngaged = false;
-    }
+    lastCommand = (command == CMD_EMERGENCY_STOP) ? 1000 : command;
     
     switch (command) {
         // Emergency & Stop
         case CMD_EMERGENCY_STOP:
-            EmergencyStop();
+            System_EmergencyStop();
             break;
         case CMD_LOCOMOTION_STOP:
             Locomotion_Stop();
@@ -265,15 +178,6 @@ void I2C_ProcessCommand(int command) {
         default:
             break;
     }
-}
-
-void EmergencyStop(void) {
-    // Order of operations: 1. Locomotion 2. Excavation 3. Belt 4. Deposition
-    Locomotion_Stop();
-    Excavation_Stop();
-    Excavation_BeltStop();
-    Deposition_Stop();
-    Serial.println("Emergency Stop Activated");
 }
 
 int I2C_GetLastCommand(void) {

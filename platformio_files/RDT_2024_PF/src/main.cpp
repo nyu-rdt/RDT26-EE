@@ -8,16 +8,18 @@
  * 
  * Modular Architecture:
  *   - config.h:        Pin definitions and constants
+ *   - system:          E-stop, emergency stop, system-level functions
  *   - can_driver:      CAN bus communication
  *   - locomotion:      4-wheel drive control
  *   - excavation:      Arm and belt control
  *   - sensors:         HX711 load cells, string pot, encoders
- *   - i2c_commands:    I2C slave command processing, E-stop handling
+ *   - i2c_commands:    I2C slave command processing
  */
 
 #include <Arduino.h>
 #include <Wire.h>
 #include "config.h"
+#include "system.h"
 #include "can_driver.h"
 #include "locomotion.h"
 #include "excavation.h"
@@ -43,10 +45,11 @@ void setup() {
     Serial.println("Teensy 4.1 - Initializing...");
     
     // Initialize all subsystems
+    System_Init();   // E-stop relay
     CAN_Init();
     Sensors_Init();  // Also initializes encoders
     Excavation_Init();
-    I2C_Init();      // Also initializes E-stop relay pin
+    I2C_Init();
     
     Serial.println("Encoders initialized");
     Serial.println("All systems initialized!");
@@ -54,21 +57,25 @@ void setup() {
 }
 
 void loop() {
-    // Check E-Stop status first
-    if (I2C_CheckEStop()) {
+    // Check E-Stop status first (hardware safety)
+    if (System_CheckEStop()) {
         // E-Stop is engaged, skip normal processing
+        // Still allow data requests during E-stop
+        if (Wire.available()) {
+            char c = Wire.read();
+            if (int(c) == CMD_REQUEST_DATA) {
+                Sensors_Update();
+            }
+        }
         yield();
         return;
     }
     
-    // Handle any interrupted position commands
-    I2C_HandleInterruptedCommand();
-    
-    // Poll for I2C commands (non-interrupt based for reliability)
+    // Poll for I2C commands
     manualReceive();
     
-    // Handle non-blocking weight reading and command refresh
-    I2C_RefreshMotorCommands();
+    // Periodic system update (weight reading)
+    System_Update();
     
     // Small yield to keep things responsive
     yield();

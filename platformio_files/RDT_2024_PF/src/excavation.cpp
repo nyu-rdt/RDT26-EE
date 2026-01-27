@@ -6,6 +6,7 @@
 #include "excavation.h"
 #include "can_driver.h"
 #include "sensors.h"
+#include "system.h"
 #include "i2c_commands.h"
 #include <Servo.h>
 #include <Wire.h>
@@ -99,8 +100,8 @@ bool Excavation_MoveToLocomotionPosition(void) {
         
         // Check for E-Stop activation
         if (digitalRead(RELAY_PIN) == LOW) {
-            I2C_SetEStopEngaged(true);
-            EmergencyStop();
+            System_SetEStopEngaged(true);
+            System_EmergencyStop();
             Serial.println("E-STOP ACTIVATED during locomotion positioning - Operation aborted");
             currentPosition = POSITION_UNKNOWN;
             return false;
@@ -131,7 +132,7 @@ bool Excavation_MoveToLocomotionPosition(void) {
         
         // Refresh motor commands periodically
         if (currentTime - lastRefreshTime >= COMMAND_REFRESH_INTERVAL) {
-            if (!I2C_IsEStopEngaged()) {
+            if (!System_IsEStopEngaged()) {
                 Excavation_RefreshCommands();
             }
             lastRefreshTime = currentTime;
@@ -169,8 +170,8 @@ bool Excavation_MoveToExcavationPosition(void) {
         
         // Check for E-Stop activation
         if (digitalRead(RELAY_PIN) == LOW) {
-            I2C_SetEStopEngaged(true);
-            EmergencyStop();
+            System_SetEStopEngaged(true);
+            System_EmergencyStop();
             Serial.println("E-STOP ACTIVATED during excavation positioning - Operation aborted");
             currentPosition = POSITION_UNKNOWN;
             return false;
@@ -201,7 +202,7 @@ bool Excavation_MoveToExcavationPosition(void) {
         
         // Refresh motor commands periodically
         if (currentTime - lastRefreshTime >= COMMAND_REFRESH_INTERVAL) {
-            if (!I2C_IsEStopEngaged()) {
+            if (!System_IsEStopEngaged()) {
                 Excavation_RefreshCommands();
             }
             lastRefreshTime = currentTime;
