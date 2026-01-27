@@ -6,10 +6,11 @@
 #include "excavation.h"
 #include "can_driver.h"
 #include "sensors.h"
+#include "i2c_commands.h"
 #include <Servo.h>
+#include <Wire.h>
 
-// PWM servo objects
-static Servo excavationBeltServo;
+// PWM servo object for arm only (belt uses CAN now)
 static Servo excavationArmServo;
 
 // Position state
@@ -17,12 +18,14 @@ static ExcavationPosition_t currentPosition = POSITION_UNKNOWN;
 static float locomotionThreshold = DEFAULT_LOCOMOTION_THRESHOLD;
 static float excavationThreshold = DEFAULT_EXCAVATION_THRESHOLD;
 
+// Active motor speeds for command refresh
+static float activeBeltSpeed = 0.0f;
+static float activeDepositionSpeed = 0.0f;
+
 void Excavation_Init(void) {
-    excavationBeltServo.attach(EXCAVATION_BELT_PWM_PIN);
     excavationArmServo.attach(EXCAVATION_SYSTEM_PWM_PIN);
     
     // Start in neutral
-    excavationBeltServo.writeMicroseconds(PWM_NEUTRAL);
     excavationArmServo.writeMicroseconds(PWM_NEUTRAL);
     
     Serial.println("Excavation System Initialized");
@@ -44,26 +47,33 @@ void Excavation_Down(void) {
 }
 
 void Excavation_BeltStop(void) {
-    excavationBeltServo.writeMicroseconds(PWM_NEUTRAL);
-    Serial.println("Belt Stopped");
+    CAN_SendMotorSpeed(CAN_ID_EXCAVATION_BELT, 0.0f);
+    activeBeltSpeed = 0.0f;
+    Serial.println("Excavation belt stopped");
 }
 
 void Excavation_BeltOutward(void) {
-    excavationBeltServo.writeMicroseconds(PWM_BELT_REVERSE);
-    Serial.println("Belt Moving Outward");
+    float speed = -EXCAVATION_DUTY_CYCLE;
+    CAN_SendMotorSpeed(CAN_ID_EXCAVATION_BELT, speed);
+    activeBeltSpeed = speed;
+    Serial.println("Excavation belt moving outward");
 }
 
 void Excavation_BeltInward(void) {
-    excavationBeltServo.writeMicroseconds(PWM_BELT_FORWARD);
-    Serial.println("Belt Moving Inward");
+    float speed = EXCAVATION_DUTY_CYCLE;
+    CAN_SendMotorSpeed(CAN_ID_EXCAVATION_BELT, speed);
+    activeBeltSpeed = speed;
+    Serial.println("Excavation belt moving inward");
 }
 
 void Excavation_Zero(void) {
-    locomotionThreshold = Sensors_GetStringLength();
-    currentPosition = POSITION_LOCOMOTION;
-    Serial.print("Excavation Zeroed at ");
-    Serial.print(locomotionThreshold);
-    Serial.println(" inches");
+    // Note: Currently used as excavation stop command
+    Excavation_Stop();
+    Serial.println("Excavation Stopped (Zero command)");
+}
+
+void Excavation_SetPosition(ExcavationPosition_t position) {
+    currentPosition = position;
 }
 
 bool Excavation_MoveToLocomotionPosition(void) {
@@ -71,28 +81,69 @@ bool Excavation_MoveToLocomotionPosition(void) {
         return true;  // Already there
     }
     
-    Excavation_Down();
-    unsigned long startTime = millis();
-    float length;
+    float length = Sensors_GetStringLength();
     
-    while (true) {
-        length = Sensors_GetStringLength();
+    if (length >= locomotionThreshold) {
+        Serial.println("Already at or beyond locomotion position threshold");
+        Excavation_Stop();
+        currentPosition = POSITION_LOCOMOTION;
+        return true;
+    }
+    
+    Excavation_Up();
+    unsigned long lastCheckTime = 0;
+    unsigned long lastRefreshTime = 0;
+    
+    while (length < locomotionThreshold) {
+        unsigned long currentTime = millis();
         
-        if (length <= locomotionThreshold) {
-            Excavation_Stop();
-            currentPosition = POSITION_LOCOMOTION;
-            Serial.println("Reached Locomotion Position");
-            return true;
-        }
-        
-        if (millis() - startTime > POSITION_MOVE_TIMEOUT_MS) {
-            Excavation_Stop();
-            Serial.println("ERROR: Locomotion position timeout");
+        // Check for E-Stop activation
+        if (digitalRead(RELAY_PIN) == LOW) {
+            I2C_SetEStopEngaged(true);
+            EmergencyStop();
+            Serial.println("E-STOP ACTIVATED during locomotion positioning - Operation aborted");
+            currentPosition = POSITION_UNKNOWN;
             return false;
         }
         
-        delay(50);  // Check every 50ms
+        // Check for incoming commands (non-blocking)
+        if (Wire.available()) {
+            char c = Wire.read();
+            if (int(c) == CMD_EXCAVATION_ZERO) {
+                Excavation_Stop();
+                currentPosition = POSITION_UNKNOWN;
+                return false;
+            }
+            else if (int(c) == CMD_EXCAVATION_POSITION) {
+                Excavation_Stop();
+                currentPosition = POSITION_UNKNOWN;
+                Serial.println("Locomotion positioning interrupted by excavation position command");
+                return false;
+            }
+            I2C_ProcessCommand(int(c));
+        }
+        
+        // Check position at intervals (every 150ms)
+        if (currentTime - lastCheckTime >= 150) {
+            length = Sensors_GetStringLength();
+            lastCheckTime = currentTime;
+        }
+        
+        // Refresh motor commands periodically
+        if (currentTime - lastRefreshTime >= COMMAND_REFRESH_INTERVAL) {
+            if (!I2C_IsEStopEngaged()) {
+                Excavation_RefreshCommands();
+            }
+            lastRefreshTime = currentTime;
+        }
+        
+        yield();
     }
+    
+    Excavation_Stop();
+    currentPosition = POSITION_LOCOMOTION;
+    Serial.println("Successfully reached locomotion position");
+    return true;
 }
 
 bool Excavation_MoveToExcavationPosition(void) {
@@ -100,45 +151,108 @@ bool Excavation_MoveToExcavationPosition(void) {
         return true;  // Already there
     }
     
-    Excavation_Up();
-    unsigned long startTime = millis();
-    float length;
+    float length = Sensors_GetStringLength();
     
-    while (true) {
-        length = Sensors_GetStringLength();
+    if (length <= excavationThreshold) {
+        Serial.println("Already at or beyond excavation position threshold");
+        Excavation_Stop();
+        currentPosition = POSITION_EXCAVATION;
+        return true;
+    }
+    
+    Excavation_Down();
+    unsigned long lastCheckTime = 0;
+    unsigned long lastRefreshTime = 0;
+    
+    while (length > excavationThreshold) {
+        unsigned long currentTime = millis();
         
-        if (length >= excavationThreshold) {
-            Excavation_Stop();
-            currentPosition = POSITION_EXCAVATION;
-            Serial.println("Reached Excavation Position");
-            return true;
-        }
-        
-        if (millis() - startTime > POSITION_MOVE_TIMEOUT_MS) {
-            Excavation_Stop();
-            Serial.println("ERROR: Excavation position timeout");
+        // Check for E-Stop activation
+        if (digitalRead(RELAY_PIN) == LOW) {
+            I2C_SetEStopEngaged(true);
+            EmergencyStop();
+            Serial.println("E-STOP ACTIVATED during excavation positioning - Operation aborted");
+            currentPosition = POSITION_UNKNOWN;
             return false;
         }
         
-        delay(50);  // Check every 50ms
+        // Check for incoming commands (non-blocking)
+        if (Wire.available()) {
+            char c = Wire.read();
+            if (int(c) == CMD_EXCAVATION_ZERO) {
+                Excavation_Stop();
+                currentPosition = POSITION_UNKNOWN;
+                return false;
+            }
+            else if (int(c) == CMD_EXCAVATION_LOCOMOTION_POS) {
+                Excavation_Stop();
+                currentPosition = POSITION_UNKNOWN;
+                Serial.println("Excavation positioning interrupted by locomotion position command");
+                return false;
+            }
+            I2C_ProcessCommand(int(c));
+        }
+        
+        // Check position at intervals (every 150ms)
+        if (currentTime - lastCheckTime >= 150) {
+            length = Sensors_GetStringLength();
+            lastCheckTime = currentTime;
+        }
+        
+        // Refresh motor commands periodically
+        if (currentTime - lastRefreshTime >= COMMAND_REFRESH_INTERVAL) {
+            if (!I2C_IsEStopEngaged()) {
+                Excavation_RefreshCommands();
+            }
+            lastRefreshTime = currentTime;
+        }
+        
+        yield();
     }
+    
+    Excavation_Stop();
+    currentPosition = POSITION_EXCAVATION;
+    Serial.println("Successfully reached excavation position");
+    return true;
 }
 
 ExcavationPosition_t Excavation_GetPosition(void) {
     return currentPosition;
 }
 
+float Excavation_GetActiveBeltSpeed(void) {
+    return activeBeltSpeed;
+}
+
+float Excavation_GetActiveDepositionSpeed(void) {
+    return activeDepositionSpeed;
+}
+
+void Excavation_RefreshCommands(void) {
+    if (activeBeltSpeed != 0.0f) {
+        CAN_SendMotorSpeed(CAN_ID_EXCAVATION_BELT, activeBeltSpeed);
+    }
+    if (activeDepositionSpeed != 0.0f) {
+        CAN_SendMotorSpeed(CAN_ID_DEPOSITION, activeDepositionSpeed);
+    }
+}
+
 void Deposition_RotateCollection(void) {
-    CAN_SendMotorSpeed(CAN_ID_DEPOSITION, DEPOSITION_DUTY_CYCLE);
+    float speed = DEPOSITION_DUTY_CYCLE;
+    CAN_SendMotorSpeed(CAN_ID_DEPOSITION, speed);
+    activeDepositionSpeed = speed;
     Serial.println("Rotating to Collection Position");
 }
 
 void Deposition_RotateDumping(void) {
-    CAN_SendMotorSpeed(CAN_ID_DEPOSITION, -DEPOSITION_DUTY_CYCLE);
+    float speed = -DEPOSITION_DUTY_CYCLE;
+    CAN_SendMotorSpeed(CAN_ID_DEPOSITION, speed);
+    activeDepositionSpeed = speed;
     Serial.println("Rotating to Dumping Position");
 }
 
 void Deposition_Stop(void) {
     CAN_SendMotorSpeed(CAN_ID_DEPOSITION, 0.0f);
+    activeDepositionSpeed = 0.0f;
     Serial.println("Deposition Rotation Stopped");
 }

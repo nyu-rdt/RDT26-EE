@@ -12,32 +12,45 @@
 #include <Arduino.h>
 
 // ============== Pin Definitions ==============
+// E-Stop Relay
+#define RELAY_PIN           2
+
 // Analog Inputs
-#define STRING_POT_PIN      A1
+#define STRING_POT_PIN      A3
 
 // HX711 Load Cells (4 sensors)
-#define HX711_DOUT1         13
-#define HX711_CLK1          9
-#define HX711_DOUT2         11
-#define HX711_CLK2          8
-#define HX711_DOUT3         7
-#define HX711_CLK3          6
-#define HX711_DOUT4         5
-#define HX711_CLK4          4
+#define HX711_DOUT1         24
+#define HX711_CLK1          25
+#define HX711_DOUT2         26
+#define HX711_CLK2          27
+#define HX711_DOUT3         34
+#define HX711_CLK3          33
+#define HX711_DOUT4         20
+#define HX711_CLK4          21
 
 // PWM Outputs (Servo signals)
-#define EXCAVATION_BELT_PWM_PIN     14
-#define EXCAVATION_SYSTEM_PWM_PIN   3
+#define EXCAVATION_SYSTEM_PWM_PIN   11
+
+// Encoder pins
+#define ENC1_A              36
+#define ENC1_B              35
+#define ENC2_A              38
+#define ENC2_B              37
+#define ENC3_A              40
+#define ENC3_B              39
+#define ENC4_A              14
+#define ENC4_B              15
 
 // ============== CAN Bus Configuration ==============
 #define CAN_BAUD_RATE       500000
 
 // Motor CAN IDs (extended frame)
-#define CAN_ID_FRONT_LEFT   0x67
-#define CAN_ID_FRONT_RIGHT  0x78
-#define CAN_ID_REAR_LEFT    0x16
-#define CAN_ID_REAR_RIGHT   0x48
-#define CAN_ID_DEPOSITION   0x42
+#define CAN_ID_FRONT_LEFT       0x78
+#define CAN_ID_FRONT_RIGHT      0x16
+#define CAN_ID_REAR_LEFT        0x48
+#define CAN_ID_REAR_RIGHT       0x67
+#define CAN_ID_DEPOSITION       0x34
+#define CAN_ID_EXCAVATION_BELT  0x68
 
 // ============== I2C Configuration ==============
 #define I2C_SLAVE_ADDRESS   0x24
@@ -78,6 +91,8 @@
 #define CMD_BELT_STOP                   99
 #define CMD_BELT_OUTWARD                100
 #define CMD_BELT_INWARD                 101
+#define CMD_ACME_UP                     102
+#define CMD_ACME_DOWN                   103
 
 // Deposition System
 #define CMD_DEPOSITION_ROTATE_COLLECTION 112
@@ -97,31 +112,37 @@ typedef enum {
 
 // ============== System Parameters ==============
 // Speed limiting (safety)
-#define LOCOMOTION_DUTY_CYCLE           0.20f   // 20% max speed
-#define DEPOSITION_DUTY_CYCLE           0.15f   // 15% for deposition
+#define LOCOMOTION_DUTY_CYCLE           0.33f   // 33% max speed
+#define DEPOSITION_DUTY_CYCLE           0.20f   // 20% for deposition
+#define EXCAVATION_DUTY_CYCLE           0.42f   // 42% for excavation belt
 
 // String potentiometer calibration
 #define STRING_POT_SCALE                27.0f
 #define STRING_POT_OFFSET               0.719f
 
 // Excavation position thresholds (inches)
-#define DEFAULT_LOCOMOTION_THRESHOLD    10.0f
-#define DEFAULT_EXCAVATION_THRESHOLD    30.0f
+#define DEFAULT_LOCOMOTION_THRESHOLD    29.0f
+#define DEFAULT_EXCAVATION_THRESHOLD    17.0f
 
 // Timeout for position movements (ms)
-#define POSITION_MOVE_TIMEOUT_MS        10000
+#define POSITION_MOVE_TIMEOUT_MS        25000
+
+// Command refresh interval (ms) - for CAN motor keepalive
+#define COMMAND_REFRESH_INTERVAL        500
 
 // HX711 calibration factors
-#define HX711_CAL_FACTOR_1              (-1000.0f)
-#define HX711_CAL_FACTOR_2              (-1000.0f)
-#define HX711_CAL_FACTOR_3              (-1000.0f)
-#define HX711_CAL_FACTOR_4              (-1000.0f)
+#define HX711_CAL_FACTOR_1              (-102.0f)
+#define HX711_CAL_FACTOR_2              (105.0f)
+#define HX711_CAL_FACTOR_3              (-102.0f)
+#define HX711_CAL_FACTOR_4              (111.0f)
 
 // PWM microseconds for servo signals
 #define PWM_NEUTRAL                     1500
-#define PWM_BELT_FORWARD                1550
-#define PWM_BELT_REVERSE                1450
-#define PWM_EXCAVATION_UP               1550
-#define PWM_EXCAVATION_DOWN             1450
+#define PWM_EXCAVATION_UP               1460
+#define PWM_EXCAVATION_DOWN             1522
+
+// Encoder properties
+#define COUNTS_PER_REVOLUTION           8192.0f
+#define DEGREES_PER_COUNT               (360.0f / COUNTS_PER_REVOLUTION)
 
 #endif // CONFIG_H

@@ -11,17 +11,27 @@
  *   - can_driver:      CAN bus communication
  *   - locomotion:      4-wheel drive control
  *   - excavation:      Arm and belt control
- *   - sensors:         HX711 load cells, string pot
- *   - i2c_commands:    I2C slave command processing
+ *   - sensors:         HX711 load cells, string pot, encoders
+ *   - i2c_commands:    I2C slave command processing, E-stop handling
  */
 
 #include <Arduino.h>
+#include <Wire.h>
 #include "config.h"
 #include "can_driver.h"
 #include "locomotion.h"
 #include "excavation.h"
 #include "sensors.h"
 #include "i2c_commands.h"
+
+// Manual receive function - polls I2C for commands
+void manualReceive(void) {
+    while (Wire.available()) {
+        char c = Wire.read();
+        Serial.println(int(c));
+        I2C_ProcessCommand(int(c));
+    }
+}
 
 void setup() {
     // Initialize serial for debugging
@@ -34,27 +44,32 @@ void setup() {
     
     // Initialize all subsystems
     CAN_Init();
-    Sensors_Init();
+    Sensors_Init();  // Also initializes encoders
     Excavation_Init();
-    I2C_Init();
+    I2C_Init();      // Also initializes E-stop relay pin
     
+    Serial.println("Encoders initialized");
     Serial.println("All systems initialized!");
     Serial.println("Waiting for I2C commands...");
 }
 
 void loop() {
-    // Main loop is mostly idle - work happens in I2C callbacks
-    
-    // Debug: print last command if any
-    int lastCmd = I2C_GetLastCommand();
-    if (lastCmd) {
-        // Could add periodic status updates here
+    // Check E-Stop status first
+    if (I2C_CheckEStop()) {
+        // E-Stop is engaged, skip normal processing
+        yield();
+        return;
     }
     
-    // Periodic sensor update (optional, for monitoring)
-    static unsigned long lastSensorUpdate = 0;
-    if (millis() - lastSensorUpdate > 100) {
-        Sensors_Update();
-        lastSensorUpdate = millis();
-    }
+    // Handle any interrupted position commands
+    I2C_HandleInterruptedCommand();
+    
+    // Poll for I2C commands (non-interrupt based for reliability)
+    manualReceive();
+    
+    // Handle non-blocking weight reading and command refresh
+    I2C_RefreshMotorCommands();
+    
+    // Small yield to keep things responsive
+    yield();
 }
