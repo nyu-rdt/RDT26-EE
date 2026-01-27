@@ -1,28 +1,30 @@
-# PlatformIO Projects
+# PlatformIO Archive (Legacy Code)
 
-This folder contains all PlatformIO-based firmware projects for the RDT26-EE excavation rover.
+> ⚠️ **LEGACY CODE** - This folder contains archived firmware from the 2024-2025 competition season. It is kept for reference but is no longer actively developed.
+
+This folder contains PlatformIO-based firmware projects for the RDT26-EE excavation rover.
 
 ---
 
-## 🎯 Which Project Should I Use?
+## 🎯 Project Reference
 
 | Project | Status | Use Case |
 |---------|--------|----------|
-| **[RDT_2024_PF](./RDT_2024_PF/)** | ✅ **Active** | Modular architecture for Teensy 4.1 - **Start here!** |
-| [2024_teensy_original](./2024_teensy_original/) | ✅ Reference | Single-file version for Teensy 4.1 (legacy reference) |
-| [2024_STM32_migr](./2024_STM32_migr/) | ⚠️ Outdated | STM32 port - based on old code, not currently in use |
-| [stm32_rtos_2024](./stm32_rtos_2024/) | ⚠️ Outdated | STM32 + FreeRTOS - based on old code, not currently in use |
+| **[RDT_2024_PF](./RDT_2024_PF/)** | 📦 Archived | Modular architecture for Teensy 4.1 - most complete legacy code |
+| [2024_teensy_original](./2024_teensy_original/) | 📦 Archived | Single-file version for Teensy 4.1 |
+| [2024_STM32_migr](./2024_STM32_migr/) | ⚠️ Outdated | STM32 port - incomplete, missing features |
+| [stm32_rtos_2024](./stm32_rtos_2024/) | ⚠️ Outdated | STM32 + FreeRTOS - incomplete, missing features |
 
-**New team members should start with `RDT_2024_PF`** - it has clean modular code with proper documentation.
+**This is archived code.** For the current robot codebase, check the main repository or ask the team lead.
 
 ---
 
 ## Project Descriptions
 
-### RDT_2024_PF (Recommended)
-**Platform:** Teensy 4.1 | **Framework:** Arduino
+### RDT_2024_PF (Most Complete)
+**Platform:** Teensy 4.1 | **Framework:** Arduino | **Status:** 📦 Archived
 
-The primary codebase for the excavation rover. Features a clean modular architecture:
+The most complete archived codebase for the excavation rover. Features a clean modular architecture:
 - Separate modules for locomotion, excavation, sensors, CAN, I2C, and system control
 - Full support for rotary encoders, HX711 load cells, E-stop relay
 - CAN bus motor control at 500kbps

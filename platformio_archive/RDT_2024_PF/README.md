@@ -1,6 +1,9 @@
 # RDT_2024_PF - Excavation Rover Control System
 
+> ⚠️ **LEGACY CODE** - This is archived firmware from the 2024-2025 competition season. Kept for reference.
+
 NYU Robotic Design Team | NASA Lunabotics
+
 ---
 
 ## Overview
