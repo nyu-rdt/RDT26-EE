@@ -13,7 +13,7 @@ Review docs in [/docs](./docs) for coding style, testing, and contributing guide
 
 all PCBs, schematics etc. are in the Google Drive or in [/HARDWARE](./HARDWARE) folder
 
-### new files
+## new files
 pls try and keep new files organized in the right folders - e.g. tests in /tests, docs in /docs, hardware files in /HARDWARE etc.
 
 when testing things try and use the platformio test framework instead of making throwaway files.
