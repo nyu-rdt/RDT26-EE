@@ -40,7 +40,7 @@ void setup() {
   pinMode(M1, OUTPUT);
   pinMode(M2, OUTPUT);
 
-  setMicrostep(1);  // change this to 1,2,4,8,16,32
+  setMicrostep(1);  // CHANGE THIS to 1,2,4,8,16,32
 }
 
 void loop() {
