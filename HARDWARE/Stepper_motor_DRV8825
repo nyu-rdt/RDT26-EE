@@ -1,8 +1,8 @@
-// Use the pwr/gnd rails on one side for the teensy and the other side for pwrr supply with cap
+// Use the pwr/gnd rails on one side for the teensy and the other side for pwr supply with cap
 // ENABLE and FAULT not wired
-// M0 goes to pin 4, M1 to pin 5, M2 to pin 6
+// M0 goes to pin 10, M1 to pin 11, M2 to pin 12
 // Reset and Sleep go to power rail --> Teensy 5v
-// Step goes to pin 3 and DIR goes to pin 2
+// Step goes to pin 7 and DIR goes to pin 6
 // VMOT and GND go to 100E-6 cap on the other side pwr and gnd rails w power supply
 // B2 to candy cane green on stepper, B1 to solid green, A1 to solid red, A2 to candy cane red
 // GND to gnd rail duh
@@ -10,13 +10,13 @@
 
 
 
-#define dirPin 2
-#define stepPin 3
+#define dirPin 6
+#define stepPin 7
 
 // Microstepping pins on DRV8825:
-#define M0 4
-#define M1 5
-#define M2 6
+#define M0 10
+#define M1 11
+#define M2 12
 
 #define stepsPerRevolution 200  // full-step count
 
@@ -49,7 +49,7 @@ void loop() {
 
   digitalWrite(dirPin, HIGH);
 
-  // One revolution
+  // DOWN
   for (int i = 0; i < totalSteps; i++) {
     digitalWrite(stepPin, HIGH);
     delayMicroseconds(800);   // adjust speed
@@ -57,11 +57,11 @@ void loop() {
     delayMicroseconds(800);
   }
 
-  delay(1000);
+  // delay(1000);
 
   digitalWrite(dirPin, LOW);
 
-  // One revolution other way
+  // UP
   for (int i = 0; i < totalSteps; i++) {
     digitalWrite(stepPin, HIGH);
     delayMicroseconds(800);
