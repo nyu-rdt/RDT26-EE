@@ -32,7 +32,17 @@
 
 // Speed from param index
 #define SPEED_TABLE { 0.25f, 0.50f, 0.75f, 1.00f }
-#define GET_SPEED(idx) (speedTable[((idx) > 3) ? 3 : (idx)] * LOCOMOTION_DUTY_CYCLE)
+
+static inline float getSpeed(uint8_t idx)
+{
+    static constexpr float speedTable[] = SPEED_TABLE;
+    if (idx > 3U) {
+        idx = 3U;
+    }
+    return speedTable[idx] * LOCOMOTION_DUTY_CYCLE;
+}
+
+#define GET_SPEED(idx) (getSpeed(static_cast<uint8_t>(idx)))
 
 // Handler function type
 typedef void (*GroupHandler)(uint8_t param);
