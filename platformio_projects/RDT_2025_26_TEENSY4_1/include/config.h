@@ -1,12 +1,21 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+// setting flags:
+#define RAMP_UP true
+#define SERIAL_DEBUG true
+#define USE_TIMEOUT false
+
 #define I2C_CHILD_ADDRESS 0x08
 #define CAN_BAUD_RATE 500000
-#define CAN_ID_LEFT_MOTOR  0x78
-#define CAN_ID_RIGHT_MOTOR 0x4c
+#define CAN_ID_LEFT_MOTOR  0x48
+#define CAN_ID_RIGHT_MOTOR 0x78
 #define LOCOMOTION_DUTY_CYCLE 0.33f
 #define COMMAND_TIMEOUT_MS 200
+
+// Ramping parameters
+#define TX_PERIOD_MS 20
+#define MAX_SPEED_DELTA_PER_TICK 0.01f
 
 // Command Groups
 #define GRP_CONTROL     0x0

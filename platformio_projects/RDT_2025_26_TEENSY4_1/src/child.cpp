@@ -7,6 +7,7 @@
 static void receiveEvent(int numBytes);
 static bool processCommand(uint8_t cmd);
 static void registerHandlers();
+static void sendLocomotion(float left, float right);
 static void grp_Control(uint8_t param);
 static void grp_LocoStop(uint8_t param);
 static void grp_Forward(uint8_t param);
@@ -17,22 +18,36 @@ static void grp_Excavation(uint8_t param);
 static void grp_Deposition(uint8_t param);
 static void grp_Data(uint8_t param);
 
-//isr stuff
 volatile uint8_t latestCommand = 0x10;
 volatile bool newCommand = false;
 static unsigned long lastCommandTime = 0;
-
-//groups
 static GroupHandler groups[16] = {nullptr};
+
+#if RAMP_UP
+static float currentLeft = 0.0f, currentRight = 0.0f;
+static float targetLeft = 0.0f, targetRight = 0.0f;
+static unsigned long lastTxMs = 0;
+
+static float slew(float cur, float tgt, float maxDelta) {
+    float d = tgt - cur;
+    return (d > maxDelta) ? cur + maxDelta : (d < -maxDelta) ? cur - maxDelta : tgt;
+}
+#endif
 
 void child_init() {
     Wire.begin(I2C_CHILD_ADDRESS);
     Wire.onReceive(receiveEvent);
-    
     CAN_Init();
     registerHandlers();
-    
+
+#if RAMP_UP
+    currentLeft = currentRight = targetLeft = targetRight = 0.0f;
+    lastTxMs = millis();
+    Serial.println("Ready (ramping ON)");
+#else
+    CAN_SendLocomotion(0.0f, 0.0f);
     Serial.println("Ready");
+#endif
 }
 
 static void receiveEvent(int numBytes) {
@@ -42,18 +57,48 @@ static void receiveEvent(int numBytes) {
     }
 }
 
+
+static void sendLocomotion(float left, float right) {
+#if RAMP_UP
+    targetLeft = left;
+    targetRight = right;
+#else
+    CAN_SendLocomotion(left, right);
+#endif
+}
+
 bool child_update() {
     if (newCommand) {
         newCommand = false;
         lastCommandTime = millis();
+#if SERIAL_DEBUG
+        Serial.print("cmd: 0x");
+        Serial.println(latestCommand, HEX);
+#endif
         return processCommand(latestCommand);
     }
-    
+
+#if USE_TIMEOUT
     if (millis() - lastCommandTime > COMMAND_TIMEOUT_MS) {
+#if SERIAL_DEBUG
+        Serial.print("Command timeout: 0x");
+        Serial.println(latestCommand, HEX);
+#endif
         processCommand(0x10);
         lastCommandTime = millis();
         return true;
     }
+#endif
+
+#if RAMP_UP
+    if (millis() - lastTxMs >= TX_PERIOD_MS) {
+        lastTxMs = millis();
+        currentLeft = slew(currentLeft, targetLeft, MAX_SPEED_DELTA_PER_TICK);
+        currentRight = slew(currentRight, targetRight, MAX_SPEED_DELTA_PER_TICK);
+        CAN_SendLocomotion(currentLeft, currentRight);
+    }
+#endif
+
     return false;
 }
 
@@ -82,42 +127,34 @@ static void registerHandlers() {
 
 
 // Group Handlers
-
 static void grp_Control(uint8_t param) {
-    if (param == 0x01) {
-        CAN_SendLocomotion(0.0f, 0.0f);
-    }
+    if (param == 0x01) sendLocomotion(0.0f, 0.0f);
 }
 
 static void grp_LocoStop(uint8_t param) {
-    CAN_SendLocomotion(0.0f, 0.0f);
+    sendLocomotion(0.0f, 0.0f);
 }
 
 static void grp_Forward(uint8_t param) {
     float spd = GET_SPEED(param);
-    CAN_SendLocomotion(spd, spd);
+    sendLocomotion(-spd, spd);
 }
 
 static void grp_Backward(uint8_t param) {
     float spd = GET_SPEED(param);
-    CAN_SendLocomotion(-spd, -spd);
+    sendLocomotion(spd, -spd);
 }
 
 static void grp_TurnLeft(uint8_t param) {
     float spd = GET_SPEED(param);
-    CAN_SendLocomotion(-spd, spd);
+    sendLocomotion(spd, spd);
 }
 
 static void grp_TurnRight(uint8_t param) {
     float spd = GET_SPEED(param);
-    CAN_SendLocomotion(spd, -spd);
+    sendLocomotion(-spd, -spd);
 }
 
-static void grp_Excavation(uint8_t param) {
-}
-
-static void grp_Deposition(uint8_t param) {
-}
-
-static void grp_Data(uint8_t param) {
-}
+static void grp_Excavation(uint8_t param) {}
+static void grp_Deposition(uint8_t param) {}
+static void grp_Data(uint8_t param) {}
