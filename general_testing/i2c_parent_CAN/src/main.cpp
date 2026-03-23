@@ -2,10 +2,8 @@
 #include "parent.h"
 #include "config.h"
 
-void sendCommand(uint8_t action, uint8_t speed) {
-    i2c_parent_sendByte(action);
-    delay(10);
-    i2c_parent_sendByte(speed);
+void sendCommand(uint8_t group, uint8_t param) {
+    i2c_parent_sendCommand(group, param);
 }
 
 void setup() {
@@ -16,18 +14,18 @@ void setup() {
 
 void loop() {
     Serial.println("Sending: FORWARD 50%");
-    sendCommand(CMD_FORWARD, SPEED_50);
+    sendCommand(GRP_FORWARD, SPEED_PARAM_50);
     delay(3000);
 
     Serial.println("Sending: TURN LEFT 25%");
-    sendCommand(CMD_TURN_LEFT, SPEED_25);
+    sendCommand(GRP_LEFT, SPEED_PARAM_25);
     delay(3000);
 
     Serial.println("Sending: BACKWARD 75%");
-    sendCommand(CMD_BACKWARD, SPEED_75);
+    sendCommand(GRP_BACKWARD, SPEED_PARAM_75);
     delay(3000);
 
     Serial.println("Sending: STOP");
-    sendCommand(CMD_STOP, 0);
+    sendCommand(GRP_LOCO_STOP, 0);
     delay(3000);
 }

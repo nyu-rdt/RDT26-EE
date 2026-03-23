@@ -1,5 +1,4 @@
 #pragma once
-
 void child_init();
-void child_update();
+bool child_update();
 
