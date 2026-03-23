@@ -21,7 +21,7 @@
 
 #define CMD_GROUP(c) (((c)>>4)&0xF)
 #define CMD_PARAM(c) ((c)&0xF)
-#define GET_SPEED(i) (({static const float t[]=SPEED_TABLE;t[(i)>3?3:(i)]*LOCOMOTION_DUTY_CYCLE;}))
+//#define GET_SPEED(i) (({static const float t[]=SPEED_TABLE;t[(i)>3?3:(i)]*LOCOMOTION_DUTY_CYCLE;}))
 
 // Speed from param index
 #define SPEED_TABLE { 0.25f, 0.50f, 0.75f, 1.00f }

@@ -10,6 +10,8 @@ void setup() {
     Serial.begin(9600);
     i2c_parent_init();
     delay(1000);
+    sendCommand(GRP_LOCO_STOP, 0);
+    delay(5000);
 }
 
 void loop() {
