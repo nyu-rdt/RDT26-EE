@@ -21,9 +21,23 @@
 
 #define CMD_GROUP(c) (((c)>>4)&0xF)
 #define CMD_PARAM(c) ((c)&0xF)
-#define SPEED_TABLE {.25f,.5f,.75f,1.f}
 #define GET_SPEED(i) (({static const float t[]=SPEED_TABLE;t[(i)>3?3:(i)]*LOCOMOTION_DUTY_CYCLE;}))
 
-typedef void(*GroupHandler)(uint8_t);
+// Speed from param index
+#define SPEED_TABLE { 0.25f, 0.50f, 0.75f, 1.00f }
+
+static inline float getSpeed(uint8_t idx)
+{
+    static constexpr float speedTable[] = SPEED_TABLE;
+    if (idx > 3U) {
+        idx = 3U;
+    }
+    return speedTable[idx] * LOCOMOTION_DUTY_CYCLE;
+}
+
+#define GET_SPEED(idx) (getSpeed(static_cast<uint8_t>(idx)))
+
+// Handler function type
+typedef void (*GroupHandler)(uint8_t param);
 
 #endif

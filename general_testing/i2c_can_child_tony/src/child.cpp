@@ -22,9 +22,6 @@ volatile uint8_t latestCommand = 0x10;
 volatile bool newCommand = false;
 static unsigned long lastCommandTime = 0;
 
-// speed table
-static const float speedTable[4] = SPEED_TABLE;
-
 //groups
 static GroupHandler groups[16] = {nullptr};
 
