@@ -1,6 +1,9 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
+// Control mode
+#define USE_WASD true
+
 // default I2C bus (Wire)
 #define I2C_SDA_PIN 18
 #define I2C_SCL_PIN 19
