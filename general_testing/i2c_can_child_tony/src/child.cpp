@@ -5,7 +5,7 @@
 
 // Forward declarations
 static void receiveEvent(int numBytes);
-static void processCommand(uint8_t cmd);
+static bool processCommand(uint8_t cmd);
 static void registerHandlers();
 static void grp_Control(uint8_t param);
 static void grp_LocoStop(uint8_t param);
@@ -45,26 +45,30 @@ static void receiveEvent(int numBytes) {
     }
 }
 
-void child_update() {
+bool child_update() {
     if (newCommand) {
         newCommand = false;
         lastCommandTime = millis();
-        processCommand(latestCommand);
+        return processCommand(latestCommand);
     }
     
     if (millis() - lastCommandTime > COMMAND_TIMEOUT_MS) {
         processCommand(0x10);
         lastCommandTime = millis();
+        return true;
     }
+    return false;
 }
 
-static void processCommand(uint8_t cmd) {
+static bool processCommand(uint8_t cmd) {
     uint8_t group = CMD_GROUP(cmd);
     uint8_t param = CMD_PARAM(cmd);
     
     if (groups[group] != nullptr) {
         groups[group](param);
+        return true;
     }
+    return false;
 }
 
 static void registerHandlers() {

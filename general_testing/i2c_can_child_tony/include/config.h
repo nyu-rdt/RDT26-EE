@@ -1,21 +1,14 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-// I2C
 #define I2C_CHILD_ADDRESS 0x08
-
-// CAN
 #define CAN_BAUD_RATE 500000
 #define CAN_ID_LEFT_MOTOR  0x78
-#define CAN_ID_RIGHT_MOTOR 0x16
-
-// Duty cycle limit
+#define CAN_ID_RIGHT_MOTOR 0x4c
 #define LOCOMOTION_DUTY_CYCLE 0.33f
-
-// Command timeout (ms)
 #define COMMAND_TIMEOUT_MS 200
 
-// Command Groups (high nibble)
+// Command Groups
 #define GRP_CONTROL     0x0
 #define GRP_LOCO_STOP   0x1
 #define GRP_FORWARD     0x2
@@ -26,15 +19,11 @@
 #define GRP_DEPOSITION  0x7
 #define GRP_DATA        0x8
 
-// Command parsing macros
-#define CMD_GROUP(cmd)  (((cmd) >> 4) & 0x0F)
-#define CMD_PARAM(cmd)  ((cmd) & 0x0F)
+#define CMD_GROUP(c) (((c)>>4)&0xF)
+#define CMD_PARAM(c) ((c)&0xF)
+#define SPEED_TABLE {.25f,.5f,.75f,1.f}
+#define GET_SPEED(i) (({static const float t[]=SPEED_TABLE;t[(i)>3?3:(i)]*LOCOMOTION_DUTY_CYCLE;}))
 
-// Speed from param index
-#define SPEED_TABLE { 0.25f, 0.50f, 0.75f, 1.00f }
-#define GET_SPEED(idx) (speedTable[((idx) > 3) ? 3 : (idx)] * LOCOMOTION_DUTY_CYCLE)
-
-// Handler function type
-typedef void (*GroupHandler)(uint8_t param);
+typedef void(*GroupHandler)(uint8_t);
 
 #endif
