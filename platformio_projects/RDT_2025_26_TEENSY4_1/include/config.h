@@ -4,7 +4,7 @@
 // setting flags:
 #define RAMP_UP true
 #define SERIAL_DEBUG true
-#define USE_TIMEOUT false
+#define USE_TIMEOUT true
 
 #define I2C_CHILD_ADDRESS 0x08
 #define CAN_BAUD_RATE 500000

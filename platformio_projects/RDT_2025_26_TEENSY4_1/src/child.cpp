@@ -82,7 +82,7 @@ bool child_update() {
     if (millis() - lastCommandTime > COMMAND_TIMEOUT_MS) {
 #if SERIAL_DEBUG
         Serial.print("Command timeout: 0x");
-        Serial.println(latestCommand, HEX);
+        Serial.println(16, HEX);
 #endif
         processCommand(0x10);
         lastCommandTime = millis();
