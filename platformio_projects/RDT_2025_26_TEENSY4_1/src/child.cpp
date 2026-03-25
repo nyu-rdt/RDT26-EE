@@ -155,6 +155,9 @@ static void grp_TurnRight(uint8_t param) {
     sendLocomotion(-spd, -spd);
 }
 
-static void grp_Excavation(uint8_t param) {}
+static void grp_Excavation(uint8_t param) {
+    float spd = GET_DIRECTION(param) * EXCAVATION_DUTY_CYCLE;
+    CAN_SendExcavation(spd);
+}
 static void grp_Deposition(uint8_t param) {}
 static void grp_Data(uint8_t param) {}
