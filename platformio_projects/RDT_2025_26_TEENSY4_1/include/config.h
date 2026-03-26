@@ -28,7 +28,7 @@
 #define GRP_DEPOSITION  0x7
 #define GRP_DATA        0x8
 
-#define CMD_GROUP(c) (((c)>>4)&0xF)
+#define CMD_GROUP(c) (((c)>>4)&0xF)   
 #define CMD_PARAM(c) ((c)&0xF)
 //#define GET_SPEED(i) (({static const float t[]=SPEED_TABLE;t[(i)>3?3:(i)]*LOCOMOTION_DUTY_CYCLE;}))
 
