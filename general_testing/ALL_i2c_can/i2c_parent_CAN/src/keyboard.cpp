@@ -66,12 +66,12 @@ static void processKey(char key) {
     
         case 'U':
                 currentMode = GRP_EXCAVATION;
-                i2c_parent_sendCommand(currentMode, 0); // up
+                i2c_parent_sendCommand(currentMode, 0); // forward
                 printStatus("UP excav");
             break;
         case 'J':
                 currentMode = GRP_EXCAVATION;
-                i2c_parent_sendCommand(currentMode, 1); // down
+                i2c_parent_sendCommand(currentMode, 1); // reverse
                 printStatus("DOWN excav");
             break; 
         case 'H':
