@@ -22,6 +22,7 @@ volatile uint8_t latestCommand = 0x10;
 volatile bool newCommand = false;
 static unsigned long lastCommandTime = 0;
 static GroupHandler groups[16] = {nullptr};
+volatile float current_Excav_Speed = 0.0f; // For ramping excavation speed if needed
 
 #if RAMP_UP
 static float currentLeft = 0.0f, currentRight = 0.0f;
@@ -96,6 +97,7 @@ bool child_update() {
         currentLeft = slew(currentLeft, targetLeft, MAX_SPEED_DELTA_PER_TICK);
         currentRight = slew(currentRight, targetRight, MAX_SPEED_DELTA_PER_TICK);
         CAN_SendLocomotion(currentLeft, currentRight);
+        CAN_SendExcavation(current_Excav_Speed); // Example: excavation speed based on average of left/right
     }
 #endif
 
@@ -155,6 +157,10 @@ static void grp_TurnRight(uint8_t param) {
     sendLocomotion(-spd, -spd);
 }
 
-static void grp_Excavation(uint8_t param) {}
+static void grp_Excavation(uint8_t param) {
+    float spd = GET_DIRECTION(param) * EXCAVATION_DUTY_CYCLE;
+    current_Excav_Speed = spd;
+    //CAN_SendExcavation(spd);
+}
 static void grp_Deposition(uint8_t param) {}
 static void grp_Data(uint8_t param) {}

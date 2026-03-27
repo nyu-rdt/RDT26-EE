@@ -63,6 +63,22 @@ static void processKey(char key) {
             i2c_parent_sendCommand(GRP_LOCO_STOP, 0);
             printStatus("STOP");
             break;
+    
+        case 'U':
+                currentMode = GRP_EXCAVATION;
+                i2c_parent_sendCommand(currentMode, 0); // forward
+                printStatus("UP excav");
+            break;
+        case 'J':
+                currentMode = GRP_EXCAVATION;
+                i2c_parent_sendCommand(currentMode, 1); // reverse
+                printStatus("DOWN excav");
+            break; 
+        case 'H':
+                currentMode = GRP_EXCAVATION;
+                i2c_parent_sendCommand(currentMode, 2); // stop
+                printStatus("STOP excav");
+            break; 
     }
 }
 

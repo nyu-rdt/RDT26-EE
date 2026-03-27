@@ -10,7 +10,9 @@
 #define CAN_BAUD_RATE 500000
 #define CAN_ID_LEFT_MOTOR  0x48
 #define CAN_ID_RIGHT_MOTOR 0x78
+#define CAN_ID_EXCAVATION_MOTOR 0x48 // CHANGE TO REAL VALUE!!!!!!!!!!!!
 #define LOCOMOTION_DUTY_CYCLE 0.33f
+#define EXCAVATION_DUTY_CYCLE 0.33f
 #define COMMAND_TIMEOUT_MS 200
 
 // Ramping parameters
@@ -45,7 +47,7 @@ static inline float getSpeed(uint8_t idx)
 }
 
 #define GET_SPEED(idx) (getSpeed(static_cast<uint8_t>(idx)))
-
+#define GET_DIRECTION(param) (param == 0x0) ? (1) : (param == 0x1) ? (-1) : 0                        // stop for 0x2 }
 // Handler function type
 typedef void (*GroupHandler)(uint8_t param);
 
