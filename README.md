@@ -1,5 +1,8 @@
 # RDT26-EE
 NYU Robotic Design Team Electrical Engineering subsystem repo
+[![Main Compile](https://github.com/nyu-rdt/RDT26-EE/actions/workflows/platformio-main.yml/badge.svg)](https://github.com/nyu-rdt/RDT26-EE/actions/workflows/platformio-main.yml)
+[![i2c_parent_CAN Compile](https://github.com/nyu-rdt/RDT26-EE/actions/workflows/platformio-i2c-parent.yml/badge.svg)](https://github.com/nyu-rdt/RDT26-EE/actions/workflows/platformio-i2c-parent.yml)
+[![All Projects Compile](https://github.com/nyu-rdt/RDT26-EE/actions/workflows/platformio-all.yml/badge.svg)](https://github.com/nyu-rdt/RDT26-EE/actions/workflows/platformio-all.yml)
 
 For help with C/C++ or using git and github, refer to training presentations in the NYU RDT 2025 - 2026 / Electrical Engineering / EE Trainings google drive
 

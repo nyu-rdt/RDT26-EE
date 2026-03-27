@@ -1,0 +1,70 @@
+name: PlatformIO All Projects Compile
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  compile-all-platformio-projects:
+    name: All PlatformIO Projects Compile
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Compile all PlatformIO projects and report failures
+        shell: bash
+        run: |
+          set +e
+
+          mapfile -t ini_files < <(git ls-files | grep -E '(^|/)platformio\.ini$')
+
+          if [ "${#ini_files[@]}" -eq 0 ]; then
+            echo "No platformio.ini files found."
+            echo "## All PlatformIO projects" >> "$GITHUB_STEP_SUMMARY"
+            echo "- Result: no projects found" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          failed_dirs=()
+
+          for ini in "${ini_files[@]}"; do
+            dir="$(dirname "$ini")"
+            echo "Building $dir"
+            (
+              cd "$dir"
+              pio run
+            )
+            rc=$?
+            if [ $rc -ne 0 ]; then
+              failed_dirs+=("$dir")
+            fi
+          done
+
+          echo "## All PlatformIO projects" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Total projects: ${#ini_files[@]}" >> "$GITHUB_STEP_SUMMARY"
+
+          if [ "${#failed_dirs[@]}" -eq 0 ]; then
+            echo "- Result: success" >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+
+          echo "- Result: failed" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Failed projects:" >> "$GITHUB_STEP_SUMMARY"
+          for d in "${failed_dirs[@]}"; do
+            echo "- `$d`" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+          printf 'Failed projects:\n' >&2
+          printf '%s\n' "${failed_dirs[@]}" >&2
+          exit 1

@@ -1,0 +1,36 @@
+name: PlatformIO i2c_parent_CAN Compile
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  compile-i2c-parent:
+    name: i2c_parent_CAN Compiles
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: general_testing/ALL_i2c_can/i2c_parent_CAN
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install PlatformIO
+        run: pip install platformio
+
+      - name: Compile i2c_parent_CAN
+        run: pio run
+
+      - name: Add summary
+        if: always()
+        run: |
+          echo "## i2c_parent_CAN" >> "$GITHUB_STEP_SUMMARY"
+          echo '- Path: `general_testing/ALL_i2c_can/i2c_parent_CAN`' >> "$GITHUB_STEP_SUMMARY"
+          echo "- Result: ${{ job.status }}" >> "$GITHUB_STEP_SUMMARY"
