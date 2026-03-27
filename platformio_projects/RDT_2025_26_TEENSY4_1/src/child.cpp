@@ -27,6 +27,7 @@ volatile float current_Excav_Speed = 0.0f; // For ramping excavation speed if ne
 #if RAMP_UP
 static float currentLeft = 0.0f, currentRight = 0.0f;
 static float targetLeft = 0.0f, targetRight = 0.0f;
+static float targetExcav = 0.0f, currentExcav = 0.0f;
 static unsigned long lastTxMs = 0;
 
 static float slew(float cur, float tgt, float maxDelta) {
@@ -43,10 +44,12 @@ void child_init() {
 
 #if RAMP_UP
     currentLeft = currentRight = targetLeft = targetRight = 0.0f;
+    currentExcav = targetExcav = 0.0f;
     lastTxMs = millis();
     Serial.println("Ready (ramping ON)");
 #else
     CAN_SendLocomotion(0.0f, 0.0f);
+    CAN_SendExcavation(0.0f);
     Serial.println("Ready");
 #endif
 }
@@ -68,6 +71,14 @@ static void sendLocomotion(float left, float right) {
 #endif
 }
 
+static void sendExcavation(float speed) {
+#if RAMP_UP
+    targetExcav = speed;
+#else
+    CAN_SendExcavation(speed);
+#endif
+}
+
 bool child_update() {
     if (newCommand) {
         newCommand = false;
@@ -85,7 +96,8 @@ bool child_update() {
         Serial.print("Command timeout: 0x");
         Serial.println(16, HEX);
 #endif
-        processCommand(0x10);
+        sendLocomotion(0.0f, 0.0f);
+        sendExcavation(0.0f);
         lastCommandTime = millis();
         return true;
     }
@@ -96,11 +108,11 @@ bool child_update() {
         lastTxMs = millis();
         currentLeft = slew(currentLeft, targetLeft, MAX_SPEED_DELTA_PER_TICK);
         currentRight = slew(currentRight, targetRight, MAX_SPEED_DELTA_PER_TICK);
+        currentExcav = slew(currentExcav, targetExcav, MAX_EXCAV_DELTA_PER_TICK);
         CAN_SendLocomotion(currentLeft, currentRight);
-        CAN_SendExcavation(current_Excav_Speed); // Example: excavation speed based on average of left/right
+        CAN_SendExcavation(currentExcav);
     }
 #endif
-
     return false;
 }
 
@@ -159,8 +171,7 @@ static void grp_TurnRight(uint8_t param) {
 
 static void grp_Excavation(uint8_t param) {
     float spd = GET_DIRECTION(param) * EXCAVATION_DUTY_CYCLE;
-    current_Excav_Speed = spd;
-    //CAN_SendExcavation(spd);
+    sendExcavation(spd);
 }
 static void grp_Deposition(uint8_t param) {}
 static void grp_Data(uint8_t param) {}
