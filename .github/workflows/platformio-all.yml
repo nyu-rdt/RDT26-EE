@@ -3,7 +3,26 @@ name: PlatformIO All Projects Compile
 on:
   push:
     branches: [main, master]
+    paths:
+      - "**/*.c"
+      - "**/*.cc"
+      - "**/*.cpp"
+      - "**/*.h"
+      - "**/*.hpp"
+      - "**/*.ino"
+      - "**/platformio.ini"
+      - ".github/workflows/platformio-all.yml"
   pull_request:
+    paths:
+      - "**/*.c"
+      - "**/*.cc"
+      - "**/*.cpp"
+      - "**/*.h"
+      - "**/*.hpp"
+      - "**/*.ino"
+      - "**/platformio.ini"
+      - ".github/workflows/platformio-all.yml"
+  workflow_dispatch:
 
 jobs:
   compile-all-platformio-projects:
@@ -13,6 +32,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -22,7 +43,7 @@ jobs:
       - name: Install PlatformIO
         run: pip install platformio
 
-      - name: Compile all PlatformIO projects and report failures
+      - name: Compile impacted PlatformIO projects and report failures
         shell: bash
         run: |
           set +e
@@ -36,10 +57,51 @@ jobs:
             exit 0
           fi
 
+          all_dirs=()
+          for ini in "${ini_files[@]}"; do
+            all_dirs+=("$(dirname "$ini")")
+          done
+
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            base_sha="${{ github.event.pull_request.base.sha }}"
+            head_sha="${{ github.event.pull_request.head.sha }}"
+          else
+            base_sha="${{ github.event.before }}"
+            head_sha="${{ github.sha }}"
+          fi
+
+          if [ -z "$base_sha" ] || [ "$base_sha" = "0000000000000000000000000000000000000000" ]; then
+            mapfile -t changed_files < <(git ls-files)
+          else
+            mapfile -t changed_files < <(git diff --name-only "$base_sha" "$head_sha")
+          fi
+
+          impacted_dirs=()
+          for dir in "${all_dirs[@]}"; do
+            for changed in "${changed_files[@]}"; do
+              if [[ "$changed" == "$dir/"* ]] || [[ "$changed" == "$dir" ]]; then
+                impacted_dirs+=("$dir")
+                break
+              fi
+            done
+          done
+
+          if [ "${#impacted_dirs[@]}" -eq 0 ]; then
+            if [ "${#changed_files[@]}" -gt 0 ]; then
+              impacted_dirs=("${all_dirs[@]}")
+              echo "No direct project path matches found; running all projects for safety."
+            else
+              echo "## All PlatformIO projects" >> "$GITHUB_STEP_SUMMARY"
+              echo "- Changed files: ${#changed_files[@]}" >> "$GITHUB_STEP_SUMMARY"
+              echo "- Impacted projects: 0" >> "$GITHUB_STEP_SUMMARY"
+              echo "- Result: skipped (no PlatformIO project changes detected)" >> "$GITHUB_STEP_SUMMARY"
+              exit 0
+            fi
+          fi
+
           failed_dirs=()
 
-          for ini in "${ini_files[@]}"; do
-            dir="$(dirname "$ini")"
+          for dir in "${impacted_dirs[@]}"; do
             echo "Building $dir"
             (
               cd "$dir"
@@ -52,7 +114,8 @@ jobs:
           done
 
           echo "## All PlatformIO projects" >> "$GITHUB_STEP_SUMMARY"
-          echo "- Total projects: ${#ini_files[@]}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Changed files: ${#changed_files[@]}" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Impacted projects: ${#impacted_dirs[@]}" >> "$GITHUB_STEP_SUMMARY"
 
           if [ "${#failed_dirs[@]}" -eq 0 ]; then
             echo "- Result: success" >> "$GITHUB_STEP_SUMMARY"

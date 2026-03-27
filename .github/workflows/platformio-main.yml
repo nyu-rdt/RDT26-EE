@@ -3,7 +3,14 @@ name: PlatformIO Main Compile
 on:
   push:
     branches: [main, master]
+    paths:
+      - "platformio_projects/RDT_2025_26_TEENSY4_1/**"
+      - ".github/workflows/platformio-main.yml"
   pull_request:
+    paths:
+      - "platformio_projects/RDT_2025_26_TEENSY4_1/**"
+      - ".github/workflows/platformio-main.yml"
+  workflow_dispatch:
 
 jobs:
   compile-main-project:

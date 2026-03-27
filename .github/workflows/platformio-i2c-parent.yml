@@ -3,7 +3,14 @@ name: PlatformIO i2c_parent_CAN Compile
 on:
   push:
     branches: [main, master]
+    paths:
+      - "general_testing/ALL_i2c_can/i2c_parent_CAN/**"
+      - ".github/workflows/platformio-i2c-parent.yml"
   pull_request:
+    paths:
+      - "general_testing/ALL_i2c_can/i2c_parent_CAN/**"
+      - ".github/workflows/platformio-i2c-parent.yml"
+  workflow_dispatch:
 
 jobs:
   compile-i2c-parent:
