@@ -24,6 +24,25 @@ void CAN_SendMotorSpeed(uint32_t canId, float speed) {
     can1.write(msg);
 }
 
+/*
+// Alternate test function for standard 11-bit frame format.
+// Keep commented for now; you can swap calls to this version for A/B testing.
+void CAN_SendMotorSpeed(uint32_t canId, float speed) {
+    CAN_message_t msg;
+    msg.flags.extended = 0;
+    msg.id = canId;
+    msg.len = 4;
+
+    int32_t value = (int32_t)(speed * 100000.0f);
+    msg.buf[0] = (value >> 24) & 0xFF;
+    msg.buf[1] = (value >> 16) & 0xFF;
+    msg.buf[2] = (value >> 8) & 0xFF;
+    msg.buf[3] = value & 0xFF;
+
+    can1.write(msg);
+}
+*/
+
 void CAN_SendLocomotion(float left, float right) {
     CAN_SendMotorSpeed(CAN_ID_LEFT_MOTOR, left);
     CAN_SendMotorSpeed(CAN_ID_RIGHT_MOTOR, right);
