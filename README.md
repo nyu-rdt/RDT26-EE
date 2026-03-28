@@ -6,9 +6,6 @@ For help with C/C++ or using git and github, refer to training presentations in 
 ## CI Status
 [![Main Project Compile](https://github.com/nyu-rdt/RDT26-EE/actions/workflows/platformio-main.yml/badge.svg?branch=main&event=push)](https://github.com/nyu-rdt/RDT26-EE/actions/workflows/platformio-main.yml)
 [![i2c_parent_CAN Compile](https://github.com/nyu-rdt/RDT26-EE/actions/workflows/platformio-i2c-parent.yml/badge.svg?branch=main&event=push)](https://github.com/nyu-rdt/RDT26-EE/actions/workflows/platformio-i2c-parent.yml)
-[![Impacted Projects Compile](https://github.com/nyu-rdt/RDT26-EE/actions/workflows/platformio-all.yml/badge.svg?branch=main&event=push)](https://github.com/nyu-rdt/RDT26-EE/actions/workflows/platformio-all.yml)
-
-*(Third badge compiles only PlatformIO project directories touched by the push/PR)*
 
 ## where is the robot code?
 
