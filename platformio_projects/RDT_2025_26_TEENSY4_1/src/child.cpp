@@ -93,8 +93,7 @@ bool child_update() {
 #if USE_TIMEOUT
     if (millis() - lastCommandTime > COMMAND_TIMEOUT_MS) {
 #if SERIAL_DEBUG
-        Serial.print("Command timeout: 0x");
-        Serial.println(16, HEX);
+        Serial.println("Command timeout");
 #endif
         sendLocomotion(0.0f, 0.0f);
         sendExcavation(0.0f);
