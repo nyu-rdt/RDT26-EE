@@ -14,6 +14,7 @@
 #define LOCOMOTION_DUTY_CYCLE 0.33f
 #define EXCAVATION_DUTY_CYCLE 0.33f
 #define COMMAND_TIMEOUT_MS 200
+#define EXCAVATION_STEP_PERIOD 800 // microseconds, time between each step change in excavation speed
 
 // Ramping parameters
 #define TX_PERIOD_MS 20
@@ -26,9 +27,10 @@
 #define GRP_BACKWARD    0x3
 #define GRP_LEFT        0x4
 #define GRP_RIGHT       0x5
-#define GRP_EXCAVATION  0x6
-#define GRP_DEPOSITION  0x7
-#define GRP_DATA        0x8
+#define GRP_EXCAVATION_BELT  0x6
+#define GRP_EXCAVATION_VERT 0x7
+#define GRP_DEPOSITION  0x8
+#define GRP_DATA        0x9
 
 #define CMD_GROUP(c) (((c)>>4)&0xF)   
 #define CMD_PARAM(c) ((c)&0xF)

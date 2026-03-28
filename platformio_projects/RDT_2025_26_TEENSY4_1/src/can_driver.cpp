@@ -32,3 +32,4 @@ void CAN_SendLocomotion(float left, float right) {
 void CAN_SendExcavation(float speed) {
     CAN_SendMotorSpeed(CAN_ID_EXCAVATION_MOTOR, speed);
 }
+
