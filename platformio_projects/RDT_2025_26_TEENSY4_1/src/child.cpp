@@ -2,6 +2,7 @@
 #include "child.h"
 #include "config.h"
 #include "can_driver.h"
+#include "stepper_driver.h"
 
 // Forward declarations
 static void receiveEvent(int numBytes);
@@ -14,7 +15,8 @@ static void grp_Forward(uint8_t param);
 static void grp_Backward(uint8_t param);
 static void grp_TurnLeft(uint8_t param);
 static void grp_TurnRight(uint8_t param);
-static void grp_Excavation(uint8_t param);
+static void grp_ExcavationBelt(uint8_t param);
+static void grp_ExcavationVert(uint8_t param);
 static void grp_Deposition(uint8_t param);
 static void grp_Data(uint8_t param);
 
@@ -40,6 +42,7 @@ void child_init() {
     Wire.begin(I2C_CHILD_ADDRESS);
     Wire.onReceive(receiveEvent);
     CAN_Init();
+    STEPPER_Init();
     registerHandlers();
 
 #if RAMP_UP
@@ -112,7 +115,10 @@ bool child_update() {
         CAN_SendExcavation(currentExcav);
     }
 #endif
+    STEPPER_Update(EXCAVATION_STEP_PERIOD); // manages the stepper motor
+
     return false;
+
 }
 
 static bool processCommand(uint8_t cmd) {
@@ -133,7 +139,8 @@ static void registerHandlers() {
     groups[GRP_BACKWARD]   = grp_Backward;
     groups[GRP_LEFT]       = grp_TurnLeft;
     groups[GRP_RIGHT]      = grp_TurnRight;
-    groups[GRP_EXCAVATION] = grp_Excavation;
+    groups[GRP_EXCAVATION_BELT] = grp_ExcavationBelt;
+    groups[GRP_EXCAVATION_VERT] = grp_ExcavationVert;
     groups[GRP_DEPOSITION] = grp_Deposition;
     groups[GRP_DATA]       = grp_Data;
 }
@@ -168,9 +175,14 @@ static void grp_TurnRight(uint8_t param) {
     sendLocomotion(-spd, -spd);
 }
 
-static void grp_Excavation(uint8_t param) {
+static void grp_ExcavationBelt(uint8_t param) {
     float spd = GET_DIRECTION(param) * EXCAVATION_DUTY_CYCLE;
     sendExcavation(spd);
 }
+
+static void grp_ExcavationVert(uint8_t param) {
+    STEPPER_SetDirection(GET_DIRECTION(param)); 
+}
+
 static void grp_Deposition(uint8_t param) {}
 static void grp_Data(uint8_t param) {}

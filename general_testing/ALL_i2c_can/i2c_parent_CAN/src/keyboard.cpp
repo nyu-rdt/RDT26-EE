@@ -63,19 +63,35 @@ static void processKey(char key) {
             i2c_parent_sendCommand(GRP_LOCO_STOP, 0);
             printStatus("STOP");
             break;
-    
+        // belt excav control
         case 'U':
-                currentMode = GRP_EXCAVATION;
+                currentMode = GRP_EXCAVATION_BELT;
                 i2c_parent_sendCommand(currentMode, 0); // forward
-                printStatus("UP excav");
+                printStatus("FORWARD excav BELT");
             break;
         case 'J':
-                currentMode = GRP_EXCAVATION;
+                currentMode = GRP_EXCAVATION_BELT;
                 i2c_parent_sendCommand(currentMode, 1); // reverse
-                printStatus("DOWN excav");
+                printStatus("BACKWARD excav BELT");
             break; 
         case 'H':
-                currentMode = GRP_EXCAVATION;
+                currentMode = GRP_EXCAVATION_BELT;
+                i2c_parent_sendCommand(currentMode, 2); // stop
+                printStatus("STOP excav BELT");
+            break; 
+        // vertical excav control
+        case 'O':
+                currentMode =  GRP_EXCAVATION_VERT;
+                i2c_parent_sendCommand(currentMode, 0); // up
+                printStatus("UP excav");
+            break;
+        case 'L':
+                currentMode = GRP_EXCAVATION_VERT;
+                i2c_parent_sendCommand(currentMode, 1); // down
+                printStatus("DOWN excav");
+            break; 
+        case 'K':
+                currentMode = GRP_EXCAVATION_VERT;
                 i2c_parent_sendCommand(currentMode, 2); // stop
                 printStatus("STOP excav");
             break; 
@@ -84,7 +100,7 @@ static void processKey(char key) {
 
 void keyboard_init() {
     Serial.println("WASD Control Ready");
-    Serial.println("W/A/S/D=Move | E/Q=Speed | X/Space=Stop");
+    Serial.println("W/A/S/D=Move | E/Q=Speed | X/Space=Stop | U/J/H=Excavation Forward/Reverse/Stop | O/L/K=Vertical Excavation Up/Down/Stop");
 }
 
 void keyboard_update() {
