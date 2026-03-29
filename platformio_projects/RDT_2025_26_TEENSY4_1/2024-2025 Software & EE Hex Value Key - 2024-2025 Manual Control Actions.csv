@@ -1,0 +1,39 @@
+,,,,,,,
+Category,Subcategory,1st Nibble,,2nd Nibble,,Final Hex,Description
+,,Command,Hex ,Value,Hex,,
+,,Emergency Stop,0,,1,0 1,Still deciding whether we want commands to be remembered during a stop
+Locomotion,,Locomotion Stop,1,Locomotion Stop,0,1 0,Stops moving forward/ backward and turning
+,,Forward,2,25%,0,2 0,Move forward at VALUE% of max speed
+,,,2,50%,1,2 1,
+,,,2,75%,2,2 2,
+,,,2,100%,3,2 3,
+,,Backward,3,25%,0,3 0,Move backward at VALUE% of max speed
+,,,3,50%,1,3 1,
+,,,3,75%,2,3 2,
+,,,3,100%,3,3 3,
+,,Left,4,25%,0,4 0,Move left at VALUE% of max speed (forward in right wheels backward in left wheels)
+,,,4,50%,1,4 1,
+,,,4,75%,2,4 2,
+,,,4,100%,3,4 3,
+,,Right,5,25%,0,5 0,Move right at VALUE% of max speed (forward in left wheels backward in right wheels)
+,,,5,50%,1,5 1,
+,,,5,75%,2,5 2,
+,,,5,100%,3,5 3,
+Excavation/Construction,,Exacavation Conveyor Actions,6,Zero Excavation Conveyor,0,6 0,"Store the current position of the excavation conveyor as ""locomotion position"" STOP MOVEMENT OF ACME SCREW"
+,,,6,Locomotion Position,1,6 1,Move the excavation conveyor to its locomotion position
+,,,6,Excavation Position,2,6 2,Move the excavation conveyor to its excavation position
+,,,6,Belt Stop,3,6 3,Stop the belt movement 
+,,,6,Belt Outward,4,6 4,Move the belt in reverse
+,,,6,Belt Inward,5,6 5,Digging and collecting the material
+,,Deposition Conveyor Actions,7,Rotate Collection,0,7 0,Rotating the belt to collect from the shovel into the construction bin
+,,,7,Rotate Dumping,1,7 1,Rotating the belt to move the dirt from construction
+,,,7,Stop rotating,2,7 2,Stop the belt
+Other,,Request Data,8,Request data,0,8 0,"Weight collected, position (locomotion, excavation, deposition), distance travelled. "
+,,Switch to Autonomous Control,8,Switch to Autonomous Control,1,8 1,"Sends signal to ""switch to autonomous control"" and to start interpreting actions acording to the autonomous control scheme (see other sheet). Stops all motion (wheels, pivot and belt) before switching."
+,,,,,,,
+,,1. depo now has a door controler by a linear actuator,,open door,,,
+,,,,close door,,,
+,,,,???,,,
+,,2. depo now has a vibration motor controlled through PWM,,turn on,,,
+,,,,turn off,,,
+,,,,? do we want intensity variation?,,,
