@@ -21,10 +21,15 @@ static void grp_Forward(uint8_t param);
 static void grp_Backward(uint8_t param);
 static void grp_TurnLeft(uint8_t param);
 static void grp_TurnRight(uint8_t param);
+#if USE_OLD_HEX_MAPPING
+static void grp_Excavation(uint8_t param);
+static void grp_Deposition(uint8_t param);
+#endif
 static void grp_ExcavationBelt(uint8_t param);
 static void grp_ExcavationVert(uint8_t param);
 static void grp_DepositionDoor(uint8_t param);
 static void grp_DepositionVib(uint8_t param);
+
 static void grp_Data(uint8_t param);
 
 volatile uint8_t latestCommand = 0x10;
@@ -159,10 +164,15 @@ static void registerHandlers() {
     groups[GRP_BACKWARD]   = grp_Backward;
     groups[GRP_LEFT]       = grp_TurnLeft;
     groups[GRP_RIGHT]      = grp_TurnRight;
+    #if USE_OLD_HEX_MAPPING
+    groups[GRP_EXCAVATION] = grp_Excavation;
+    groups[GRP_DEPOSITION] = grp_Deposition;
+    #else
     groups[GRP_EXCAVATION_BELT] = grp_ExcavationBelt;
     groups[GRP_EXCAVATION_VERT] = grp_ExcavationVert;
     groups[GRP_DEPOSITION_DOOR] = grp_DepositionDoor;
     groups[GRP_DEPOSITION_VIB] = grp_DepositionVib; 
+    #endif
     groups[GRP_DATA]       = grp_Data;
 }
 
@@ -197,6 +207,26 @@ static void grp_TurnRight(uint8_t param) {
     float spd = GET_SPEED(param);
     sendLocomotion(-spd, -spd);
 }
+
+#if USE_OLD_HEX_MAPPING
+static void grp_Excavation(uint8_t param) {
+    if (param<3){
+        grp_ExcavationVert(param);
+    }
+    else {
+        grp_ExcavationBelt(param-3);
+    }
+}
+
+static void grp_Deposition(uint8_t param) {
+    if (param<3){
+        grp_DepositionDoor(param);
+    }
+    else {
+        grp_DepositionVib(param-3);
+    }
+}
+#endif
 
 static void grp_ExcavationBelt(uint8_t param) {
     float spd = GET_DIRECTION(param) * EXCAVATION_DUTY_CYCLE;

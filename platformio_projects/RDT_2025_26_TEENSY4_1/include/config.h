@@ -6,6 +6,7 @@
 #define SERIAL_DEBUG true
 #define USE_TIMEOUT true
 #define ANALOG_VIB_CONTROL false
+#define USE_OLD_HEX_MAPPING false
 
 #define I2C_CHILD_ADDRESS 0x08
 #define E_STOP_PIN 2
@@ -47,10 +48,15 @@
 #define GRP_BACKWARD           0x3
 #define GRP_LEFT               0x4
 #define GRP_RIGHT              0x5
+#if USE_OLD_HEX_MAPPING
+#define GRP_EXCAVATION          0x6
+#define GRP_DEPOSITION         0x7
+#else
 #define GRP_EXCAVATION_BELT    0x6
 #define GRP_EXCAVATION_VERT    0x7
 #define GRP_DEPOSITION_DOOR    0x8
 #define GRP_DEPOSITION_VIB     0x9
+#endif
 #define GRP_DATA               0xA
 
 #define CMD_GROUP(c) (((c)>>4)&0xF)   
