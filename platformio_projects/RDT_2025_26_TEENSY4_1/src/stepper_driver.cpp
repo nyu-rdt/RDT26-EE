@@ -9,6 +9,7 @@
 // Set pwr supply to ~12V
 
 #include <Arduino.h>
+#include "stepper_driver.h"
 #include "config.h" 
 
 #define dirPin 6

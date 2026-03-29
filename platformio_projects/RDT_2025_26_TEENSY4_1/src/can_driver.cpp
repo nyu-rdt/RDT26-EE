@@ -2,6 +2,13 @@
 #include "can_driver.h"
 #include "config.h"
 
+static_assert(CAN_ID_LEFT_MOTOR != CAN_ID_RIGHT_MOTOR,
+              "CAN IDs must be unique: LEFT and RIGHT motors share an ID.");
+static_assert(CAN_ID_LEFT_MOTOR != CAN_ID_EXCAVATION_MOTOR,
+              "CAN IDs must be unique: LEFT and EXCAVATION motors share an ID.");
+static_assert(CAN_ID_RIGHT_MOTOR != CAN_ID_EXCAVATION_MOTOR,
+              "CAN IDs must be unique: RIGHT and EXCAVATION motors share an ID.");
+
 static FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
 
 void CAN_Init() {
@@ -51,7 +58,3 @@ void CAN_SendLocomotion(float left, float right) {
 void CAN_SendExcavation(float speed) {
     CAN_SendMotorSpeed(CAN_ID_EXCAVATION_MOTOR, speed);
 }
-<<<<<<< HEAD
-
-=======
->>>>>>> bb4dd6355f5b47f4ceb8e26f2476f0e57d66781b

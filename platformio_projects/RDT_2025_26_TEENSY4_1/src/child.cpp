@@ -1,14 +1,20 @@
+#include <Arduino.h>
 #include <Wire.h>
 #include "child.h"
 #include "config.h"
 #include "can_driver.h"
 #include "stepper_driver.h"
+#include "depo_door_driver.h"
+#include "vib_motor_driver.h"
+#include "system.h"
 
 // Forward declarations
 static void receiveEvent(int numBytes);
 static bool processCommand(uint8_t cmd);
 static void registerHandlers();
 static void sendLocomotion(float left, float right);
+static void stopLocomotion();
+static void stopExcavation();
 static void grp_Control(uint8_t param);
 static void grp_LocoStop(uint8_t param);
 static void grp_Forward(uint8_t param);
@@ -17,18 +23,20 @@ static void grp_TurnLeft(uint8_t param);
 static void grp_TurnRight(uint8_t param);
 #if USE_OLD_HEX_MAPPING
 static void grp_Excavation(uint8_t param);
-#else
+static void grp_Deposition(uint8_t param);
+#endif
 static void grp_ExcavationBelt(uint8_t param);
 static void grp_ExcavationVert(uint8_t param);
-#endif
-static void grp_Deposition(uint8_t param);
+
+static void grp_DepositionDoor(uint8_t param);
+static void grp_DepositionVib(uint8_t param);
+
 static void grp_Data(uint8_t param);
 
 volatile uint8_t latestCommand = 0x10;
 volatile bool newCommand = false;
 static unsigned long lastCommandTime = 0;
 static GroupHandler groups[16] = {nullptr};
-volatile float current_Excav_Speed = 0.0f; // For ramping excavation speed if needed
 
 #if RAMP_UP
 static float currentLeft = 0.0f, currentRight = 0.0f;
@@ -43,10 +51,15 @@ static float slew(float cur, float tgt, float maxDelta) {
 #endif
 
 void child_init() {
-    Wire.begin(I2C_CHILD_ADDRESS);
-    Wire.onReceive(receiveEvent);
+    Wire2.begin(I2C_CHILD_ADDRESS);
+    Wire2.onReceive(receiveEvent);
+
+    SYSTEM_Init();
     CAN_Init();
     STEPPER_Init();
+    DEPO_DOOR_Init();
+    VIB_Init();
+    SYSTEM_RegisterStopCallbacks(stopLocomotion, stopExcavation);
     registerHandlers();
 
 #if RAMP_UP
@@ -62,8 +75,8 @@ void child_init() {
 }
 
 static void receiveEvent(int numBytes) {
-    if (Wire.available()) {
-        latestCommand = Wire.read();
+    if (Wire2.available()) {
+        latestCommand = Wire2.read();
         newCommand = true;
     }
 }
@@ -86,7 +99,17 @@ static void sendExcavation(float speed) {
 #endif
 }
 
+static void stopLocomotion() {
+    sendLocomotion(0.0f, 0.0f);
+}
+
+static void stopExcavation() {
+    sendExcavation(0.0f);
+}
+
 bool child_update() {
+    SYSTEM_Update();
+
     if (newCommand) {
         newCommand = false;
         lastCommandTime = millis();
@@ -102,8 +125,7 @@ bool child_update() {
 #if SERIAL_DEBUG
         Serial.println("Command timeout");
 #endif
-        sendLocomotion(0.0f, 0.0f);
-        sendExcavation(0.0f);
+        SYSTEM_StopAllMotors();
         lastCommandTime = millis();
         return true;
     }
@@ -143,20 +165,28 @@ static void registerHandlers() {
     groups[GRP_BACKWARD]   = grp_Backward;
     groups[GRP_LEFT]       = grp_TurnLeft;
     groups[GRP_RIGHT]      = grp_TurnRight;
+    #if USE_OLD_HEX_MAPPING
+    groups[GRP_EXCAVATION] = grp_Excavation;
+    groups[GRP_DEPOSITION] = grp_Deposition;
+    #else
     groups[GRP_EXCAVATION_BELT] = grp_ExcavationBelt;
     groups[GRP_EXCAVATION_VERT] = grp_ExcavationVert;
-    groups[GRP_DEPOSITION] = grp_Deposition;
+    groups[GRP_DEPOSITION_DOOR] = grp_DepositionDoor;
+    groups[GRP_DEPOSITION_VIB] = grp_DepositionVib; 
+    #endif
     groups[GRP_DATA]       = grp_Data;
 }
 
 
 // Group Handlers
 static void grp_Control(uint8_t param) {
-    if (param == 0x01) sendLocomotion(0.0f, 0.0f);
+    if (param == 0x01) {
+        SYSTEM_StopAllMotors();
+    }
 }
 
 static void grp_LocoStop(uint8_t param) {
-    sendLocomotion(0.0f, 0.0f);
+    stopLocomotion();
 }
 
 static void grp_Forward(uint8_t param) {
@@ -178,13 +208,27 @@ static void grp_TurnRight(uint8_t param) {
     float spd = GET_SPEED(param);
     sendLocomotion(-spd, -spd);
 }
+
 #if USE_OLD_HEX_MAPPING
 static void grp_Excavation(uint8_t param) {
-    if param < 
-    float spd = GET_DIRECTION(param) * EXCAVATION_DUTY_CYCLE;
-    sendExcavation(spd);
+    if (param<3){
+        grp_ExcavationVert(param);
+    }
+    else {
+        grp_ExcavationBelt(param-3);
+    }
 }
-#else
+
+static void grp_Deposition(uint8_t param) {
+    if (param<3){
+        grp_DepositionDoor(param);
+    }
+    else {
+        grp_DepositionVib(param-3);
+    }
+}
+#endif
+
 static void grp_ExcavationBelt(uint8_t param) {
     float spd = GET_DIRECTION(param) * EXCAVATION_DUTY_CYCLE;
     sendExcavation(spd);
@@ -193,7 +237,16 @@ static void grp_ExcavationBelt(uint8_t param) {
 static void grp_ExcavationVert(uint8_t param) {
     STEPPER_SetDirection(GET_DIRECTION(param)); 
 }
-#endif
 
-static void grp_Deposition(uint8_t param) {}
-static void grp_Data(uint8_t param) {}
+static void grp_DepositionDoor(uint8_t param) {
+    DEPO_DOOR_SetDirection(GET_DIRECTION(param));
+}
+
+static void grp_DepositionVib(uint8_t param) {
+    VIB_drive(GET_DIRECTION(param));
+}
+
+
+static void grp_Data(uint8_t param) {
+
+}
