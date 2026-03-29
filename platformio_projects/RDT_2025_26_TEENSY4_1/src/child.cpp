@@ -15,8 +15,12 @@ static void grp_Forward(uint8_t param);
 static void grp_Backward(uint8_t param);
 static void grp_TurnLeft(uint8_t param);
 static void grp_TurnRight(uint8_t param);
+#if USE_OLD_HEX_MAPPING
+static void grp_Excavation(uint8_t param);
+#else
 static void grp_ExcavationBelt(uint8_t param);
 static void grp_ExcavationVert(uint8_t param);
+#endif
 static void grp_Deposition(uint8_t param);
 static void grp_Data(uint8_t param);
 
@@ -174,7 +178,13 @@ static void grp_TurnRight(uint8_t param) {
     float spd = GET_SPEED(param);
     sendLocomotion(-spd, -spd);
 }
-
+#if USE_OLD_HEX_MAPPING
+static void grp_Excavation(uint8_t param) {
+    if param < 
+    float spd = GET_DIRECTION(param) * EXCAVATION_DUTY_CYCLE;
+    sendExcavation(spd);
+}
+#else
 static void grp_ExcavationBelt(uint8_t param) {
     float spd = GET_DIRECTION(param) * EXCAVATION_DUTY_CYCLE;
     sendExcavation(spd);
@@ -183,6 +193,7 @@ static void grp_ExcavationBelt(uint8_t param) {
 static void grp_ExcavationVert(uint8_t param) {
     STEPPER_SetDirection(GET_DIRECTION(param)); 
 }
+#endif
 
 static void grp_Deposition(uint8_t param) {}
 static void grp_Data(uint8_t param) {}

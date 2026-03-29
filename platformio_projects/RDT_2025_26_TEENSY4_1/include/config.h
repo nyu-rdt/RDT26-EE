@@ -5,6 +5,7 @@
 #define RAMP_UP true
 #define SERIAL_DEBUG true
 #define USE_TIMEOUT true
+#define USE_OLD_HEX_MAPPING true
 
 #define I2C_CHILD_ADDRESS 0x08
 #define CAN_BAUD_RATE 500000
@@ -28,10 +29,17 @@
 #define GRP_BACKWARD    0x3
 #define GRP_LEFT        0x4
 #define GRP_RIGHT       0x5
+
+#if USE_OLD_HEX_MAPPING
+#define GRP_EXCAVATION 0x6
+#define GRP_DEPOSITION 0x7
+#define GRP_DATA 0x8
+#else
 #define GRP_EXCAVATION_BELT  0x6
 #define GRP_EXCAVATION_VERT 0x7
 #define GRP_DEPOSITION  0x8
 #define GRP_DATA        0x9
+#endif
 
 #define CMD_GROUP(c) (((c)>>4)&0xF)   
 #define CMD_PARAM(c) ((c)&0xF)
