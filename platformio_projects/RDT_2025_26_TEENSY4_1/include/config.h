@@ -5,6 +5,7 @@
 #define RAMP_UP true
 #define SERIAL_DEBUG true
 #define USE_TIMEOUT true
+#define ANALOG_VIB_CONTROL false
 
 #define I2C_CHILD_ADDRESS 0x08
 
@@ -32,6 +33,12 @@
 #define DEPOSITION_DOOR_PULSE_OPEN_US 2500
 #define DEPOSITION_DOOR_PULSE_CLOSE_US 500
 
+#define VIB_MOTOR_PIN 8
+
+#if ANALOG_VIB_CONTROL
+    #define VIB_MOTOR_DUTY_CYCLE 0.6f // not super critical since we just want it on/off, but can be tuned for stronger/weaker vibration
+#endif
+
 // Command Groups
 #define GRP_CONTROL            0x0
 #define GRP_LOCO_STOP          0x1
@@ -41,8 +48,9 @@
 #define GRP_RIGHT              0x5
 #define GRP_EXCAVATION_BELT    0x6
 #define GRP_EXCAVATION_VERT    0x7
-#define GRP_DEPOSITION         0x8
-#define GRP_DATA               0x9
+#define GRP_DEPOSITION_DOOR    0x8
+#define GRP_DEPOSITION_VIB     0x9
+#define GRP_DATA               0xA
 
 #define CMD_GROUP(c) (((c)>>4)&0xF)   
 #define CMD_PARAM(c) ((c)&0xF)

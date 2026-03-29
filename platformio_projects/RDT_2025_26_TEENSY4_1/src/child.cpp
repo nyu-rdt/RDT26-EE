@@ -1,9 +1,4 @@
 #include <Wire.h>
-#include "child.h"
-#include "config.h"
-#include "can_driver.h"
-#include "stepper_driver.h"
-#include "depo_door_driver.h"
 
 // Forward declarations
 static void receiveEvent(int numBytes);
@@ -144,7 +139,8 @@ static void registerHandlers() {
     groups[GRP_RIGHT]      = grp_TurnRight;
     groups[GRP_EXCAVATION_BELT] = grp_ExcavationBelt;
     groups[GRP_EXCAVATION_VERT] = grp_ExcavationVert;
-    groups[GRP_DEPOSITION] = grp_Deposition;
+    groups[GRP_DEPOSITION_DOOR] = grp_DepositionDoor;
+    groups[GRP_DEPOSITION_VIB] = grp_DepositionVib; 
     groups[GRP_DATA]       = grp_Data;
 }
 
@@ -192,7 +188,15 @@ static void grp_ExcavationVert(uint8_t param) {
     STEPPER_SetDirection(GET_DIRECTION(param)); 
 }
 
-static void grp_Deposition(uint8_t param) {
+static void grp_DepositionDoor(uint8_t param) {
     DEPO_DOOR_SetDirection(GET_DIRECTION(param));
 }
-static void grp_Data(uint8_t param) {}
+
+static void grp_DepositionVib(uint8_t param) {
+    VIB_drive(GET_DIRECTION(param));
+}
+
+
+static void grp_Data(uint8_t param) {
+    
+}
