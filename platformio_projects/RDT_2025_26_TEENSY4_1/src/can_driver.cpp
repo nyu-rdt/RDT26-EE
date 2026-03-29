@@ -2,6 +2,13 @@
 #include "can_driver.h"
 #include "config.h"
 
+static_assert(CAN_ID_LEFT_MOTOR != CAN_ID_RIGHT_MOTOR,
+              "CAN IDs must be unique: LEFT and RIGHT motors share an ID.");
+static_assert(CAN_ID_LEFT_MOTOR != CAN_ID_EXCAVATION_MOTOR,
+              "CAN IDs must be unique: LEFT and EXCAVATION motors share an ID.");
+static_assert(CAN_ID_RIGHT_MOTOR != CAN_ID_EXCAVATION_MOTOR,
+              "CAN IDs must be unique: RIGHT and EXCAVATION motors share an ID.");
+
 static FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
 
 void CAN_Init() {

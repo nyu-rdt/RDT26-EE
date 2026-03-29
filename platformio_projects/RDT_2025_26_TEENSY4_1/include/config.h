@@ -15,7 +15,7 @@
 
 #define CAN_ID_LEFT_MOTOR  0x49
 #define CAN_ID_RIGHT_MOTOR 0x78
-#define CAN_ID_EXCAVATION_MOTOR 0x78 // CHANGE TO REAL VALUE!!!!!!!!!!!!
+#define CAN_ID_EXCAVATION_MOTOR 0x48 // CHANGE TO REAL VALUE!!!!!!!!!!!!
 
 #define LOCOMOTION_DUTY_CYCLE 0.33f
 #define EXCAVATION_DUTY_CYCLE 0.4f
@@ -34,7 +34,7 @@
 #define DEPOSITION_DOOR_PULSE_OPEN_US 2500
 #define DEPOSITION_DOOR_PULSE_CLOSE_US 500
 
-#define VIB_MOTOR_PIN 8
+#define VIB_MOTOR_PIN 31
 
 #if ANALOG_VIB_CONTROL
     #define VIB_MOTOR_DUTY_CYCLE 0.6f // not super critical since we just want it on/off, but can be tuned for stronger/weaker vibration
