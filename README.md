@@ -4,8 +4,13 @@ NYU Robotic Design Team Electrical Engineering subsystem repo
 For help with C/C++ or using git and github, refer to training presentations in the NYU RDT 2025 - 2026 / Electrical Engineering / EE Trainings google drive
 
 ## CI Status
-[![Main Project Compile](https://github.com/nyu-rdt/RDT26-EE/actions/workflows/platformio-main.yml/badge.svg?branch=main&event=push)](https://github.com/nyu-rdt/RDT26-EE/actions/workflows/platformio-main.yml)
-[![i2c_parent_CAN Compile](https://github.com/nyu-rdt/RDT26-EE/actions/workflows/platformio-i2c-parent.yml/badge.svg?branch=main&event=push)](https://github.com/nyu-rdt/RDT26-EE/actions/workflows/platformio-i2c-parent.yml)
+[![Main Project Compile](https://github.com/nyu-rdt/RDT26-EE/actions/workflows/platformio-main.yml/badge.svg)](https://github.com/nyu-rdt/RDT26-EE/actions/workflows/platformio-main.yml)
+[![i2c_parent_CAN Compile](https://github.com/nyu-rdt/RDT26-EE/actions/workflows/platformio-i2c-parent.yml/badge.svg)](https://github.com/nyu-rdt/RDT26-EE/actions/workflows/platformio-i2c-parent.yml)
+
+- `platformio-main.yml` compiles `platformio_projects/RDT_2025_26_TEENSY4_1`
+- `platformio-i2c-parent.yml` compiles `general_testing/ALL_i2c_can/i2c_parent_CAN`
+
+Both workflows run on push/pull request when those folders change, and can also be run manually from the Actions tab.
 
 ## where is the robot code?
 
