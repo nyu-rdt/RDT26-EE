@@ -1,10 +1,20 @@
+#include <Arduino.h>
 #include <Wire.h>
+#include "child.h"
+#include "config.h"
+#include "can_driver.h"
+#include "stepper_driver.h"
+#include "depo_door_driver.h"
+#include "vib_motor_driver.h"
+#include "system.h"
 
 // Forward declarations
 static void receiveEvent(int numBytes);
 static bool processCommand(uint8_t cmd);
 static void registerHandlers();
 static void sendLocomotion(float left, float right);
+static void stopLocomotion();
+static void stopExcavation();
 static void grp_Control(uint8_t param);
 static void grp_LocoStop(uint8_t param);
 static void grp_Forward(uint8_t param);
@@ -13,14 +23,14 @@ static void grp_TurnLeft(uint8_t param);
 static void grp_TurnRight(uint8_t param);
 static void grp_ExcavationBelt(uint8_t param);
 static void grp_ExcavationVert(uint8_t param);
-static void grp_Deposition(uint8_t param);
+static void grp_DepositionDoor(uint8_t param);
+static void grp_DepositionVib(uint8_t param);
 static void grp_Data(uint8_t param);
 
 volatile uint8_t latestCommand = 0x10;
 volatile bool newCommand = false;
 static unsigned long lastCommandTime = 0;
 static GroupHandler groups[16] = {nullptr};
-volatile float current_Excav_Speed = 0.0f; // For ramping excavation speed if needed
 
 #if RAMP_UP
 static float currentLeft = 0.0f, currentRight = 0.0f;
@@ -35,11 +45,15 @@ static float slew(float cur, float tgt, float maxDelta) {
 #endif
 
 void child_init() {
-    Wire.begin(I2C_CHILD_ADDRESS);
-    Wire.onReceive(receiveEvent);
+    Wire2.begin(I2C_CHILD_ADDRESS);
+    Wire2.onReceive(receiveEvent);
+
+    SYSTEM_Init();
     CAN_Init();
     STEPPER_Init();
     DEPO_DOOR_Init();
+    VIB_Init();
+    SYSTEM_RegisterStopCallbacks(stopLocomotion, stopExcavation);
     registerHandlers();
 
 #if RAMP_UP
@@ -55,8 +69,8 @@ void child_init() {
 }
 
 static void receiveEvent(int numBytes) {
-    if (Wire.available()) {
-        latestCommand = Wire.read();
+    if (Wire2.available()) {
+        latestCommand = Wire2.read();
         newCommand = true;
     }
 }
@@ -79,7 +93,17 @@ static void sendExcavation(float speed) {
 #endif
 }
 
+static void stopLocomotion() {
+    sendLocomotion(0.0f, 0.0f);
+}
+
+static void stopExcavation() {
+    sendExcavation(0.0f);
+}
+
 bool child_update() {
+    SYSTEM_Update();
+
     if (newCommand) {
         newCommand = false;
         lastCommandTime = millis();
@@ -95,9 +119,7 @@ bool child_update() {
 #if SERIAL_DEBUG
         Serial.println("Command timeout");
 #endif
-        sendLocomotion(0.0f, 0.0f);
-        sendExcavation(0.0f);
-        DEPO_DOOR_SetDirection(0);
+        SYSTEM_StopAllMotors();
         lastCommandTime = millis();
         return true;
     }
@@ -148,15 +170,12 @@ static void registerHandlers() {
 // Group Handlers
 static void grp_Control(uint8_t param) {
     if (param == 0x01) {
-        sendLocomotion(0.0f, 0.0f);
-        sendExcavation(0.0f);
-        DEPO_DOOR_SetDirection(0);
-        STEPPER_SetDirection(0);
+        SYSTEM_StopAllMotors();
     }
 }
 
 static void grp_LocoStop(uint8_t param) {
-    sendLocomotion(0.0f, 0.0f);
+    stopLocomotion();
 }
 
 static void grp_Forward(uint8_t param) {
@@ -198,5 +217,5 @@ static void grp_DepositionVib(uint8_t param) {
 
 
 static void grp_Data(uint8_t param) {
-    
+
 }

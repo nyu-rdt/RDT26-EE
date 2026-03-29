@@ -95,12 +95,39 @@ static void processKey(char key) {
                 i2c_parent_sendCommand(currentMode, STOP); // stop
                 printStatus("STOP excav");
             break; 
+        // deposition door control
+        case 'R':
+                currentMode = GRP_DEPOSITION_DOOR;
+                i2c_parent_sendCommand(currentMode, FORWARD); // open
+                printStatus("OPEN depo DOOR");
+            break;
+        case 'F':
+                currentMode = GRP_DEPOSITION_DOOR;
+                i2c_parent_sendCommand(currentMode, REVERSE); // close
+                printStatus("CLOSE depo DOOR");
+            break;
+        case 'V':
+                currentMode = GRP_DEPOSITION_DOOR;
+                i2c_parent_sendCommand(currentMode, STOP); // stop
+                printStatus("STOP depo DOOR");
+            break;
+        // deposition vibration control
+        case 'T':
+                currentMode = GRP_DEPOSITION_VIB;
+                i2c_parent_sendCommand(currentMode, FORWARD); // on
+                printStatus("ON depo VIB");
+            break;
+        case 'G':
+                currentMode = GRP_DEPOSITION_VIB;
+                i2c_parent_sendCommand(currentMode, STOP); // off
+                printStatus("OFF depo VIB");
+            break;
     }
 }
 
 void keyboard_init() {
     Serial.println("WASD Control Ready");
-    Serial.println("W/A/S/D=Move | E/Q=Speed | X/Space=Stop | U/J/H=Excavation Forward/Reverse/Stop | O/L/K=Vertical Excavation Up/Down/Stop");
+    Serial.println("W/A/S/D=Move | E/Q=Speed | X/Space=Stop | U/J/H=Belt Fwd/Rev/Stop | O/L/K=Vert Fwd/Rev/Stop | R/F/V=Door Open/Close/Stop | T/G=Vib On/Off");
 }
 
 void keyboard_update() {

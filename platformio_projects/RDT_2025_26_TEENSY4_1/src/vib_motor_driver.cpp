@@ -2,19 +2,24 @@
 #include "config.h"
 #include "vib_motor_driver.h"
 
+static bool vibEnabledFromDirection(int direction) {
+    return direction > 0;
+}
+
 void VIB_Init() {
     pinMode(VIB_MOTOR_PIN, OUTPUT);
-    digitalWrite(VIB_MOTOR_PIN, HIGH); // Active HIGH to stop it
+    VIB_drive(0);
 }
 
 void VIB_drive(int direction) {
-    #if ANALOG_VIB_CONTROL
-        if (direction != 0) {
-            analogWrite(VIB_MOTOR_PIN, static_cast<int>(VIB_MOTOR_DUTY_CYCLE * 255));
-        } else {
-            analogWrite(VIB_MOTOR_PIN, 0);
-        }
-    #else
-        digitalWrite(VIB_MOTOR_PIN, (direction != 0) ? LOW : HIGH);
-    #endif
+    bool enable = vibEnabledFromDirection(direction);
+#if ANALOG_VIB_CONTROL
+    // Active-HIGH stop wiring: lower duty drives the motor harder.
+    int pwmValue = enable
+                       ? (int)((1.0f - VIB_MOTOR_DUTY_CYCLE) * 255.0f)
+                       : 255;
+    analogWrite(VIB_MOTOR_PIN, pwmValue);
+#else
+    digitalWrite(VIB_MOTOR_PIN, enable ? LOW : HIGH);
+#endif
 }

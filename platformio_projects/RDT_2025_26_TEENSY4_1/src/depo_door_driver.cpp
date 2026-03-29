@@ -21,10 +21,4 @@ void DEPO_DOOR_SetDirection(int direction) {
     int pulseWidthUs = getDoorPulseWidthUs(direction);
     depoDoorActuator.writeMicroseconds(pulseWidthUs);
 
-#if SERIAL_DEBUG
-    Serial.print("Depo door dir: ");
-    Serial.print(direction);
-    Serial.print(" pulse: ");
-    Serial.println(pulseWidthUs);
-#endif
 }
