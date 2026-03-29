@@ -7,6 +7,7 @@
 #define USE_TIMEOUT true
 #define ANALOG_VIB_CONTROL false
 #define USE_OLD_HEX_MAPPING false
+#define USE_OLD_HEX_MAPPING true
 
 #define I2C_CHILD_ADDRESS 0x08
 #define E_STOP_PIN 2

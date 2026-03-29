@@ -27,6 +27,7 @@ static void grp_Deposition(uint8_t param);
 #endif
 static void grp_ExcavationBelt(uint8_t param);
 static void grp_ExcavationVert(uint8_t param);
+
 static void grp_DepositionDoor(uint8_t param);
 static void grp_DepositionVib(uint8_t param);
 

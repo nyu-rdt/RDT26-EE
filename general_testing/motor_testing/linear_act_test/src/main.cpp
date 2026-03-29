@@ -10,8 +10,8 @@
 //   otherwise -> stop
 constexpr int kActuatorPin = 6;
 constexpr int kPulseStopUs = 1500;
-constexpr int kPulseExtendUs = 2500;
-constexpr int kPulseRetractUs = 500;
+constexpr int kPulseExtendUs = 2400;
+constexpr int kPulseRetractUs = 600;
 constexpr int kExtendThresholdUs = 2450;
 constexpr int kRetractThresholdUs = 550;
 constexpr int kArmDelayMs = 2000;
@@ -25,12 +25,12 @@ void stopActuator() {
 
 void extendActuator() {
   actuator.writeMicroseconds(kPulseExtendUs);
-  Serial.println("EXTEND (2500us)");
+  Serial.println("EXTEND (2100us)");
 }
 
 void retractActuator() {
   actuator.writeMicroseconds(kPulseRetractUs);
-  Serial.println("RETRACT (500us)");
+  Serial.println("RETRACT (900us)");
 }
 
 void oneShotTest() {
@@ -58,13 +58,9 @@ void printHelp() {
 }
 
 void thresholdedPulseCommand(int us) {
-  if (us >= kExtendThresholdUs) {
-    extendActuator();
-  } else if (us <= kRetractThresholdUs) {
-    retractActuator();
-  } else {
-    stopActuator();
-  }
+  us = constrain(us, 0, 3000);
+    actuator.writeMicroseconds(us);
+
 
   Serial.print("INPUT ");
   Serial.print(us);
@@ -98,7 +94,7 @@ void setup() {
   Serial.begin(115200);
   delay(400);
 
-  actuator.attach(kActuatorPin, 500, 2500);
+  actuator.attach(kActuatorPin); // Set max pulse to accommodate extend range
   actuator.writeMicroseconds(kPulseStopUs);
   delay(kArmDelayMs);
 
