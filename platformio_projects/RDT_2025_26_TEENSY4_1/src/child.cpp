@@ -3,6 +3,7 @@
 #include "config.h"
 #include "can_driver.h"
 #include "stepper_driver.h"
+#include "depo_door_driver.h"
 
 // Forward declarations
 static void receiveEvent(int numBytes);
@@ -43,6 +44,7 @@ void child_init() {
     Wire.onReceive(receiveEvent);
     CAN_Init();
     STEPPER_Init();
+    DEPO_DOOR_Init();
     registerHandlers();
 
 #if RAMP_UP
@@ -100,6 +102,7 @@ bool child_update() {
 #endif
         sendLocomotion(0.0f, 0.0f);
         sendExcavation(0.0f);
+        DEPO_DOOR_SetDirection(0);
         lastCommandTime = millis();
         return true;
     }
@@ -148,7 +151,12 @@ static void registerHandlers() {
 
 // Group Handlers
 static void grp_Control(uint8_t param) {
-    if (param == 0x01) sendLocomotion(0.0f, 0.0f);
+    if (param == 0x01) {
+        sendLocomotion(0.0f, 0.0f);
+        sendExcavation(0.0f);
+        DEPO_DOOR_SetDirection(0);
+        STEPPER_SetDirection(0);
+    }
 }
 
 static void grp_LocoStop(uint8_t param) {
@@ -184,5 +192,7 @@ static void grp_ExcavationVert(uint8_t param) {
     STEPPER_SetDirection(GET_DIRECTION(param)); 
 }
 
-static void grp_Deposition(uint8_t param) {}
+static void grp_Deposition(uint8_t param) {
+    DEPO_DOOR_SetDirection(GET_DIRECTION(param));
+}
 static void grp_Data(uint8_t param) {}
