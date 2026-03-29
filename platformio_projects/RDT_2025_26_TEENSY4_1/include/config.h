@@ -7,13 +7,16 @@
 #define USE_TIMEOUT true
 
 #define I2C_CHILD_ADDRESS 0x08
+
 #define CAN_BAUD_RATE 500000
+#define COMMAND_TIMEOUT_MS 500
+
 #define CAN_ID_LEFT_MOTOR  0x49
 #define CAN_ID_RIGHT_MOTOR 0x78
 #define CAN_ID_EXCAVATION_MOTOR 0x48 // CHANGE TO REAL VALUE!!!!!!!!!!!!
+
 #define LOCOMOTION_DUTY_CYCLE 0.33f
 #define EXCAVATION_DUTY_CYCLE 0.4f
-#define COMMAND_TIMEOUT_MS 500
 #define EXCAVATION_STEP_PERIOD 800 // microseconds, time between each step change in excavation speed
 
 // Ramping parameters
@@ -21,17 +24,25 @@
 #define MAX_SPEED_DELTA_PER_TICK 0.01f
 #define MAX_EXCAV_DELTA_PER_TICK 0.01f
 
+// Deposition door actuator (SPARKmini-style PWM)
+#define DEPOSITION_DOOR_ACTUATOR_PIN 9
+
+#define DEPOSITION_DOOR_ARM_DELAY_MS 2000
+#define DEPOSITION_DOOR_PULSE_STOP_US 1500
+#define DEPOSITION_DOOR_PULSE_OPEN_US 2500
+#define DEPOSITION_DOOR_PULSE_CLOSE_US 500
+
 // Command Groups
-#define GRP_CONTROL     0x0
-#define GRP_LOCO_STOP   0x1
-#define GRP_FORWARD     0x2
-#define GRP_BACKWARD    0x3
-#define GRP_LEFT        0x4
-#define GRP_RIGHT       0x5
-#define GRP_EXCAVATION_BELT  0x6
-#define GRP_EXCAVATION_VERT 0x7
-#define GRP_DEPOSITION  0x8
-#define GRP_DATA        0x9
+#define GRP_CONTROL            0x0
+#define GRP_LOCO_STOP          0x1
+#define GRP_FORWARD            0x2
+#define GRP_BACKWARD           0x3
+#define GRP_LEFT               0x4
+#define GRP_RIGHT              0x5
+#define GRP_EXCAVATION_BELT    0x6
+#define GRP_EXCAVATION_VERT    0x7
+#define GRP_DEPOSITION         0x8
+#define GRP_DATA               0x9
 
 #define CMD_GROUP(c) (((c)>>4)&0xF)   
 #define CMD_PARAM(c) ((c)&0xF)
