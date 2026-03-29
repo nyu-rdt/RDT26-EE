@@ -69,7 +69,7 @@ static inline float getSpeed(uint8_t idx)
 }
 
 #define GET_SPEED(idx) (getSpeed(static_cast<uint8_t>(idx)))
-#define GET_DIRECTION(param) (((param) == 0x0) ? (1) : (((param) == 0x1) ? (-1) : (0)))
+#define GET_DIRECTION(param) (((param) == 0x0) ? (0) : (((param) == 0x1) ? (1) : ((param) == 0x2) ? (-1) : (0)))
 // Handler function type
 typedef void (*GroupHandler)(uint8_t param);
 

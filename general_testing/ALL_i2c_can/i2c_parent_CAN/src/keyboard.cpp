@@ -60,39 +60,39 @@ static void processKey(char key) {
         case 'X':
         case ' ':
             currentMode = GRP_LOCO_STOP;
-            i2c_parent_sendCommand(GRP_LOCO_STOP, 0);
+            i2c_parent_sendCommand(GRP_LOCO_STOP, STOP);
             printStatus("STOP");
             break;
         // belt excav control
         case 'U':
                 currentMode = GRP_EXCAVATION_BELT;
-                i2c_parent_sendCommand(currentMode, 0); // forward
+                i2c_parent_sendCommand(currentMode, FORWARD); // forward
                 printStatus("FORWARD excav BELT");
             break;
         case 'J':
                 currentMode = GRP_EXCAVATION_BELT;
-                i2c_parent_sendCommand(currentMode, 1); // reverse
+                i2c_parent_sendCommand(currentMode, REVERSE); // reverse
                 printStatus("BACKWARD excav BELT");
             break; 
         case 'H':
                 currentMode = GRP_EXCAVATION_BELT;
-                i2c_parent_sendCommand(currentMode, 2); // stop
+                i2c_parent_sendCommand(currentMode, STOP); // stop
                 printStatus("STOP excav BELT");
             break; 
         // vertical excav control
         case 'O':
                 currentMode =  GRP_EXCAVATION_VERT;
-                i2c_parent_sendCommand(currentMode, 0); // up
+                i2c_parent_sendCommand(currentMode, FORWARD); // up
                 printStatus("UP excav");
             break;
         case 'L':
                 currentMode = GRP_EXCAVATION_VERT;
-                i2c_parent_sendCommand(currentMode, 1); // down
+                i2c_parent_sendCommand(currentMode, REVERSE); // down
                 printStatus("DOWN excav");
             break; 
         case 'K':
                 currentMode = GRP_EXCAVATION_VERT;
-                i2c_parent_sendCommand(currentMode, 2); // stop
+                i2c_parent_sendCommand(currentMode, STOP); // stop
                 printStatus("STOP excav");
             break; 
     }

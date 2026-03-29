@@ -29,6 +29,10 @@
 #define SPEED_PARAM_75   0x2
 #define SPEED_PARAM_100  0x3
 
+#define FORWARD 1
+#define REVERSE 2
+#define STOP 0
+
 
 // Build single-byte command expected by i2c_can_child_tony.
 #define BUILD_I2C_CMD(group, param) ((((group) & 0x0F) << 4) | ((param) & 0x0F))
