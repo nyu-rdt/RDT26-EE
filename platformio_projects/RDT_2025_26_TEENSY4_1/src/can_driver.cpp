@@ -51,7 +51,7 @@ void CAN_SendMotorSpeed(uint32_t canId, float speed) {
 */
 
 void CAN_SendLocomotion(float left, float right) {
-    CAN_SendMotorSpeed(CAN_ID_LEFT_MOTOR, left);
+    CAN_SendMotorSpeed(CAN_ID_LEFT_MOTOR, -left);
     CAN_SendMotorSpeed(CAN_ID_RIGHT_MOTOR, right);
 }
 
