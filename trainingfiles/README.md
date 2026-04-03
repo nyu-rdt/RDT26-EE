@@ -158,6 +158,5 @@ Task notifications are lighter than queues for single-flag signals. `xTaskNotify
 
 ## Reference
 
-- Full rover RTOS firmware: `platformio_projects/RDT26_RTOS_TEENSY4_1/`
 - FreeRTOS docs: https://www.freertos.org/a00110.html
 - tsandmann port: https://github.com/tsandmann/freertos-teensy
