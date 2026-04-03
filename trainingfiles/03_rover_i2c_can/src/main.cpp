@@ -45,6 +45,8 @@ typedef struct {
     float rightSpeed;
     float excavSpeed;
     bool  stopAll;      // E-stop or GRP_CONTROL stop — zero everything
+    bool  hasLocoCmd;   // true if this command targets locomotion (including stop)
+    bool  hasExcavCmd;  // true if this command targets excavation (including stop)
 } MotorCommand_t;
 
 // ── IPC handles ──────────────────────────────────────────────────────────────
@@ -113,33 +115,41 @@ void TaskI2CDecode(void *pvParams) {
 
         switch (group) {
             case GRP_CONTROL:
-            case GRP_LOCO_STOP:
                 cmd.stopAll = true;
+                break;
+
+            case GRP_LOCO_STOP:
+                cmd.hasLocoCmd = true;  // speeds stay 0 — stops locomotion only
                 break;
 
             case GRP_FORWARD:
                 cmd.leftSpeed  = -getSpeed(param);  // left motor is mechanically reversed
                 cmd.rightSpeed =  getSpeed(param);
+                cmd.hasLocoCmd = true;
                 break;
 
             case GRP_BACKWARD:
                 cmd.leftSpeed  =  getSpeed(param);
                 cmd.rightSpeed = -getSpeed(param);
+                cmd.hasLocoCmd = true;
                 break;
 
             case GRP_LEFT:
                 // Turn left: both motors spin the same direction
                 cmd.leftSpeed  = getSpeed(param);
                 cmd.rightSpeed = getSpeed(param);
+                cmd.hasLocoCmd = true;
                 break;
 
             case GRP_RIGHT:
                 cmd.leftSpeed  = -getSpeed(param);
                 cmd.rightSpeed = -getSpeed(param);
+                cmd.hasLocoCmd = true;
                 break;
 
             case GRP_EXCAVATION:
-                cmd.excavSpeed = getDirection(param) * EXCAVATION_DUTY_CYCLE;
+                cmd.excavSpeed  = getDirection(param) * EXCAVATION_DUTY_CYCLE;
+                cmd.hasExcavCmd = true;
                 break;
 
             default:
@@ -199,13 +209,13 @@ void TaskMotorCtrl(void *pvParams) {
             if (cmd.stopAll) {
                 targetLeft = targetRight = targetExcav = 0.0f;
             } else {
-                // Only update targets that the command actually set (non-zero
-                // locomotion commands leave excavation unchanged, and vice versa).
-                if (cmd.leftSpeed != 0.0f || cmd.rightSpeed != 0.0f) {
+                // Only update targets that the command actually addresses.
+                // Locomotion commands leave excavation unchanged, and vice versa.
+                if (cmd.hasLocoCmd) {
                     targetLeft  = cmd.leftSpeed;
                     targetRight = cmd.rightSpeed;
                 }
-                if (cmd.excavSpeed != 0.0f) {
+                if (cmd.hasExcavCmd) {
                     targetExcav = cmd.excavSpeed;
                 }
             }
