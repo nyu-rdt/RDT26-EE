@@ -43,35 +43,35 @@ lib_deps =
 
 Add other `lib_deps` only for libraries not already bundled with Teensy. You do **not** need to add FlexCAN_T4, Wire, Servo, SPI — those ship with the Teensy framework package and are always available.
 
-### 3. Get the FreeRTOSConfig.h template
+### 3. FreeRTOSConfig.h — do you need to copy it?
 
-Run `pio run` once (it will fail — that's fine). This downloads the library to `.pio/libdeps/`. Then copy the template the library ships:
+**No.** The library ships its own `FreeRTOSConfig.h` in its `src/` directory and `FreeRTOS.h` finds it there automatically. You do not need to copy anything for a basic build.
 
-```
-.pio/libdeps/teensy41/freertos-teensy/src/FreeRTOSConfig.h
-```
+**Only customize it if you need to change settings.** Because `FreeRTOS.h` and `FreeRTOSConfig.h` live in the same directory inside the library, GCC always finds the library's copy first — placing one in `src/`, `include/`, or the project root does **not** override it by itself (tested).
 
-Paste it at the **project root** — not in `src/` or `include/`. The tsandmann port looks for it there specifically.
+**To override from the project root**, use the `-include` build flag in `platformio.ini`:
 
-```
-my_project/
-├── FreeRTOSConfig.h   ← HERE
-├── include/
-├── src/
-└── platformio.ini
+```ini
+build_flags =
+    -include "${PROJECT_DIR}/FreeRTOSConfig.h"
 ```
 
-### 4. Edit FreeRTOSConfig.h
+This force-injects your file before anything else, setting the `FREERTOS_CONFIG_H` include guard so the library's copy is skipped. Two caveats:
+- Your config must start from the **library's** `FreeRTOSConfig.h` as a base — the port has many required settings that a generic template won't have
+- If your config uses `configGENERATE_RUN_TIME_STATS == 1`, add `#include <stdint.h>` before the `uint64_t` declaration (it's injected before system headers are available)
+- After changing the config, run `pio run -t clean` first — stale cached objects will cause linker errors
+
+### 4. Customizing FreeRTOSConfig.h (optional)
 
 You don't need to touch most of it. The fields that matter:
 
 ```c
 configTICK_RATE_HZ       1000       // 1ms tick — standard, leave it
-configMAX_PRIORITIES     5          // priority levels 0–4; increase if needed
+configMAX_PRIORITIES     10         // priority levels 0–9; reduce if you don't need many
 configMINIMAL_STACK_SIZE 128        // words (not bytes) for the idle task stack
-configUSE_MUTEXES        1          // set 1 if you use xSemaphoreCreateMutex
+configUSE_MUTEXES        1          // required by port's C++ threading layer
 configUSE_TASK_NOTIFICATIONS 1      // set 1 if you use xTaskNotify
-configTOTAL_HEAP_SIZE    (64*1024)  // bytes for RTOS heap; 0 = use system malloc
+configTOTAL_HEAP_SIZE    0          // 0 = use system malloc (Teensy port default)
 ```
 
 Everything else either has a safe default or gets stripped by the linker if unused.

@@ -61,7 +61,7 @@ static void CAN_SendMotorSpeed(uint32_t id, float speed) {
     msg.flags.extended = 1;
     msg.id  = id;
     msg.len = 4;
-    // Speed is encoded as int32 × 100000, big-endian — matches SPARK Mini protocol
+    // Speed is encoded as int32 × 100000, big-endian.
     int32_t val = (int32_t)(speed * 100000.0f);
     msg.buf[0] = (val >> 24) & 0xFF;
     msg.buf[1] = (val >> 16) & 0xFF;
