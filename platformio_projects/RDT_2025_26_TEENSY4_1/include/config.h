@@ -9,7 +9,11 @@
 #define USE_OLD_HEX_MAPPING true
 
 #define I2C_CHILD_ADDRESS 0x08
-#define E_STOP_PIN 2
+#define RELAY_DRIVER_PIN 2
+#define RELAY_READ_PIN 3
+#define RELAY_3S_LOW_PIN 4
+#define RELAY_6S_LOW_PIN 5
+
 
 #define CAN_BAUD_RATE 500000
 #define COMMAND_TIMEOUT_MS 500
@@ -35,7 +39,7 @@
 #define DEPOSITION_DOOR_PULSE_OPEN_US 2500
 #define DEPOSITION_DOOR_PULSE_CLOSE_US 500
 
-#define VIB_MOTOR_PIN 31
+#define VIB_MOTOR_PIN 30
 
 #if ANALOG_VIB_CONTROL
     #define VIB_MOTOR_DUTY_CYCLE 0.6f // not super critical since we just want it on/off, but can be tuned for stronger/weaker vibration

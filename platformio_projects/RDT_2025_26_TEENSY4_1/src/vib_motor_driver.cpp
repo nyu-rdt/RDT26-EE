@@ -16,10 +16,10 @@ void VIB_drive(int direction) {
 #if ANALOG_VIB_CONTROL
     // Active-HIGH stop wiring: lower duty drives the motor harder.
     int pwmValue = enable
-                       ? (int)((1.0f - VIB_MOTOR_DUTY_CYCLE) * 255.0f)
-                       : 255;
+                       ? (int)((VIB_MOTOR_DUTY_CYCLE) * 255.0f)
+                       : 0;
     analogWrite(VIB_MOTOR_PIN, pwmValue);
 #else
-    digitalWrite(VIB_MOTOR_PIN, enable ? LOW : HIGH);
+    digitalWrite(VIB_MOTOR_PIN, enable ? HIGH : LOW);
 #endif
 }

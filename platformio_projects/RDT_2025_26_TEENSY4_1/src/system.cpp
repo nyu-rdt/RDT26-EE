@@ -7,15 +7,23 @@
 
 static SystemStopLocomotionFn stopLocomotion = nullptr;
 static SystemStopExcavationFn stopExcavation = nullptr;
+volatile bool relay_state = false;
+volatile bool relay_3s_low = false;
+volatile bool relay_6s_low = false;
 
 void SYSTEM_Init() {
-    pinMode(E_STOP_PIN, OUTPUT);
-    digitalWrite(E_STOP_PIN, HIGH);
+    pinMode(RELAY_DRIVER_PIN, OUTPUT);
+    pinMode(RELAY_READ_PIN, INPUT_PULLDOWN);
+    pinMode(RELAY_3S_LOW_PIN, INPUT_PULLDOWN);
+    pinMode(RELAY_6S_LOW_PIN, INPUT_PULLDOWN);
+    digitalWrite(RELAY_DRIVER_PIN, HIGH);
 }
 
 void SYSTEM_Update() {
-    // Keep relay energized continuously for fail-safe behavior.
-    digitalWrite(E_STOP_PIN, HIGH);
+    digitalWrite(RELAY_DRIVER_PIN, HIGH);
+    relay_state = digitalRead(RELAY_READ_PIN);
+    relay_3s_low = digitalRead(RELAY_3S_LOW_PIN);
+    relay_6s_low = digitalRead(RELAY_6S_LOW_PIN);
 }
 
 void SYSTEM_RegisterStopCallbacks(SystemStopLocomotionFn stopLocomotionFn,

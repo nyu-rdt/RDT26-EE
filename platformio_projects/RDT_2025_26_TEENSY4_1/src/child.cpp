@@ -81,32 +81,6 @@ static void receiveEvent(int numBytes) {
     }
 }
 
-
-static void sendLocomotion(float left, float right) {
-#if RAMP_UP
-    targetLeft = left;
-    targetRight = right;
-#else
-    CAN_SendLocomotion(left, right);
-#endif
-}
-
-static void sendExcavation(float speed) {
-#if RAMP_UP
-    targetExcav = speed;
-#else
-    CAN_SendExcavation(speed);
-#endif
-}
-
-static void stopLocomotion() {
-    sendLocomotion(0.0f, 0.0f);
-}
-
-static void stopExcavation() {
-    sendExcavation(0.0f);
-}
-
 bool child_update() {
     SYSTEM_Update();
 
@@ -175,6 +149,32 @@ static void registerHandlers() {
     groups[GRP_DEPOSITION_VIB] = grp_DepositionVib; 
     #endif
     groups[GRP_DATA]       = grp_Data;
+}
+
+
+static void sendLocomotion(float left, float right) {
+#if RAMP_UP
+    targetLeft = left;
+    targetRight = right;
+#else
+    CAN_SendLocomotion(left, right);
+#endif
+}
+
+static void sendExcavation(float speed) {
+#if RAMP_UP
+    targetExcav = speed;
+#else
+    CAN_SendExcavation(speed);
+#endif
+}
+
+static void stopLocomotion() {
+    sendLocomotion(0.0f, 0.0f);
+}
+
+static void stopExcavation() {
+    sendExcavation(0.0f);
 }
 
 
@@ -247,6 +247,4 @@ static void grp_DepositionVib(uint8_t param) {
 }
 
 
-static void grp_Data(uint8_t param) {
-
-}
+static void grp_Data(uint8_t param) {}
