@@ -143,6 +143,18 @@ void loop() {} // leave empty — the RTOS replaces loop()
 
 A mutex (`xSemaphoreCreateMutex`) protects a shared resource. Pattern: `xSemaphoreTake → use resource → xSemaphoreGive`. Always release it, even on error paths. Never hold a mutex across a `vTaskDelay`.
 
+**Interactive experiments** — all knobs are in `02_queue_mutex/include/config.h`. Change one value, flash, and watch Serial.
+
+| Experiment | What to change | What to observe |
+|------------|---------------|-----------------|
+| A — fill the queue | `CONSUMER_SLOW_MS` → `2000` | `queue waiting` climbs to `QUEUE_DEPTH`, then "[Producer] WARNING: queue full" appears |
+| B — drain it back | Restore `CONSUMER_SLOW_MS` → `0` | `queue waiting` drops to 0 within a few seconds |
+| C — shrink the buffer | `QUEUE_DEPTH` → `1`, `PRODUCER_PERIOD_MS` → `100` | Drops appear almost every cycle |
+| D — watch heap drop | `TASK_STACK_WORDS` → `4096` | `free heap` in status block drops by ~43 KB (3 tasks × 3584 extra words × 4 bytes) |
+| E — stack overflow | `TASK_STACK_WORDS` → `96` | Overflow hook fires immediately; device halts — reset to recover |
+
+The status block prints every `PRINTER_PERIOD_MS` ms. Reduce it to `500` if you want faster feedback during experiments.
+
 ### 03 — ISR safety and task notifications
 
 Wire callbacks run at interrupt level. Two rules:
@@ -154,9 +166,24 @@ Task notifications are lighter than queues for single-flag signals. `xTaskNotify
 
 `vTaskDelayUntil(&lastWake, period)` is the correct way to write a fixed-period task. `vTaskDelay(20)` drifts by execution time each cycle; `vTaskDelayUntil` wakes at absolute tick intervals.
 
+**Interactive experiments** — all knobs are in `03_rover_i2c_can/include/config.h`. Requires a second Teensy sending I2C commands (or use `general_testing/ALL_i2c_can/i2c_parent_CAN`).
+
+| Experiment | What to change | What to observe |
+|------------|---------------|-----------------|
+| A — CAN without hardware | `SIMULATE_CAN` → `0` (no motors connected) | System freezes; E-stop does nothing — CAN bus-off error-interrupt storm starves all tasks |
+| B — I2C queue overflow | `I2C_QUEUE_DEPTH` → `2`, send a burst of commands | ISR drops bytes; commands arrive garbled or not at all |
+| C — motor queue overflow | `MOTOR_QUEUE_DEPTH` → `1`, send commands faster than 20ms | "[I2CDecode] WARNING: motor queue full" appears |
+| D — instant speed | `MAX_SPEED_DELTA_PER_TICK` → `0.5` | `[CAN SIM]` speed jumps to target in one tick instead of ramping |
+| E — slow ramp | `MAX_SPEED_DELTA_PER_TICK` → `0.002` | Speed takes ~10s to reach full; useful for seeing the slew effect |
+| F — command timeout | `COMMAND_TIMEOUT_MS` → `100`, stop sending I2C | `[CAN SIM]` speeds ramp to 0 within 100ms of the last command |
+| G — E-stop debounce | `ESTOP_DEBOUNCE_MS` → `1` | Brief noise on pin 3 triggers false E-stops |
+| H — stack vs heap | `MOTOR_TASK_STACK` → `4096` | Free heap drops by ~14 KB; visible if you add a `Serial.printf` in the motor loop |
+
+> **Note on experiment A:** the freeze happens because the CAN controller has no termination resistor and no ACK from any node. It accumulates TX errors, enters bus-off, and the error-recovery interrupt fires thousands of times per second — faster than FreeRTOS can schedule tasks. `SIMULATE_CAN 1` skips the real write and prints `[CAN SIM]` lines instead.
+
 ---
 
 ## Reference
 
-- FreeRTOS docs: https://www.freertos.org/a00110.html
+- FreeRTOS docs: https://www.freertos.org/Documentation/00-Overview
 - tsandmann port: https://github.com/tsandmann/freertos-teensy

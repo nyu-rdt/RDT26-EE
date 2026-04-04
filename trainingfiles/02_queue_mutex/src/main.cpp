@@ -34,6 +34,7 @@
 #include "task.h"
 #include "queue.h"
 #include "semphr.h"
+#include "config.h"
 
 // ── Shared IPC handles ───────────────────────────────────────────────────────
 // Declare these at file scope so all tasks can reach them.
@@ -81,7 +82,7 @@ void TaskProducer(void *pvParams) {
             safePrintln(buf);
         }
 
-        vTaskDelay(pdMS_TO_TICKS(500));
+        vTaskDelay(pdMS_TO_TICKS(PRODUCER_PERIOD_MS));
     }
 }
 
@@ -100,6 +101,12 @@ void TaskConsumer(void *pvParams) {
 
             // Blink LED to give a visual indication of activity.
             digitalWrite(LED_BUILTIN, !digitalRead(LED_BUILTIN));
+
+            // CONSUMER_SLOW_MS > 0 throttles the consumer so the queue fills up.
+            // See config.h experiment A.
+            if (CONSUMER_SLOW_MS > 0) {
+                vTaskDelay(pdMS_TO_TICKS(CONSUMER_SLOW_MS));
+            }
         }
     }
 }
@@ -111,7 +118,7 @@ void TaskPrinter(void *pvParams) {
     char buf[128];
 
     for (;;) {
-        vTaskDelay(pdMS_TO_TICKS(2000));
+        vTaskDelay(pdMS_TO_TICKS(PRINTER_PERIOD_MS));
 
         // Take the mutex before the entire multi-line block.
         // Without this, Consumer's single-line prints could interleave here.
@@ -136,10 +143,9 @@ void setup() {
 
     pinMode(LED_BUILTIN, OUTPUT);
 
-    // Create the queue: holds up to 4 items, each the size of a uint32_t.
-    // Depth of 4 means the Producer can be 4 items ahead of the Consumer
-    // before sends start blocking.
-    xQueueCounter = xQueueCreate(4, sizeof(uint32_t));
+    // Create the queue. QUEUE_DEPTH is set in config.h — reduce it to 1 to see
+    // drops almost immediately; increase it to buffer large bursts.
+    xQueueCounter = xQueueCreate(QUEUE_DEPTH, sizeof(uint32_t));
     configASSERT(xQueueCounter != NULL);
 
     // Create the mutex. A mutex starts in the "given" (unlocked) state.
@@ -150,9 +156,10 @@ void setup() {
 
     // Priority 2: Producer and Consumer are equal — they time-slice.
     // Priority 1: Printer is lower, runs only when the others are sleeping.
-    configASSERT(xTaskCreate(TaskProducer, "Producer", 512, NULL, 2, NULL) == pdPASS);
-    configASSERT(xTaskCreate(TaskConsumer, "Consumer", 512, NULL, 2, NULL) == pdPASS);
-    configASSERT(xTaskCreate(TaskPrinter,  "Printer",  512, NULL, 1, NULL) == pdPASS);
+    // Stack size comes from config.h — change TASK_STACK_WORDS to see heap shift.
+    configASSERT(xTaskCreate(TaskProducer, "Producer", TASK_STACK_WORDS, NULL, 2, NULL) == pdPASS);
+    configASSERT(xTaskCreate(TaskConsumer, "Consumer", TASK_STACK_WORDS, NULL, 2, NULL) == pdPASS);
+    configASSERT(xTaskCreate(TaskPrinter,  "Printer",  TASK_STACK_WORDS, NULL, 1, NULL) == pdPASS);
 
     vTaskStartScheduler();
     Serial.println("ERROR: scheduler exited — halt.");

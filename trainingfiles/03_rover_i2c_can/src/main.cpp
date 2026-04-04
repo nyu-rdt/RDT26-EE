@@ -59,6 +59,11 @@ static TaskHandle_t     hTaskMotor  = NULL;   // handle for direct E-stop notifi
 static FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> can1;
 
 static void CAN_SendMotorSpeed(uint32_t id, float speed) {
+#if SIMULATE_CAN
+    // Skip real CAN write — without termination/ACK the controller goes bus-off
+    // and the resulting error-interrupt storm starves all RTOS tasks.
+    
+#else
     CAN_message_t msg;
     msg.flags.extended = 1;
     msg.id  = id;
@@ -70,6 +75,7 @@ static void CAN_SendMotorSpeed(uint32_t id, float speed) {
     msg.buf[2] = (val >>  8) & 0xFF;
     msg.buf[3] =  val        & 0xFF;
     can1.write(msg);
+#endif
 }
 
 // ── I2C ISR callbacks ─────────────────────────────────────────────────────────
@@ -252,6 +258,19 @@ void TaskMotorCtrl(void *pvParams) {
             xSemaphoreGive(xMutexCAN);
         }
 
+#if PRINT_CAN
+        // Print all three speeds together, throttled so Serial isn't flooded.
+        // The motor loop runs every TX_PERIOD_MS (20ms) — without throttling
+        // that's 150 lines/s. CAN_PRINT_PERIOD_MS in config.h controls the rate.
+        static uint32_t lastCanPrint = 0;
+        uint32_t nowMs = millis();
+        if (nowMs - lastCanPrint >= (uint32_t)CAN_PRINT_PERIOD_MS) {
+            lastCanPrint = nowMs;
+            Serial.printf("[CAN] L=% .3f  R=% .3f  E=% .3f\n",
+                          currentLeft, currentRight, currentExcav);
+        }
+#endif
+
         // ── 6. Wait until next 20ms tick ──────────────────────────────────
         // vTaskDelayUntil is preferred over vTaskDelay for periodic tasks.
         // vTaskDelay(20) would drift by execution time each cycle.
@@ -275,7 +294,8 @@ void TaskMotorCtrl(void *pvParams) {
 //   to the motor task and are checked at the TOP of every 20ms cycle, before
 //   any queued commands are processed.
 void TaskEStop(void *pvParams) {
-    bool    prevAsserted = false;
+    bool     prevAsserted = false;
+    bool     prevPinLow   = false;   // tracks last pin state to detect edges
     uint32_t assertedSince = 0;
 
     for (;;) {
@@ -284,10 +304,13 @@ void TaskEStop(void *pvParams) {
 
         bool pinLow = (digitalRead(E_STOP_READ_PIN) == LOW);
 
-        if (pinLow && !prevAsserted) {
-            // Leading edge — start debounce timer
+        // Start the debounce timer only on the HIGH→LOW edge, not every tick.
+        // Bug if you use (pinLow && !prevAsserted): prevAsserted stays false until
+        // debounce fires, so the timer resets every 10ms loop and never accumulates.
+        if (pinLow && !prevPinLow) {
             assertedSince = millis();
         }
+        prevPinLow = pinLow;
 
         bool debounced = pinLow && ((millis() - assertedSince) >= ESTOP_DEBOUNCE_MS);
 
@@ -301,6 +324,18 @@ void TaskEStop(void *pvParams) {
             Serial.println("[EStop] released");
             // Notification value 0 = released — motor task can accept commands again.
             xTaskNotify(hTaskMotor, 0U, eSetValueWithOverwrite);
+        }
+
+        // Periodic status line so you can confirm pin state without waiting for a
+        // transition. Fires at CAN_PRINT_PERIOD_MS so it lines up with the CAN print.
+        static uint32_t lastEstopPrint = 0;
+        uint32_t nowEstop = millis();
+        if (nowEstop - lastEstopPrint >= (uint32_t)CAN_PRINT_PERIOD_MS) {
+            lastEstopPrint = nowEstop;
+            Serial.printf("[EStop] pin=%s  debounced=%s  asserted=%s\n",
+                          pinLow      ? "LOW " : "HIGH",
+                          debounced   ? "YES"  : "no",
+                          prevAsserted? "YES"  : "no");
         }
 
         vTaskDelay(pdMS_TO_TICKS(10));
@@ -317,7 +352,7 @@ void setup() {
     pinMode(E_STOP_RELAY_DRIVE_PIN, OUTPUT);
     digitalWrite(E_STOP_RELAY_DRIVE_PIN, HIGH);
 
-    pinMode(E_STOP_READ_PIN, INPUT_PULLUP);
+    pinMode(E_STOP_READ_PIN, INPUT_PULLDOWN);
 
     Serial.println("=== 03_rover_i2c_can ===");
 
@@ -325,9 +360,10 @@ void setup() {
     can1.begin();
     can1.setBaudRate(CAN_BAUD_RATE);
 
-    // Create IPC primitives before any task or ISR that uses them
-    xQueueI2C   = xQueueCreate(16, sizeof(uint8_t));         // raw I2C bytes
-    xQueueMotor = xQueueCreate(4,  sizeof(MotorCommand_t));  // decoded commands
+    // Create IPC primitives before any task or ISR that uses them.
+    // Depths are set in config.h — see experiment A and B.
+    xQueueI2C   = xQueueCreate(I2C_QUEUE_DEPTH,   sizeof(uint8_t));
+    xQueueMotor = xQueueCreate(MOTOR_QUEUE_DEPTH,  sizeof(MotorCommand_t));
     xMutexCAN   = xSemaphoreCreateMutex();
     configASSERT(xQueueI2C   != NULL);
     configASSERT(xQueueMotor != NULL);
@@ -339,9 +375,10 @@ void setup() {
 
     // Create tasks.
     // Motor task is created first so hTaskMotor is valid before EStop starts.
-    configASSERT(xTaskCreate(TaskMotorCtrl,  "MotorCtrl",  512, NULL, 2, &hTaskMotor) == pdPASS);
-    configASSERT(xTaskCreate(TaskI2CDecode,  "I2CDecode",  512, NULL, 3, NULL)        == pdPASS);
-    configASSERT(xTaskCreate(TaskEStop,      "EStop",      384, NULL, 5, NULL)        == pdPASS);
+    // Stack sizes are set in config.h — see experiment F.
+    configASSERT(xTaskCreate(TaskMotorCtrl,  "MotorCtrl",  MOTOR_TASK_STACK,  NULL, 2, &hTaskMotor) == pdPASS);
+    configASSERT(xTaskCreate(TaskI2CDecode,  "I2CDecode",  DECODE_TASK_STACK, NULL, 3, NULL)        == pdPASS);
+    configASSERT(xTaskCreate(TaskEStop,      "EStop",      ESTOP_TASK_STACK,  NULL, 5, NULL)        == pdPASS);
 
     Serial.println("Tasks created. Starting scheduler.");
     vTaskStartScheduler();
