@@ -7,6 +7,8 @@
 static uint8_t speedLevel = 1;  // 0-3
 static uint8_t currentMode = GRP_LOCO_STOP;
 
+char* message = "W/A/S/D=Move | E/Q=Speed | X/Space=Stop | U/J/H=Belt Fwd/Rev/Stop | O/L/K=Vert Fwd/Rev/Stop | R/F/V=Door Open/Close/Stop | T/G=Vib On/Off | I=Request Data";
+
 static void printStatus(const char* mode) {
     Serial.print("Mode: ");
     Serial.print(mode);
@@ -122,12 +124,38 @@ static void processKey(char key) {
                 i2c_parent_sendCommand(currentMode, STOP); // off
                 printStatus("OFF depo VIB");
             break;
+        case 'I': {
+            uint8_t buf[3] = {0, 0, 0};
+            uint8_t count = i2c_parent_requestData(buf, 3);
+            if (count == 3) {
+                Serial.print("[DATA] relay=");
+                Serial.print(buf[0] & 0x1 ? "ON" : "OFF");
+                Serial.print(" 3S_low=");
+                Serial.print(buf[0] & 0x2 ? "YES" : "NO");
+                Serial.print(" 6S_low=");
+                Serial.print(buf[0] & 0x4 ? "YES" : "NO");
+                Serial.print(" L=");
+                Serial.print((int8_t)buf[1]);
+                Serial.print("% R=");
+                Serial.print((int8_t)buf[2]);
+                Serial.println("%");
+            } else {
+                Serial.print("[DATA] read failed, got ");
+                Serial.print(count);
+                Serial.println(" bytes");
+            }
+            break;
+        }
+        case 'P':{
+            Serial.println(message);
+            break;
+        }
     }
 }
 
 void keyboard_init() {
     Serial.println("WASD Control Ready");
-    Serial.println("W/A/S/D=Move | E/Q=Speed | X/Space=Stop | U/J/H=Belt Fwd/Rev/Stop | O/L/K=Vert Fwd/Rev/Stop | R/F/V=Door Open/Close/Stop | T/G=Vib On/Off");
+    Serial.println(message);
 }
 
 void keyboard_update() {

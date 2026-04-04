@@ -32,6 +32,11 @@ void SYSTEM_RegisterStopCallbacks(SystemStopLocomotionFn stopLocomotionFn,
     stopExcavation = stopExcavationFn;
 }
 
+// Returns relay pin states packed into one byte: bit0=relay, bit1=3s_low, bit2=6s_low
+uint8_t SYSTEM_GetRelayStatus() {
+    return (uint8_t)(((uint8_t)relay_6s_low << 2) | ((uint8_t)relay_3s_low << 1) | (uint8_t)relay_state);
+}
+
 void SYSTEM_StopAllMotors() {
     if (stopLocomotion != nullptr) {
         stopLocomotion();

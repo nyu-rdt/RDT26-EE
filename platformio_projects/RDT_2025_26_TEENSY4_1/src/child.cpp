@@ -10,6 +10,7 @@
 
 // Forward declarations
 static void receiveEvent(int numBytes);
+static void requestEvent();
 static bool processCommand(uint8_t cmd);
 static void registerHandlers();
 static void sendLocomotion(float left, float right);
@@ -53,6 +54,7 @@ static float slew(float cur, float tgt, float maxDelta) {
 void child_init() {
     Wire2.begin(I2C_CHILD_ADDRESS);
     Wire2.onReceive(receiveEvent);
+    Wire2.onRequest(requestEvent);
 
     SYSTEM_Init();
     CAN_Init();
@@ -79,6 +81,18 @@ static void receiveEvent(int numBytes) {
         latestCommand = Wire2.read();
         newCommand = true;
     }
+}
+
+// Fires when master calls requestFrom() — sends relay status + current motor speeds
+static void requestEvent() {
+    Wire2.write(SYSTEM_GetRelayStatus());
+#if RAMP_UP
+    Wire2.write((uint8_t)((int8_t)(currentLeft  * 100.0f)));
+    Wire2.write((uint8_t)((int8_t)(currentRight * 100.0f)));
+#else
+    Wire2.write((uint8_t)0);
+    Wire2.write((uint8_t)0);
+#endif
 }
 
 bool child_update() {
@@ -247,4 +261,6 @@ static void grp_DepositionVib(uint8_t param) {
 }
 
 
-static void grp_Data(uint8_t param) {}
+static void grp_Data(uint8_t param) {
+    // response is sent by requestEvent() when master calls Wire.requestFrom()
+}

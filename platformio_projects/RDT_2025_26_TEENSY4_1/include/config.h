@@ -6,7 +6,7 @@
 #define SERIAL_DEBUG true
 #define USE_TIMEOUT true
 #define ANALOG_VIB_CONTROL false
-#define USE_OLD_HEX_MAPPING true
+#define USE_OLD_HEX_MAPPING false
 
 #define I2C_CHILD_ADDRESS 0x08
 #define RELAY_DRIVER_PIN 2
