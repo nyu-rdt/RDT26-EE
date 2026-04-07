@@ -154,8 +154,17 @@ void TaskI2CDecode(void *pvParams) {
                 break;
 
             case GRP_EXCAVATION:
-                cmd.excavSpeed  = getDirection(param) * EXCAVATION_DUTY_CYCLE;
-                cmd.hasExcavCmd = true;
+                // Old mapping: params 0-2 = vertical stepper, params 3-5 = belt CAN
+                if (param >= 3) {
+                    cmd.excavSpeed  = getDirection(param - 3) * EXCAVATION_DUTY_CYCLE;
+                    cmd.hasExcavCmd = true;
+                } else {
+                    Serial.println("[I2CDecode] excav vert not implemented");
+                }
+                break;
+
+            case GRP_DEPOSITION:
+                Serial.println("[I2CDecode] deposition not implemented");
                 break;
 
             default:

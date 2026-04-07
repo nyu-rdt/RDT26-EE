@@ -4,7 +4,7 @@
 // Set SIMULATE_CAN to 1 when testing without CAN hardware (no motors/controllers
 // connected). Without termination and ACK the CAN controller goes bus-off, which
 // causes an error-interrupt storm that starves RTOS tasks and breaks E-stop.
-#define SIMULATE_CAN        1
+#define SIMULATE_CAN        0
 #define PRINT_CAN           1       // print CAN messages to Serial even when not simulating
 #define CAN_PRINT_PERIOD_MS 500     // how often to print (ms); reduce for faster updates
 
@@ -90,7 +90,8 @@
 #define GRP_BACKWARD        0x3
 #define GRP_LEFT            0x4
 #define GRP_RIGHT           0x5
-#define GRP_EXCAVATION      0x6     // param 0/1/2 = stop/fwd/rev belt
+#define GRP_EXCAVATION      0x6     // params 0-2 = vert stop/fwd/rev; params 3-5 = belt stop/fwd/rev
+#define GRP_DEPOSITION      0x7     // params 0-2 = door stop/open/close; params 3-5 = vib stop/on/off
 
 // Speed table: param 0-3 → 25 / 50 / 75 / 100% × LOCOMOTION_DUTY_CYCLE
 static inline float getSpeed(uint8_t idx) {
