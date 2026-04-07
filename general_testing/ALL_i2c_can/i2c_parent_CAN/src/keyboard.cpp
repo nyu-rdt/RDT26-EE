@@ -65,63 +65,63 @@ static void processKey(char key) {
             i2c_parent_sendCommand(GRP_LOCO_STOP, STOP);
             printStatus("STOP");
             break;
-        // belt excav control
+        // belt excav control (old mapping: GRP_EXCAVATION params 3-5 = belt stop/fwd/rev)
         case 'U':
-                currentMode = GRP_EXCAVATION_BELT;
-                i2c_parent_sendCommand(currentMode, FORWARD); // forward
+                currentMode = GRP_EXCAVATION;
+                i2c_parent_sendCommand(currentMode, FORWARD + 3); // belt forward
                 printStatus("FORWARD excav BELT");
             break;
         case 'J':
-                currentMode = GRP_EXCAVATION_BELT;
-                i2c_parent_sendCommand(currentMode, REVERSE); // reverse
+                currentMode = GRP_EXCAVATION;
+                i2c_parent_sendCommand(currentMode, REVERSE + 3); // belt reverse
                 printStatus("BACKWARD excav BELT");
-            break; 
+            break;
         case 'H':
-                currentMode = GRP_EXCAVATION_BELT;
-                i2c_parent_sendCommand(currentMode, STOP); // stop
+                currentMode = GRP_EXCAVATION;
+                i2c_parent_sendCommand(currentMode, STOP + 3); // belt stop
                 printStatus("STOP excav BELT");
-            break; 
-        // vertical excav control
+            break;
+        // vertical excav control (old mapping: GRP_EXCAVATION params 0-2 = vert stop/fwd/rev)
         case 'O':
-                currentMode =  GRP_EXCAVATION_VERT;
-                i2c_parent_sendCommand(currentMode, FORWARD); // up
+                currentMode = GRP_EXCAVATION;
+                i2c_parent_sendCommand(currentMode, FORWARD); // vert up
                 printStatus("UP excav");
             break;
         case 'L':
-                currentMode = GRP_EXCAVATION_VERT;
-                i2c_parent_sendCommand(currentMode, REVERSE); // down
+                currentMode = GRP_EXCAVATION;
+                i2c_parent_sendCommand(currentMode, REVERSE); // vert down
                 printStatus("DOWN excav");
-            break; 
+            break;
         case 'K':
-                currentMode = GRP_EXCAVATION_VERT;
-                i2c_parent_sendCommand(currentMode, STOP); // stop
+                currentMode = GRP_EXCAVATION;
+                i2c_parent_sendCommand(currentMode, STOP); // vert stop
                 printStatus("STOP excav");
-            break; 
-        // deposition door control
+            break;
+        // deposition door control (old mapping: GRP_DEPOSITION params 0-2 = door stop/open/close)
         case 'R':
-                currentMode = GRP_DEPOSITION_DOOR;
-                i2c_parent_sendCommand(currentMode, FORWARD); // open
+                currentMode = GRP_DEPOSITION;
+                i2c_parent_sendCommand(currentMode, FORWARD); // door open
                 printStatus("OPEN depo DOOR");
             break;
         case 'F':
-                currentMode = GRP_DEPOSITION_DOOR;
-                i2c_parent_sendCommand(currentMode, REVERSE); // close
+                currentMode = GRP_DEPOSITION;
+                i2c_parent_sendCommand(currentMode, REVERSE); // door close
                 printStatus("CLOSE depo DOOR");
             break;
         case 'V':
-                currentMode = GRP_DEPOSITION_DOOR;
-                i2c_parent_sendCommand(currentMode, STOP); // stop
+                currentMode = GRP_DEPOSITION;
+                i2c_parent_sendCommand(currentMode, STOP); // door stop
                 printStatus("STOP depo DOOR");
             break;
-        // deposition vibration control
+        // deposition vibration control (old mapping: GRP_DEPOSITION params 3-5 = vib stop/on/rev)
         case 'T':
-                currentMode = GRP_DEPOSITION_VIB;
-                i2c_parent_sendCommand(currentMode, FORWARD); // on
+                currentMode = GRP_DEPOSITION;
+                i2c_parent_sendCommand(currentMode, FORWARD + 3); // vib on
                 printStatus("ON depo VIB");
             break;
         case 'G':
-                currentMode = GRP_DEPOSITION_VIB;
-                i2c_parent_sendCommand(currentMode, STOP); // off
+                currentMode = GRP_DEPOSITION;
+                i2c_parent_sendCommand(currentMode, STOP + 3); // vib off
                 printStatus("OFF depo VIB");
             break;
         case 'I': {
