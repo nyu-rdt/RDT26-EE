@@ -4,7 +4,7 @@ flags in config are mostly for testing. could move thos to test folder somehow p
 
 ### if youre only testing:
 0. connect through usb to the i2c **parent**, power child on by connecting the 3S battery
-1. ensure i2c wiring is correct (sda to sda (18), scl to scl (19), gnd to gnd)
+1. ensure i2c wiring is correct (sda to sda, scl to scl, gnd to gnd)
 2. if code is already uploaded to both mcus just open serial monitor with `pio device monitor`
 3. if you need to upload code, use the commands below. you can open two serial monitors at once to see both sides of the i2c communication and join them in vscode to see them together, or do it one at a time (in that case upload the main code first)
 
@@ -22,7 +22,7 @@ pio run -t upload -d platformio_projects/RDT_2025_26_TEENSY4_1 --upload-port COM
 #### upload test file:
 
 ```bash
-pio run -t upload -d general_testing/ALL_i2c_can/i2c_parent_CAN --upload-port COM4
+pio run -t upload -d platformio_projects/i2c_parent --upload-port COM4
 ```
 (replace COM3/4 with your actual ports - you can see which ones are connected in port menu under you terminal in vscode)
 
@@ -31,7 +31,7 @@ sometimes this will act up, then disconnect the other usb from your laptop while
 
 ## corresponding test file:
 
-testing project for parent side i2c is [/general_testing\ALL_i2c_can\i2c_parent_CAN](./../general_testing/ALL_i2c_can/i2c_parent_CAN) - lets you send loco commands via serial (WASD in serial monitor)
+testing project for parent side i2c is [/platformio_projects/i2c_parent](./../platformio_projects/i2c_parent) - lets you send loco commands via serial (WASD in serial monitor)
 
 ## opening serial monitor(s):
 ```bash
