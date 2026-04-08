@@ -7,6 +7,9 @@
 #include "depo_door_driver.h"
 #include "vib_motor_driver.h"
 #include "system.h"
+#if CURRENT_SENSE_ENABLED
+#include "current_sensors.h"
+#endif
 
 // Forward declarations
 static void receiveEvent(int numBytes);
@@ -39,6 +42,11 @@ volatile bool newCommand = false;
 static unsigned long lastCommandTime = 0;
 static GroupHandler groups[16] = {nullptr};
 
+#if CURRENT_SENSE_ENABLED
+static float currents[NUM_CURRENT_SENSORS] = {0};
+static unsigned long lastCurrentMs = 0;
+#endif
+
 #if RAMP_UP
 static float currentLeft = 0.0f, currentRight = 0.0f;
 static float targetLeft = 0.0f, targetRight = 0.0f;
@@ -61,6 +69,10 @@ void child_init() {
     STEPPER_Init();
     DEPO_DOOR_Init();
     VIB_Init();
+#if CURRENT_SENSE_ENABLED
+    CURRENT_SENSORS_Init();
+    lastCurrentMs = millis();
+#endif
     SYSTEM_RegisterStopCallbacks(stopLocomotion, stopExcavation);
     registerHandlers();
 
@@ -83,7 +95,9 @@ static void receiveEvent(int numBytes) {
     }
 }
 
-// Fires when master calls requestFrom() — sends relay status + current motor speeds
+// Fires when master calls requestFrom() — sends relay status + current motor speeds.
+// With CURRENT_SENSE_ENABLED the master must request 3 + NUM_CURRENT_SENSORS bytes;
+// each current byte is whole amps (0–20), matching the sensor range.
 static void requestEvent() {
     Wire2.write(SYSTEM_GetRelayStatus());
 #if RAMP_UP
@@ -92,6 +106,11 @@ static void requestEvent() {
 #else
     Wire2.write((uint8_t)0);
     Wire2.write((uint8_t)0);
+#endif
+#if CURRENT_SENSE_ENABLED
+    for (int i = 0; i < NUM_CURRENT_SENSORS; i++) {
+        Wire2.write((uint8_t)(currents[i]*10));
+    }
 #endif
 }
 
@@ -130,6 +149,13 @@ bool child_update() {
     }
 #endif
     STEPPER_Update(EXCAVATION_STEP_PERIOD); // manages the stepper motor
+
+#if CURRENT_SENSE_ENABLED
+    if (millis() - lastCurrentMs >= CURRENT_PERIOD_MS) {
+        lastCurrentMs = millis();
+        CURRENT_SENSORS_Update(currents);
+    }
+#endif
 
     return false;
 

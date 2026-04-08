@@ -36,4 +36,16 @@
 // Build single-byte command expected by i2c_can_child_tony.
 #define BUILD_I2C_CMD(group, param) ((((group) & 0x0F) << 4) | ((param) & 0x0F))
 
+// Must match CURRENT_SENSE_ENABLED in the child firmware.
+// When true, 'I' requests 8 extra current bytes after the 3 standard bytes.
+#define CURRENT_SENSE_ENABLED false
+#define NUM_CURRENT_SENSORS   8
+
+#define BASE_RESPONSE_BYTES 3
+#if CURRENT_SENSE_ENABLED
+  #define RESPONSE_BYTES (BASE_RESPONSE_BYTES + NUM_CURRENT_SENSORS)
+#else
+  #define RESPONSE_BYTES BASE_RESPONSE_BYTES
+#endif
+
 #endif

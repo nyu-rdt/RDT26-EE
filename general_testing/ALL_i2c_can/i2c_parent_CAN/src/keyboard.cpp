@@ -125,9 +125,9 @@ static void processKey(char key) {
                 printStatus("OFF depo VIB");
             break;
         case 'I': {
-            uint8_t buf[3] = {0, 0, 0};
-            uint8_t count = i2c_parent_requestData(buf, 3);
-            if (count == 3) {
+            uint8_t buf[RESPONSE_BYTES] = {};
+            uint8_t count = i2c_parent_requestData(buf, RESPONSE_BYTES);
+            if (count >= BASE_RESPONSE_BYTES) {
                 Serial.print("[DATA] relay=");
                 Serial.print(buf[0] & 0x1 ? "ON" : "OFF");
                 Serial.print(" 3S_low=");
@@ -138,10 +138,26 @@ static void processKey(char key) {
                 Serial.print((int8_t)buf[1]);
                 Serial.print("% R=");
                 Serial.print((int8_t)buf[2]);
-                Serial.println("%");
+                Serial.print("%");
+#if CURRENT_SENSE_ENABLED
+                Serial.print(" | currents(A):");
+                for (uint8_t i = 0; i < NUM_CURRENT_SENSORS; i++) {
+                    Serial.print(" CH");
+                    Serial.print(i);
+                    Serial.print("=");
+                    if (i + BASE_RESPONSE_BYTES < count) {
+                        Serial.print(buf[BASE_RESPONSE_BYTES + i] / 10.0f);
+                    } else {
+                        Serial.print("ERR");
+                    }
+                }
+#endif
+                Serial.println();
             } else {
                 Serial.print("[DATA] read failed, got ");
                 Serial.print(count);
+                Serial.print("/");
+                Serial.print(RESPONSE_BYTES);
                 Serial.println(" bytes");
             }
             break;
