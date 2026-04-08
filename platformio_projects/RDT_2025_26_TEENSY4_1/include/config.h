@@ -7,12 +7,24 @@
 #define USE_TIMEOUT true
 #define ANALOG_VIB_CONTROL false
 #define USE_OLD_HEX_MAPPING true
+// Raw current readings — NOT for production. Data processing + status encoding
+// happens in SW before this ships. Enable only for sensor bring-up / debugging.
+#define CURRENT_SENSE_ENABLED false
 
 #define I2C_CHILD_ADDRESS 0x08
 #define RELAY_DRIVER_PIN 2
 #define RELAY_READ_PIN 3
 #define RELAY_3S_LOW_PIN 4
 #define RELAY_6S_LOW_PIN 5
+
+#define NUM_CURRENT_SENSORS 8
+#define CURRENT_INPUT_PIN 26
+#define CURRENT_SELECT_PIN_0 27
+#define CURRENT_SELECT_PIN_1 28
+#define CURRENT_SELECT_PIN_2 29
+// Sensor: 0-20A maps to 0-2V. ADC: 0-3.3V -> 0-1023. Formula: A = raw * (3.3/1023) * (20/2)
+#define CURRENT_SCALING (33.0f / 1023.0f)
+#define CURRENT_PERIOD_MS 200
 
 
 #define CAN_BAUD_RATE 500000
