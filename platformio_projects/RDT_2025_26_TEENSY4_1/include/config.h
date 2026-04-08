@@ -25,6 +25,8 @@
 // Sensor: 0-20A maps to 0-2V. ADC: 0-3.3V -> 0-1023. Formula: A = raw * (3.3/1023) * (20/2)
 #define CURRENT_SCALING (33.0f / 1023.0f)
 #define CURRENT_PERIOD_MS 200
+#define CHANNEL_SETTLE_MS 10
+
 
 
 #define CAN_BAUD_RATE 500000

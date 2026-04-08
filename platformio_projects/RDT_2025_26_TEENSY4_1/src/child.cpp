@@ -109,7 +109,7 @@ static void requestEvent() {
 #endif
 #if CURRENT_SENSE_ENABLED
     for (int i = 0; i < NUM_CURRENT_SENSORS; i++) {
-        Wire2.write((uint8_t)currents[i]);
+        Wire2.write((uint8_t)(currents[i]*10));
     }
 #endif
 }
