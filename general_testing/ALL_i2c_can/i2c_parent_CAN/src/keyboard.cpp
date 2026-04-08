@@ -146,7 +146,7 @@ static void processKey(char key) {
                     Serial.print(i);
                     Serial.print("=");
                     if (i + BASE_RESPONSE_BYTES < count) {
-                        Serial.print(buf[BASE_RESPONSE_BYTES + i]);
+                        Serial.print(buf[BASE_RESPONSE_BYTES + i] / 10.0f);
                     } else {
                         Serial.print("ERR");
                     }
