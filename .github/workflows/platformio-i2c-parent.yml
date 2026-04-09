@@ -4,12 +4,12 @@ on:
   push:
     branches: [main, master]
     paths:
-      - "general_testing/ALL_i2c_can/i2c_parent_CAN/**"
+      - "platformio_projects/i2c_parent/**"
       - ".github/workflows/platformio-i2c-parent.yml"
   pull_request:
     branches: [main, master]
     paths:
-      - "general_testing/ALL_i2c_can/i2c_parent_CAN/**"
+      - "platformio_projects/i2c_parent/**"
       - ".github/workflows/platformio-i2c-parent.yml"
   workflow_dispatch:
 
@@ -19,7 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     defaults:
       run:
-        working-directory: general_testing/ALL_i2c_can/i2c_parent_CAN
+        working-directory: platformio_projects/i2c_parent
 
     steps:
       - name: Checkout
@@ -33,12 +33,12 @@ jobs:
       - name: Install PlatformIO
         run: pip install platformio
 
-      - name: Compile i2c_parent_CAN
+      - name: Compile i2c_parent
         run: pio run
 
       - name: Add summary
         if: always()
         run: |
-          echo "## i2c_parent_CAN" >> "$GITHUB_STEP_SUMMARY"
-          echo '- Path: `general_testing/ALL_i2c_can/i2c_parent_CAN`' >> "$GITHUB_STEP_SUMMARY"
+          echo "## i2c_parent" >> "$GITHUB_STEP_SUMMARY"
+          echo '- Path: `platformio_projects/i2c_parent`' >> "$GITHUB_STEP_SUMMARY"
           echo "- Result: ${{ job.status }}" >> "$GITHUB_STEP_SUMMARY"
