@@ -127,30 +127,25 @@ static void processKey(char key) {
         case 'I': {
             uint8_t buf[RESPONSE_BYTES] = {};
             uint8_t count = i2c_parent_requestData(buf, RESPONSE_BYTES);
-            if (count >= BASE_RESPONSE_BYTES) {
+            if (count >= RESPONSE_BYTES) {
+                // Packet layout matches child firmware DATA_PACKET_SIZE (18 bytes):
+                //   [0-7]  motor currents, [8-9] encoders, [16] flags (bit0=relay)
                 Serial.print("[DATA] relay=");
-                Serial.print(buf[0] & 0x1 ? "ON" : "OFF");
-                Serial.print(" 3S_low=");
-                Serial.print(buf[0] & 0x2 ? "YES" : "NO");
-                Serial.print(" 6S_low=");
-                Serial.print(buf[0] & 0x4 ? "YES" : "NO");
-                Serial.print(" L=");
-                Serial.print((int8_t)buf[1]);
-                Serial.print("% R=");
-                Serial.print((int8_t)buf[2]);
-                Serial.print("%");
+                Serial.print(buf[16] & 0x1 ? "ON" : "OFF");
 #if CURRENT_SENSE_ENABLED
                 Serial.print(" | currents(A):");
                 for (uint8_t i = 0; i < NUM_CURRENT_SENSORS; i++) {
                     Serial.print(" CH");
                     Serial.print(i);
                     Serial.print("=");
-                    if (i + BASE_RESPONSE_BYTES < count) {
-                        Serial.print(buf[BASE_RESPONSE_BYTES + i] / 10.0f);
-                    } else {
-                        Serial.print("ERR");
-                    }
+                    Serial.print(buf[i] * (20.0f / 255.0f), 1);
                 }
+#endif
+#if ROTARY_ENCODERS_ENABLED
+                Serial.print(" | encoders(deg): L=");
+                Serial.print(buf[8] * (360.0f / 255.0f), 1);
+                Serial.print(" R=");
+                Serial.print(buf[9] * (360.0f / 255.0f), 1);
 #endif
                 Serial.println();
             } else {

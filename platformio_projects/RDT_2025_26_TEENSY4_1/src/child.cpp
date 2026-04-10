@@ -10,6 +10,9 @@
 #if CURRENT_SENSE_ENABLED
 #include "current_sensors.h"
 #endif
+#if ROTARY_ENCODERS_ENABLED
+#include "rotary_encoders.h"
+#endif
 
 // Forward declarations
 static void receiveEvent(int numBytes);
@@ -73,6 +76,9 @@ void child_init() {
     CURRENT_SENSORS_Init();
     lastCurrentMs = millis();
 #endif
+#if ROTARY_ENCODERS_ENABLED
+    ROTARY_ENCODER_Init();
+#endif
     SYSTEM_RegisterStopCallbacks(stopLocomotion, stopExcavation);
     registerHandlers();
 
@@ -125,8 +131,14 @@ static void requestEvent() {
     }
 #endif
 
-    pkt[8]  = 0xFF; // left_encoder  — no driver yet
-    pkt[9]  = 0xFF; // right_encoder — no driver yet
+#if ROTARY_ENCODERS_ENABLED
+    // Pack angle as 0-255 = 0-360° (same encoding used by parent keyboard.cpp display)
+    pkt[8] = (uint8_t)(ROTARY_ENCODER_getEncoderAngle(1) * 255.0f / 360.0f);
+    pkt[9] = (uint8_t)(ROTARY_ENCODER_getEncoderAngle(2) * 255.0f / 360.0f);
+#else
+    pkt[8]  = 0xFF; // left_encoder  — disabled
+    pkt[9]  = 0xFF; // right_encoder — disabled
+#endif
 
     pkt[10] = 0xFF; // load_cell[0]  — no driver yet
     pkt[11] = 0xFF; // load_cell[1]  — no driver yet

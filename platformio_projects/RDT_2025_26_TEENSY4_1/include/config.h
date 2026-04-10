@@ -2,22 +2,32 @@
 #define CONFIG_H
 
 // setting flags:
-#define RAMP_UP true
-#define SERIAL_DEBUG true
-#define USE_TIMEOUT true
-#define ANALOG_VIB_CONTROL false
-#define USE_OLD_HEX_MAPPING true
+#define RAMP_UP 1
+#define SERIAL_DEBUG 1
+#define USE_TIMEOUT 1
+#define ANALOG_VIB_CONTROL 0
+#define USE_OLD_HEX_MAPPING 1
 // Raw current readings — NOT for production. Data processing + status encoding
 // happens in SW before this ships. Enable only for sensor bring-up / debugging.
-#define CURRENT_SENSE_ENABLED false
+#define CURRENT_SENSE_ENABLED 0
 
 // Send the full 18-byte SW data packet on every requestEvent().
 // Fields with no driver yet are filled with 0xFF so SW always gets the right
 // packet size and can detect unimplemented sensors by their sentinel value.
-#define STUB_MISSING_SENSORS true
+#define STUB_MISSING_SENSORS 1
 
 // Size of the SW telemetry packet (bytes). Must match SW expectation.
 #define DATA_PACKET_SIZE 18
+
+#define ROTARY_ENCODERS_ENABLED 1
+
+#define ENC1_A 21
+#define ENC1_B 20
+#define ENC2_A 23
+#define ENC2_B 22
+
+#define ENCODER_COUNTS_PER_REV 8192.0f
+#define DEGREES_PER_COUNT (360.0f / ENCODER_COUNTS_PER_REV)
 
 #define I2C_CHILD_ADDRESS 0x08
 #define RELAY_DRIVER_PIN 2
@@ -35,8 +45,6 @@
 #define CURRENT_PERIOD_MS 200
 #define CHANNEL_SETTLE_MS 10
 
-
-
 #define CAN_BAUD_RATE 500000
 #define COMMAND_TIMEOUT_MS 500
 
@@ -47,6 +55,19 @@
 #define LOCOMOTION_DUTY_CYCLE 0.33f
 #define EXCAVATION_DUTY_CYCLE 0.4f
 #define EXCAVATION_STEP_PERIOD 800 // microseconds, time between each step change in excavation speed
+
+
+#define STEPPER_DIR_PIN 6
+#define STEPPER_STEP_PIN 7
+#define STEPPER_ENABLE_PIN 8
+
+// Microstepping pins on DRV8825:
+#define STEPPER_M0_PIN 10
+#define STEPPER_M1_PIN 11
+#define STEPPER_M2_PIN 12
+
+#define STEPS_PER_REVOLUTION 200  // full-step count
+#define MICROSTEPPING_FACTOR 1  // set this to 1,2,4,8,16,32 depending on desired microstepping mode
 
 // Ramping parameters
 #define TX_PERIOD_MS 20

@@ -42,3 +42,4 @@ void CURRENT_SENSORS_Update( float *currents ) {
         last_channel_switch_ms = now;
     }
 }
+
