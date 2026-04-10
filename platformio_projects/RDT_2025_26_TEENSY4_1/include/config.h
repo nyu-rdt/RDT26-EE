@@ -4,6 +4,11 @@
 // setting flags:
 #define RAMP_UP 1
 #define SERIAL_DEBUG 1
+// When PLOT_DATA=1, outputs sensor data in Arduino Serial Plotter format.
+// SERIAL_DEBUG and PLOT_DATA are mutually exclusive — enabling both wastes bandwidth
+// and corrupts the plotter stream with debug text. Set only one to 1 at a time.
+#define PLOT_DATA 0
+#define PLOT_PERIOD_MS 50
 #define USE_TIMEOUT 1
 #define ANALOG_VIB_CONTROL 0
 #define USE_OLD_HEX_MAPPING 1
@@ -33,8 +38,8 @@
 
 #define ENC1_A 21
 #define ENC1_B 20
-#define ENC2_A 23
-#define ENC2_B 22
+#define ENC2_A 19
+#define ENC2_B 18
 
 #define ENCODER_COUNTS_PER_REV 8192.0f
 #define DEGREES_PER_COUNT (360.0f / ENCODER_COUNTS_PER_REV)

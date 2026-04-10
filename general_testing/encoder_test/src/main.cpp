@@ -17,8 +17,8 @@
 // ── Pin config (mirror of main firmware config.h) ────────────────────────────
 #define ENC1_A 21
 #define ENC1_B 20
-#define ENC2_A 23
-#define ENC2_B 22
+#define ENC2_A 19
+#define ENC2_B 18
 
 // 8192 counts/rev (4x quadrature × 2048 PPR)
 #define ENCODER_COUNTS_PER_REV 8192.0f

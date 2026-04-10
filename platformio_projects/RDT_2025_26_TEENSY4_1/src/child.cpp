@@ -50,6 +50,10 @@ static float currents[NUM_CURRENT_SENSORS] = {0};
 static unsigned long lastCurrentMs = 0;
 #endif
 
+#if PLOT_DATA
+static unsigned long lastPlotMs = 0;
+#endif
+
 #if RAMP_UP
 static float currentLeft = 0.0f, currentRight = 0.0f;
 static float targetLeft = 0.0f, targetRight = 0.0f;
@@ -86,15 +90,15 @@ void child_init() {
     currentLeft = currentRight = targetLeft = targetRight = 0.0f;
     currentExcav = targetExcav = 0.0f;
     lastTxMs = millis();
-#if SERIAL_DEBUG
+#if SERIAL_DEBUG && !PLOT_DATA
     Serial.println("Ready (ramping ON)");
 #endif
 #else
     CAN_SendLocomotion(0.0f, 0.0f);
     CAN_SendExcavation(0.0f);
-#if SERIAL_DEBUG
+#if SERIAL_DEBUG && !PLOT_DATA
     Serial.println("Ready");
-#endif 
+#endif
 #endif
 }
 
@@ -177,7 +181,7 @@ bool child_update() {
     if (newCommand) {
         newCommand = false;
         lastCommandTime = millis();
-#if SERIAL_DEBUG
+#if SERIAL_DEBUG && !PLOT_DATA
         Serial.print("cmd: 0x");
         Serial.println(latestCommand, HEX);
 #endif
@@ -186,7 +190,7 @@ bool child_update() {
 
 #if USE_TIMEOUT
     if (millis() - lastCommandTime > COMMAND_TIMEOUT_MS) {
-#if SERIAL_DEBUG
+#if SERIAL_DEBUG && !PLOT_DATA
         Serial.println("Command timeout");
 #endif
         SYSTEM_StopAllMotors();
@@ -211,6 +215,31 @@ bool child_update() {
     if (millis() - lastCurrentMs >= CURRENT_PERIOD_MS) {
         lastCurrentMs = millis();
         CURRENT_SENSORS_Update(currents);
+    }
+#endif
+
+#if PLOT_DATA
+    if (millis() - lastPlotMs >= PLOT_PERIOD_MS) {
+        lastPlotMs = millis();
+#if CURRENT_SENSE_ENABLED
+        Serial.print("I0:"); Serial.print(currents[0], 2); Serial.print("\t");
+        Serial.print("I1:"); Serial.print(currents[1], 2); Serial.print("\t");
+        Serial.print("I2:"); Serial.print(currents[2], 2); Serial.print("\t");
+        Serial.print("I3:"); Serial.print(currents[3], 2); Serial.print("\t");
+        Serial.print("I4:"); Serial.print(currents[4], 2); Serial.print("\t");
+        Serial.print("I5:"); Serial.print(currents[5], 2); Serial.print("\t");
+        Serial.print("I6:"); Serial.print(currents[6], 2); Serial.print("\t");
+        Serial.print("I7:"); Serial.print(currents[7], 2); Serial.print("\t");
+#endif
+#if ROTARY_ENCODERS_ENABLED
+        Serial.print("Enc1:"); Serial.print(ROTARY_ENCODER_getEncoderAngle(1), 1); Serial.print("\t");
+        Serial.print("Enc2:"); Serial.print(ROTARY_ENCODER_getEncoderAngle(2), 1); Serial.print("\t");
+#endif
+#if STRING_POT_ENABLED
+        // TODO: replace with string pot driver read when available
+        Serial.print("StrPot:"); Serial.print(analogRead(A0)); Serial.print("\t");
+#endif
+        Serial.println();
     }
 #endif
 
