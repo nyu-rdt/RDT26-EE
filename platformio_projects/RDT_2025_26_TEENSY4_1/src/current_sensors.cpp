@@ -30,7 +30,7 @@ void CURRENT_SENSORS_Update( float *currents ) {
         currents[current_read_index] = rawValue * CURRENT_SCALING;
         
         // Move to next channel
-        if(current_read_index++ == NUM_CURRENT_SENSORS) {
+        if(++current_read_index == NUM_CURRENT_SENSORS) {
             current_read_index = 0;
         }
         
