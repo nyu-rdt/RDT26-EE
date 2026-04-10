@@ -76,7 +76,7 @@ void STEPPER_Update(unsigned long periodMicroseconds) {
         unsigned long currentTime = micros();
         if (currentTime - lastStepTime >= periodMicroseconds/2) {
             isStepPinHigh = !isStepPinHigh; 
-            digitalWrite(stepPin, isStepPinHigh ? HIGH : LOW);
+            digitalWrite(STEPPER_STEP_PIN, isStepPinHigh ? HIGH : LOW);
             lastStepTime = currentTime;
         }
     }
