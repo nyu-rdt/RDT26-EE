@@ -95,10 +95,55 @@ static void receiveEvent(int numBytes) {
     }
 }
 
-// Fires when master calls requestFrom() — sends relay status + current motor speeds.
-// With CURRENT_SENSE_ENABLED the master must request 3 + NUM_CURRENT_SENSORS bytes;
-// each current byte is whole amps (0–20), matching the sensor range.
+// Fires when master calls requestFrom() — always sends DATA_PACKET_SIZE bytes.
+//
+// Packet layout (18 bytes):
+//   [0-7]  motor_currents[8]  uint8, 0-255 = 0-20A
+//   [8]    left_encoder       uint8
+//   [9]    right_encoder      uint8
+//   [10-13] load_cells[4]     uint8 each
+//   [14]   string_pot         uint8 (conveyor position)
+//   [15]   gate_pos           uint8
+//   [16]   flags              uint8 (bit field, bit0 = relay status)
+//   [17]   fixes_attempted    uint8
+//
+// With STUB_MISSING_SENSORS true, any field without a driver sends 0xFF so SW
+// always receives exactly DATA_PACKET_SIZE bytes and can detect unimplemented
+// sensors by their sentinel value.
 static void requestEvent() {
+#if STUB_MISSING_SENSORS
+    uint8_t pkt[DATA_PACKET_SIZE];
+
+    // Bytes 0-7: motor currents (0-255 = 0-20A, scale = 255/20 = 12.75)
+#if CURRENT_SENSE_ENABLED
+    for (int i = 0; i < NUM_CURRENT_SENSORS; i++) {
+        pkt[i] = (uint8_t)(currents[i] * 12.75f);
+    }
+#else
+    for (int i = 0; i < NUM_CURRENT_SENSORS; i++) {
+        pkt[i] = 0xFF;
+    }
+#endif
+
+    pkt[8]  = 0xFF; // left_encoder  — no driver yet
+    pkt[9]  = 0xFF; // right_encoder — no driver yet
+
+    pkt[10] = 0xFF; // load_cell[0]  — no driver yet
+    pkt[11] = 0xFF; // load_cell[1]  — no driver yet
+    pkt[12] = 0xFF; // load_cell[2]  — no driver yet
+    pkt[13] = 0xFF; // load_cell[3]  — no driver yet
+
+    pkt[14] = 0xFF; // string_pot (conveyor_pos) — no driver yet
+    pkt[15] = 0xFF; // gate_pos                  — no driver yet
+
+    // Byte 16: flags — bit 0 = relay status (rest reserved/0 for now)
+    pkt[16] = SYSTEM_GetRelayStatus() & 0x01;
+
+    pkt[17] = 0xFF; // fixes_attempted — no driver yet
+
+    Wire2.write(pkt, DATA_PACKET_SIZE);
+#else
+    // Legacy compact format (pre-SW-packet): relay + motor speeds [+ currents]
     Wire2.write(SYSTEM_GetRelayStatus());
 #if RAMP_UP
     Wire2.write((uint8_t)((int8_t)(currentLeft  * 100.0f)));
@@ -109,9 +154,10 @@ static void requestEvent() {
 #endif
 #if CURRENT_SENSE_ENABLED
     for (int i = 0; i < NUM_CURRENT_SENSORS; i++) {
-        Wire2.write((uint8_t)(currents[i]*10));
+        Wire2.write((uint8_t)(currents[i] * 10));
     }
 #endif
+#endif // STUB_MISSING_SENSORS
 }
 
 bool child_update() {

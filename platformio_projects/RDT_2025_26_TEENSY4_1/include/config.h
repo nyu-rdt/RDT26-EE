@@ -11,6 +11,14 @@
 // happens in SW before this ships. Enable only for sensor bring-up / debugging.
 #define CURRENT_SENSE_ENABLED false
 
+// Send the full 18-byte SW data packet on every requestEvent().
+// Fields with no driver yet are filled with 0xFF so SW always gets the right
+// packet size and can detect unimplemented sensors by their sentinel value.
+#define STUB_MISSING_SENSORS true
+
+// Size of the SW telemetry packet (bytes). Must match SW expectation.
+#define DATA_PACKET_SIZE 18
+
 #define I2C_CHILD_ADDRESS 0x08
 #define RELAY_DRIVER_PIN 2
 #define RELAY_READ_PIN 3
