@@ -12,41 +12,45 @@
 #include "stepper_driver.h"
 #include "config.h" 
 
-#define dirPin 6
-#define stepPin 7
-#define enable 8
+#define STEPPER_DIR_PIN 6
+#define STEPPER_STEP_PIN 7
+#define STEPPER_ENABLE_PIN 8
 
 // Microstepping pins on DRV8825:
-#define M0 10
-#define M1 11
-#define M2 12
+#define STEPPER_M0_PIN 10
+#define STEPPER_M1_PIN 11
+#define STEPPER_M2_PIN 12
 
-#define stepsPerRevolution 200  // full-step count
-#define microSteppingFactor 1  // set this to 1,2,4,8,16,32 depending on desired microstepping mode
+#define STEPS_PER_REVOLUTION 200  // full-step count
+#define MICROSTEPPING_FACTOR 1  // set this to 1,2,4,8,16,32 depending on desired microstepping mode
 
-bool enablebool = false; // global variable to track if motor should be enabled
+bool STEPPER_enable = false; // global variable to track if motor should be enabled
 unsigned long lastStepTime = 0; // track last step time for timing control, in microseconds
 bool isStepPinHigh = false; // track state of step pin for timing control
 
 void STEPPER_Init() {
-  pinMode(dirPin, OUTPUT);
-  pinMode(stepPin, OUTPUT);
-  pinMode(M0, OUTPUT);
-  pinMode(M1, OUTPUT);
-  pinMode(M2, OUTPUT);
-  setMicrostep(microSteppingFactor); 
+    pinMode(STEPPER_DIR_PIN, OUTPUT);
+    pinMode(STEPPER_STEP_PIN, OUTPUT);
+    pinMode(STEPPER_ENABLE_PIN, OUTPUT);
+    pinMode(STEPPER_M0_PIN, OUTPUT);
+    pinMode(STEPPER_M1_PIN, OUTPUT);
+    pinMode(STEPPER_M2_PIN, OUTPUT);
+    setMicrostep(MICROSTEPPING_FACTOR); 
+
+    // Start with motor disabled
+    digitalWrite(STEPPER_ENABLE_PIN, HIGH); // HIGH to disable
 }
 
 void setMicrostep(int mode) {
   // mode = 1, 2, 4, 8, 16, 32
   // set the step mode - full, 1/2, 1/4, 1/8, 1/16, or 1/32 step
   switch (mode) {
-    case 1:   digitalWrite(M0, LOW);  digitalWrite(M1, LOW);  digitalWrite(M2, LOW);  break;
-    case 2:   digitalWrite(M0, HIGH); digitalWrite(M1, LOW);  digitalWrite(M2, LOW);  break;
-    case 4:   digitalWrite(M0, LOW);  digitalWrite(M1, HIGH); digitalWrite(M2, LOW);  break;
-    case 8:   digitalWrite(M0, HIGH); digitalWrite(M1, HIGH); digitalWrite(M2, LOW);  break;
-    case 16:  digitalWrite(M0, LOW);  digitalWrite(M1, LOW);  digitalWrite(M2, HIGH); break;
-    case 32:  digitalWrite(M0, HIGH); digitalWrite(M1, LOW);  digitalWrite(M2, HIGH); break;
+    case 1:   digitalWrite(STEPPER_M0_PIN, LOW);  digitalWrite(STEPPER_M1_PIN, LOW);  digitalWrite(STEPPER_M2_PIN, LOW);  break;
+    case 2:   digitalWrite(STEPPER_M0_PIN, HIGH); digitalWrite(STEPPER_M1_PIN, LOW);  digitalWrite(STEPPER_M2_PIN, LOW);  break;
+    case 4:   digitalWrite(STEPPER_M0_PIN, LOW);  digitalWrite(STEPPER_M1_PIN, HIGH); digitalWrite(STEPPER_M2_PIN, LOW);  break;
+    case 8:   digitalWrite(STEPPER_M0_PIN, HIGH); digitalWrite(STEPPER_M1_PIN, HIGH); digitalWrite(STEPPER_M2_PIN, LOW);  break;
+    case 16:  digitalWrite(STEPPER_M0_PIN, LOW);  digitalWrite(STEPPER_M1_PIN, LOW);  digitalWrite(STEPPER_M2_PIN, HIGH); break;
+    case 32:  digitalWrite(STEPPER_M0_PIN, HIGH); digitalWrite(STEPPER_M1_PIN, LOW);  digitalWrite(STEPPER_M2_PIN, HIGH); break;
   }
 }
 
@@ -54,12 +58,13 @@ void setMicrostep(int mode) {
 // enable stores if the motor should be on or not
 // we set dirPin based on direction input, qhich directly controlls motor
 void STEPPER_SetDirection(int direction) {
-    enablebool = (direction==0) ? false : true; // sets enable true if moving, false if stopped
-    (enablebool) ? (digitalWrite(enable, LOW)) : (digitalWrite(enable, HIGH)); // enable must be HIGH when NOT moving
+    // // S = (direction==0) ? false : true; // sets enable true if moving, false if stopped
+    STEPPER_enable = (direction!=0);
+    (STEPPER_enable) ? (digitalWrite(STEPPER_ENABLE_PIN, LOW)) : (digitalWrite(STEPPER_ENABLE_PIN, HIGH)); // enable must be HIGH when NOT moving
     if (direction == 1) { // UP
-        digitalWrite(dirPin, LOW);
+        digitalWrite(STEPPER_DIR_PIN, LOW);
     } else if (direction == -1) { // DOWN
-        digitalWrite(dirPin, HIGH);
+        digitalWrite(STEPPER_DIR_PIN, HIGH);
     }
 }
 
@@ -67,7 +72,7 @@ void STEPPER_SetDirection(int direction) {
 // using micros so it doesnt have to stop the rest of the program 
 // every period/2 it toggels the output, giving us a rising edge every period, which steps the motor
 void STEPPER_Update(unsigned long periodMicroseconds) {
-    if (enablebool) {
+    if (STEPPER_enable) {
         unsigned long currentTime = micros();
         if (currentTime - lastStepTime >= periodMicroseconds/2) {
             isStepPinHigh = !isStepPinHigh; 

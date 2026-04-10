@@ -24,20 +24,21 @@ void ROTARY_ENCODER_Init() {
 
 
 long ROTARY_ENCODER_getCount(uint8_t encoderNum) {
-    noInterrupts();
+    uint32_t primask = __get_PRIMASK();
+    __disable_irq();
     long count;
     switch (encoderNum) {
         case 1:  count = count1; break;
         case 2:  count = count2; break;
         default: count = 0;      break;
     }
-    interrupts();
+    __set_PRIMASK(primask);
     return count;
 }
 
 float ROTARY_ENCODER_getEncoderAngle(uint8_t encoderNum) {
     long count = ROTARY_ENCODER_getCount(encoderNum);
-    float angle = fmod(count * DEGREES_PER_COUNT, 360.0f);
+    float angle = (count * DEGREES_PER_COUNT) % 360.0f;
     if (angle < 0) angle += 360.0f;
     return angle;
 }
