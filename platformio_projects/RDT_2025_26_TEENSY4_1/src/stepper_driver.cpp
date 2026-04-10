@@ -14,6 +14,7 @@
 
 #define dirPin 6
 #define stepPin 7
+#define enable 8
 
 // Microstepping pins on DRV8825:
 #define M0 10
@@ -23,7 +24,7 @@
 #define stepsPerRevolution 200  // full-step count
 #define microSteppingFactor 1  // set this to 1,2,4,8,16,32 depending on desired microstepping mode
 
-bool enable = false; // global variable to track if motor should be enabled
+bool enablebool = false; // global variable to track if motor should be enabled
 unsigned long lastStepTime = 0; // track last step time for timing control, in microseconds
 bool isStepPinHigh = false; // track state of step pin for timing control
 
@@ -53,7 +54,8 @@ void setMicrostep(int mode) {
 // enable stores if the motor should be on or not
 // we set dirPin based on direction input, qhich directly controlls motor
 void STEPPER_SetDirection(int direction) {
-    enable = (direction==0) ? false : true; // sets enable true if moving, false if stopped
+    enablebool = (direction==0) ? false : true; // sets enable true if moving, false if stopped
+    (enablebool) ? (digitalWrite(enable, LOW)) : (digitalWrite(enable, HIGH)); // enable must be HIGH when NOT moving
     if (direction == 1) { // UP
         digitalWrite(dirPin, LOW);
     } else if (direction == -1) { // DOWN
@@ -65,7 +67,7 @@ void STEPPER_SetDirection(int direction) {
 // using micros so it doesnt have to stop the rest of the program 
 // every period/2 it toggels the output, giving us a rising edge every period, which steps the motor
 void STEPPER_Update(unsigned long periodMicroseconds) {
-    if (enable) {
+    if (enablebool) {
         unsigned long currentTime = micros();
         if (currentTime - lastStepTime >= periodMicroseconds/2) {
             isStepPinHigh = !isStepPinHigh; 

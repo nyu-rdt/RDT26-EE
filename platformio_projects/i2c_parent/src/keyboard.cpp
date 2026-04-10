@@ -152,6 +152,21 @@ static void processKey(char key) {
                     }
                 }
 #endif
+
+#if ROTARY_ENCODERS_ENABLED
+                Serial.print(" | encoders(deg): L=");
+                if (count > 8) {
+                    Serial.print(buf[8] * (360.0f / 255.0f));
+                } else {
+                    Serial.print("ERR");
+                }
+                Serial.print(" R=");
+                if (count > 9) {
+                    Serial.print(buf[9] * (360.0f / 255.0f));
+                } else {
+                    Serial.print("ERR");
+                }
+#endif
                 Serial.println();
             } else {
                 Serial.print("[DATA] read failed, got ");
