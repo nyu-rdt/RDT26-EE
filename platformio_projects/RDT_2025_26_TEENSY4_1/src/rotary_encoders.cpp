@@ -1,5 +1,4 @@
-#include <Arduino.h>
-#include <cmath>
+#include <Arduino.h>#include <cmath>
 #include "config.h"
 #include "rotary_encoders.h"
 
@@ -32,7 +31,7 @@ void ROTARY_ENCODER_Init() {
 
     attachInterrupt(digitalPinToInterrupt(ENC1_A), isr1A, CHANGE);
     attachInterrupt(digitalPinToInterrupt(ENC1_B), isr1B, CHANGE);
-    attachInterrupt(digital3PinToInterrupt(ENC2_A), isr2A, CHANGE);
+    attachInterrupt(digitalPinToInterrupt(ENC2_A), isr2A, CHANGE);
     attachInterrupt(digitalPinToInterrupt(ENC2_B), isr2B, CHANGE);
 }
 
@@ -52,6 +51,7 @@ long ROTARY_ENCODER_getCount(uint8_t encoderNum) {
 float ROTARY_ENCODER_getEncoderAngle(uint8_t encoderNum) {
     long count = ROTARY_ENCODER_getCount(encoderNum);
     float angle = fmod(count * DEGREES_PER_COUNT, 360.0f);
+    // angl= (count * DEGREES_PER_COUNT) % 360.0f;
     if (angle < 0) angle += 360.0f;
     return angle;
 }
