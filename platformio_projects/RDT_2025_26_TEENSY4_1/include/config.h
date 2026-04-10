@@ -7,19 +7,29 @@
 #define USE_TIMEOUT 1
 #define ANALOG_VIB_CONTROL 0
 #define USE_OLD_HEX_MAPPING 1
-// Raw current readings — NOT for production. Data processing + status encoding
-// happens in SW before this ships. Enable only for sensor bring-up / debugging.
-#define CURRENT_SENSE_ENABLED 0
-
-// Send the full 18-byte SW data packet on every requestEvent().
-// Fields with no driver yet are filled with 0xFF so SW always gets the right
-// packet size and can detect unimplemented sensors by their sentinel value.
-#define STUB_MISSING_SENSORS 1
-
 // Size of the SW telemetry packet (bytes). Must match SW expectation.
+// requestEvent() always sends exactly this many bytes; unimplemented sensors
+// send 0xFF as a sentinel so SW can detect them.
 #define DATA_PACKET_SIZE 18
 
-#define ROTARY_ENCODERS_ENABLED 1
+// Set to 1 to enable every sensor at once.
+// Set to 0 and flip individual flags below to selectively enable.
+#define ALL_SENSORS_ENABLED 0
+
+#if ALL_SENSORS_ENABLED
+    // Raw current readings — NOT for production; enable only for sensor bring-up.
+    #define CURRENT_SENSE_ENABLED   1
+    #define ROTARY_ENCODERS_ENABLED 1
+    #define LOAD_CELLS_ENABLED      1
+    #define STRING_POT_ENABLED      1
+    #define GATE_POS_ENABLED        1
+#else
+    #define CURRENT_SENSE_ENABLED   1
+    #define ROTARY_ENCODERS_ENABLED 1
+    #define LOAD_CELLS_ENABLED      0
+    #define STRING_POT_ENABLED      0
+    #define GATE_POS_ENABLED        0
+#endif
 
 #define ENC1_A 21
 #define ENC1_B 20

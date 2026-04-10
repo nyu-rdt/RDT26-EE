@@ -105,23 +105,19 @@ static void receiveEvent(int numBytes) {
     }
 }
 
-// Fires when master calls requestFrom() — always sends DATA_PACKET_SIZE bytes.
+// Fires when master calls requestFrom() — always sends exactly DATA_PACKET_SIZE bytes.
+// Disabled sensors send 0xFF as a sentinel so SW can detect them.
 //
 // Packet layout (18 bytes):
-//   [0-7]  motor_currents[8]  uint8, 0-255 = 0-20A
-//   [8]    left_encoder       uint8
-//   [9]    right_encoder      uint8
-//   [10-13] load_cells[4]     uint8 each
-//   [14]   string_pot         uint8 (conveyor position)
-//   [15]   gate_pos           uint8
-//   [16]   flags              uint8 (bit field, bit0 = relay status)
-//   [17]   fixes_attempted    uint8
-//
-// With STUB_MISSING_SENSORS true, any field without a driver sends 0xFF so SW
-// always receives exactly DATA_PACKET_SIZE bytes and can detect unimplemented
-// sensors by their sentinel value.
+//   [0-7]   motor_currents[8]  uint8, 0-255 = 0-20A  (CURRENT_SENSE_ENABLED)
+//   [8]     left_encoder       uint8, 0-255 = 0-360°  (ROTARY_ENCODERS_ENABLED)
+//   [9]     right_encoder      uint8, 0-255 = 0-360°  (ROTARY_ENCODERS_ENABLED)
+//   [10-13] load_cells[4]      uint8 each             (LOAD_CELLS_ENABLED)
+//   [14]    string_pot         uint8 (conveyor pos)   (STRING_POT_ENABLED)
+//   [15]    gate_pos           uint8                  (GATE_POS_ENABLED)
+//   [16]    flags              uint8 (bit0=relay, bit1=3s_low, bit2=6s_low)
+//   [17]    fixes_attempted    uint8                  (no driver yet)
 static void requestEvent() {
-#if STUB_MISSING_SENSORS
     uint8_t pkt[DATA_PACKET_SIZE];
 
     // Bytes 0-7: motor currents (0-255 = 0-20A, scale = 255/20 = 12.75)
@@ -130,50 +126,49 @@ static void requestEvent() {
         pkt[i] = (uint8_t)(currents[i] * 12.75f);
     }
 #else
-    for (int i = 0; i < NUM_CURRENT_SENSORS; i++) {
-        pkt[i] = 0xFF;
-    }
+    for (int i = 0; i < NUM_CURRENT_SENSORS; i++) { pkt[i] = 0xFF; }
 #endif
 
+    // Bytes 8-9: encoder angles, 0-255 = 0-360°
 #if ROTARY_ENCODERS_ENABLED
-    // Pack angle as 0-255 = 0-360° (same encoding used by parent keyboard.cpp display)
     pkt[8] = (uint8_t)(ROTARY_ENCODER_getEncoderAngle(1) * 255.0f / 360.0f);
     pkt[9] = (uint8_t)(ROTARY_ENCODER_getEncoderAngle(2) * 255.0f / 360.0f);
 #else
-    pkt[8]  = 0xFF; // left_encoder  — disabled
-    pkt[9]  = 0xFF; // right_encoder — disabled
+    pkt[8] = 0xFF;
+    pkt[9] = 0xFF;
 #endif
 
-    pkt[10] = 0xFF; // load_cell[0]  — no driver yet
-    pkt[11] = 0xFF; // load_cell[1]  — no driver yet
-    pkt[12] = 0xFF; // load_cell[2]  — no driver yet
-    pkt[13] = 0xFF; // load_cell[3]  — no driver yet
+    // Bytes 10-13: load cells
+#if LOAD_CELLS_ENABLED
+    // TODO: fill from load cell driver
+    
+#else
+    pkt[10] = pkt[11] = pkt[12] = pkt[13] = 0xFF;
+#endif
 
-    pkt[14] = 0xFF; // string_pot (conveyor_pos) — no driver yet
-    pkt[15] = 0xFF; // gate_pos                  — no driver yet
+    // Byte 14: string pot (conveyor position)
+#if STRING_POT_ENABLED
+    // TODO: fill from string pot driver
+    
+#else
+    pkt[14] = 0xFF;
+#endif
 
-    // Byte 16: flags — bit 0 = relay status (rest reserved/0 for now)
-    pkt[16] = SYSTEM_GetRelayStatus() & 0x01;
+    // Byte 15: gate position
+#if GATE_POS_ENABLED
+    // TODO: fill from gate position driver
+    
+#else
+    pkt[15] = 0xFF;
+#endif
+
+    // Byte 16: flags — bit0=relay, bit1=3s_low, bit2=6s_low
+    pkt[16] = SYSTEM_GetRelayStatus() & 0x07;
+    //TODO: add more flags here
 
     pkt[17] = 0xFF; // fixes_attempted — no driver yet
 
     Wire2.write(pkt, DATA_PACKET_SIZE);
-#else
-    // Legacy compact format (pre-SW-packet): relay + motor speeds [+ currents]
-    Wire2.write(SYSTEM_GetRelayStatus());
-#if RAMP_UP
-    Wire2.write((uint8_t)((int8_t)(currentLeft  * 100.0f)));
-    Wire2.write((uint8_t)((int8_t)(currentRight * 100.0f)));
-#else
-    Wire2.write((uint8_t)0);
-    Wire2.write((uint8_t)0);
-#endif
-#if CURRENT_SENSE_ENABLED
-    for (int i = 0; i < NUM_CURRENT_SENSORS; i++) {
-        Wire2.write((uint8_t)(currents[i] * 10));
-    }
-#endif
-#endif // STUB_MISSING_SENSORS
 }
 
 bool child_update() {

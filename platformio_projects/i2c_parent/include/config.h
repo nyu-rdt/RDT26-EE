@@ -36,9 +36,12 @@
 // Build single-byte command expected by i2c_can_child_tony.
 #define BUILD_I2C_CMD(group, param) ((((group) & 0x0F) << 4) | ((param) & 0x0F))
 
-// Must match child firmware config.h
-#define ROTARY_ENCODERS_ENABLED true
+// Must match child firmware config.h — keep in sync with RDT_2025_26_TEENSY4_1/include/config.h
 #define CURRENT_SENSE_ENABLED   true
+#define ROTARY_ENCODERS_ENABLED true
+#define LOAD_CELLS_ENABLED      false
+#define STRING_POT_ENABLED      false
+#define GATE_POS_ENABLED        false
 #define NUM_CURRENT_SENSORS     8
 
 // Child always sends the full 18-byte SW telemetry packet
