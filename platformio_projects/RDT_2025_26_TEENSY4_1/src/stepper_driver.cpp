@@ -12,15 +12,6 @@
 #include "stepper_driver.h"
 #include "config.h" 
 
-#define STEPPER_DIR_PIN 6
-#define STEPPER_STEP_PIN 7
-#define STEPPER_ENABLE_PIN 8
-
-// Microstepping pins on DRV8825:
-#define STEPPER_M0_PIN 10
-#define STEPPER_M1_PIN 11
-#define STEPPER_M2_PIN 12
-
 #define STEPS_PER_REVOLUTION 200  // full-step count
 #define MICROSTEPPING_FACTOR 1  // set this to 1,2,4,8,16,32 depending on desired microstepping mode
 

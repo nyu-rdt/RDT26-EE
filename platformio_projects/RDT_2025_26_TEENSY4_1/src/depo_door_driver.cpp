@@ -14,7 +14,6 @@ static int getDoorPulseWidthUs(int direction) {
 void DEPO_DOOR_Init() {
     depoDoorActuator.attach(DEPOSITION_DOOR_ACTUATOR_PIN, 500, 2500);
     DEPO_DOOR_SetDirection(0);
-    delay(DEPOSITION_DOOR_ARM_DELAY_MS);
 }
 
 void DEPO_DOOR_SetDirection(int direction) {

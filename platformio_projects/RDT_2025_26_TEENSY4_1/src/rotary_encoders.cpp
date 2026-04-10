@@ -1,4 +1,5 @@
-#include <Arduino.h>#include <cmath>
+#include <Arduino.h>
+#include <cmath>
 #include "config.h"
 #include "rotary_encoders.h"
 

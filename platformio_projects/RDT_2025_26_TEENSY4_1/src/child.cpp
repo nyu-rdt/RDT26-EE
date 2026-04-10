@@ -86,11 +86,15 @@ void child_init() {
     currentLeft = currentRight = targetLeft = targetRight = 0.0f;
     currentExcav = targetExcav = 0.0f;
     lastTxMs = millis();
+#if SERIAL_DEBUG
     Serial.println("Ready (ramping ON)");
+#endif
 #else
     CAN_SendLocomotion(0.0f, 0.0f);
     CAN_SendExcavation(0.0f);
+#if SERIAL_DEBUG
     Serial.println("Ready");
+#endif 
 #endif
 }
 
