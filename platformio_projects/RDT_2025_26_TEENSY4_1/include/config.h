@@ -19,6 +19,16 @@
 // Size of the SW telemetry packet (bytes). Must match SW expectation.
 #define DATA_PACKET_SIZE 18
 
+#define ROTARY_ENCODERS_ENABLED true
+
+#define ENC1_A 21
+#define ENC1_B 20
+#define ENC2_A 23
+#define ENC2_B 22
+
+#define ENCODER_COUNTS_PER_REV 8192.0f
+#define DEGREES_PER_COUNT (360.0f / ENCODER_COUNTS_PER_REV)
+
 #define I2C_CHILD_ADDRESS 0x08
 #define RELAY_DRIVER_PIN 2
 #define RELAY_READ_PIN 3
