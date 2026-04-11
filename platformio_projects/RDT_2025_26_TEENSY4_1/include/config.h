@@ -118,8 +118,10 @@
 #define GRP_EXCAVATION_VERT    0x7
 #define GRP_DEPOSITION_DOOR    0x8
 #define GRP_DEPOSITION_VIB     0x9
+#define GRP_DATA               0x8
+
 #endif
-#define GRP_DATA               0xA
+#define GRP_DATA               0x8
 
 #define CMD_GROUP(c) (((c)>>4)&0xF)   
 #define CMD_PARAM(c) ((c)&0xF)
