@@ -2,7 +2,7 @@
 #define CONFIG_H
 
 // Control mode
-#define USE_WASD true
+#define USE_WASD 1
 
 // default I2C bus (Wire)
 #define I2C_SDA_PIN 18
@@ -20,7 +20,7 @@
 #define GRP_RIGHT       0x5
 #define GRP_EXCAVATION       0x6
 #define GRP_DEPOSITION       0x7
-#define GRP_DATA             0xA
+#define GRP_DATA             0x8
 
 // Group parameter (lower nibble) for speed presets used by locomotion groups.
 #define SPEED_PARAM_25   0x0
@@ -37,11 +37,11 @@
 #define BUILD_I2C_CMD(group, param) ((((group) & 0x0F) << 4) | ((param) & 0x0F))
 
 // Must match child firmware config.h — keep in sync with RDT_2025_26_TEENSY4_1/include/config.h
-#define CURRENT_SENSE_ENABLED   true
-#define ROTARY_ENCODERS_ENABLED true
-#define LOAD_CELLS_ENABLED      false
-#define STRING_POT_ENABLED      false
-#define GATE_POS_ENABLED        false
+#define CURRENT_SENSE_ENABLED   1
+#define ROTARY_ENCODERS_ENABLED 1
+#define LOAD_CELLS_ENABLED      0
+#define STRING_POT_ENABLED      0
+#define GATE_POS_ENABLED        0
 #define NUM_CURRENT_SENSORS     8
 
 // Child always sends the full 18-byte SW telemetry packet

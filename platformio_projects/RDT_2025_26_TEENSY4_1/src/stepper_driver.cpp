@@ -52,10 +52,10 @@ void STEPPER_SetDirection(int direction) {
     // // S = (direction==0) ? false : true; // sets enable true if moving, false if stopped
     STEPPER_enable = (direction!=0);
     (STEPPER_enable) ? (digitalWrite(STEPPER_ENABLE_PIN, LOW)) : (digitalWrite(STEPPER_ENABLE_PIN, HIGH)); // enable must be HIGH when NOT moving
-    if (direction == 1) { // UP
-        digitalWrite(STEPPER_DIR_PIN, LOW);
-    } else if (direction == -1) { // DOWN
+    if (direction == 1) { // UP — HIGH matches stepper_test bench convention
         digitalWrite(STEPPER_DIR_PIN, HIGH);
+    } else if (direction == -1) { // DOWN
+        digitalWrite(STEPPER_DIR_PIN, LOW);
     }
 }
 

@@ -228,22 +228,22 @@ bool child_update() {
     if (millis() - lastPlotMs >= PLOT_PERIOD_MS) {
         lastPlotMs = millis();
 #if CURRENT_SENSE_ENABLED
-        Serial.print("I0:"); Serial.print(currents[0], 2); Serial.print("\t");
-        Serial.print("I1:"); Serial.print(currents[1], 2); Serial.print("\t");
-        Serial.print("I2:"); Serial.print(currents[2], 2); Serial.print("\t");
-        Serial.print("I3:"); Serial.print(currents[3], 2); Serial.print("\t");
-        Serial.print("I4:"); Serial.print(currents[4], 2); Serial.print("\t");
-        Serial.print("I5:"); Serial.print(currents[5], 2); Serial.print("\t");
-        Serial.print("I6:"); Serial.print(currents[6], 2); Serial.print("\t");
-        Serial.print("I7:"); Serial.print(currents[7], 2); Serial.print("\t");
+        Serial.print(">I0:"); Serial.println(currents[0], 2);
+        Serial.print(">I1:"); Serial.println(currents[1], 2);
+        Serial.print(">I2:"); Serial.println(currents[2], 2);
+        Serial.print(">I3:"); Serial.println(currents[3], 2);
+        Serial.print(">I4:"); Serial.println(currents[4], 2);
+        Serial.print(">I5:"); Serial.println(currents[5], 2);
+        Serial.print(">I6:"); Serial.println(currents[6], 2);
+        Serial.print(">I7:"); Serial.println(currents[7], 2);
 #endif
 #if ROTARY_ENCODERS_ENABLED
-        Serial.print("Enc1:"); Serial.print(ROTARY_ENCODER_getEncoderAngle(1), 1); Serial.print("\t");
-        Serial.print("Enc2:"); Serial.print(ROTARY_ENCODER_getEncoderAngle(2), 1); Serial.print("\t");
+        Serial.print(">Enc1:"); Serial.println(ROTARY_ENCODER_getEncoderAngle(1), 1);
+        Serial.print(">Enc2:"); Serial.println(ROTARY_ENCODER_getEncoderAngle(2), 1);
 #endif
 #if STRING_POT_ENABLED
         // TODO: replace with string pot driver read when available
-        Serial.print("StrPot:"); Serial.print(analogRead(A0)); Serial.print("\t");
+        Serial.print(">StrPot:"); Serial.println(analogRead(A0));
 #endif
         Serial.println();
     }
@@ -352,11 +352,11 @@ static void grp_Excavation(uint8_t param) {
 }
 
 static void grp_Deposition(uint8_t param) {
-    if (param<3){
+    if (param<2){
         grp_DepositionDoor(param);
     }
     else {
-        grp_DepositionVib(param-3);
+        grp_DepositionVib(param-2);
     }
 }
 #endif

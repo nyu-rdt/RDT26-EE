@@ -69,7 +69,11 @@
 
 #define LOCOMOTION_DUTY_CYCLE 0.33f
 #define EXCAVATION_DUTY_CYCLE 0.4f
-#define EXCAVATION_STEP_PERIOD 800 // microseconds, time between each step change in excavation speed
+// stepper_test established ~900 µs (STEP_DELAY=450 µs half-period) as the no-load speed limit.
+// 800 µs (1250 Hz) exceeded that limit, causing startup stalls and noise under load.
+// 1200 µs (833 Hz) gives ~25% margin and matches well-within-torque-band operation.
+// Tune down toward 900 µs only after verifying reliable start under full mechanical load.
+#define EXCAVATION_STEP_PERIOD 1000 // microseconds, time between each step change in excavation speed
 
 #define STEPPER_DIR_PIN 6
 #define STEPPER_STEP_PIN 7
@@ -111,16 +115,20 @@
 #define GRP_BACKWARD           0x3
 #define GRP_LEFT               0x4
 #define GRP_RIGHT              0x5
+
 #if USE_OLD_HEX_MAPPING
-#define GRP_EXCAVATION          0x6
+#define GRP_EXCAVATION         0x6
 #define GRP_DEPOSITION         0x7
+#define GRP_DATA               0x8
+
 #else
 #define GRP_EXCAVATION_BELT    0x6
 #define GRP_EXCAVATION_VERT    0x7
 #define GRP_DEPOSITION_DOOR    0x8
 #define GRP_DEPOSITION_VIB     0x9
-#endif
 #define GRP_DATA               0xA
+
+#endif
 
 #define CMD_GROUP(c) (((c)>>4)&0xF)   
 #define CMD_PARAM(c) ((c)&0xF)
