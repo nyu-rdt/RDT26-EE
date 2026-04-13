@@ -71,10 +71,11 @@
 #define EXCAVATION_DUTY_CYCLE 0.4f
 #define EXCAVATION_STEP_PERIOD 800 // microseconds, time between each step change in excavation speed
 
-
 #define STEPPER_DIR_PIN 6
 #define STEPPER_STEP_PIN 7
 #define STEPPER_ENABLE_PIN 8
+
+#define STRING_POT_PIN 39
 
 // Microstepping pins on DRV8825:
 #define STEPPER_M0_PIN 10
