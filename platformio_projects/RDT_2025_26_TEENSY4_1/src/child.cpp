@@ -152,8 +152,7 @@ static void requestEvent() {
 
     // Byte 14: string pot (conveyor position)
 #if STRING_POT_ENABLED
-    // TODO: fill from string pot driver
-    
+    pkt[14] = (uint8_t)(STRING_POT_Read() / 4095.0f * 255.0f);
 #else
     pkt[14] = 0xFF;
 #endif
@@ -346,11 +345,11 @@ static void grp_Excavation(uint8_t param) {
 }
 
 static void grp_Deposition(uint8_t param) {
-    if (param<3){
+    if (param<2){
         grp_DepositionDoor(param);
     }
     else {
-        grp_DepositionVib(param-3);
+        grp_DepositionVib(param-2);
     }
 }
 #endif

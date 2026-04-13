@@ -20,7 +20,7 @@
 #define GRP_RIGHT       0x5
 #define GRP_EXCAVATION       0x6
 #define GRP_DEPOSITION       0x7
-#define GRP_DATA             0xA
+#define GRP_DATA             0x8
 
 // Group parameter (lower nibble) for speed presets used by locomotion groups.
 #define SPEED_PARAM_25   0x0
