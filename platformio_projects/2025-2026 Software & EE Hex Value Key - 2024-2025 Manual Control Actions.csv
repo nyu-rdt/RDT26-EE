@@ -19,21 +19,16 @@ Locomotion,,Locomotion Stop,1,Locomotion Stop,0,1 0,Stops moving forward/ backwa
 ,,,5,50%,1,5 1,
 ,,,5,75%,2,5 2,
 ,,,5,100%,3,5 3,
-Excavation/Construction,,Exacavation Conveyor Actions,6,Zero Excavation Conveyor,0,6 0,"Store the current position of the excavation conveyor as ""locomotion position"" STOP MOVEMENT OF ACME SCREW"
+Excavation,,Exacavation Conveyor Actions,6,Stop Excavation Conveyor,0,6 0,"Store the current position of the excavation conveyor as ""locomotion position"""
 ,,,6,Locomotion Position,1,6 1,Move the excavation conveyor to its locomotion position
 ,,,6,Excavation Position,2,6 2,Move the excavation conveyor to its excavation position
 ,,,6,Belt Stop,3,6 3,Stop the belt movement 
 ,,,6,Belt Outward,4,6 4,Move the belt in reverse
 ,,,6,Belt Inward,5,6 5,Digging and collecting the material
-,,Deposition Conveyor Actions,7,Rotate Collection,0,7 0,Rotating the belt to collect from the shovel into the construction bin
-,,,7,Rotate Dumping,1,7 1,Rotating the belt to move the dirt from construction
-,,,7,Stop rotating,2,7 2,Stop the belt
-Other,,Request Data,8,Request data,0,8 0,"Weight collected, position (locomotion, excavation, deposition), distance travelled. "
+Construction,,Depo Bin,7,Open Door,0,7 0,Open depo bin door 
+,,,7,Close Door,1,7 1,Close depo bin door
+,,,7,Turn on Vibration Motor,2,7 2,Turn on vibration motor to remove regolith from bin
+,,,7,Turn off Vibration Motor,3,7 3,Turn off vibration motor
+Other,,Request Data,8,Request data,0,8 0,"sensor flags, byte data 
+by this doc"
 ,,Switch to Autonomous Control,8,Switch to Autonomous Control,1,8 1,"Sends signal to ""switch to autonomous control"" and to start interpreting actions acording to the autonomous control scheme (see other sheet). Stops all motion (wheels, pivot and belt) before switching."
-,,,,,,,
-,,1. depo now has a door controler by a linear actuator,,open door,,,
-,,,,close door,,,
-,,,,???,,,
-,,2. depo now has a vibration motor controlled through PWM,,turn on,,,
-,,,,turn off,,,
-,,,,? do we want intensity variation?,,,
