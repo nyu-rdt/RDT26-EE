@@ -6,6 +6,7 @@
 #include "stepper_driver.h"
 #include "depo_door_driver.h"
 #include "vib_motor_driver.h"
+#include "string_pot.h"
 #include "system.h"
 #if CURRENT_SENSE_ENABLED
 #include "current_sensors.h"
@@ -76,6 +77,7 @@ void child_init() {
     STEPPER_Init();
     DEPO_DOOR_Init();
     VIB_Init();
+    STRINGPOT_Init();
 #if CURRENT_SENSE_ENABLED
     CURRENT_SENSORS_Init();
     lastCurrentMs = millis();
@@ -142,13 +144,6 @@ static void requestEvent() {
     pkt[9] = 0xFF;
 #endif
 
-#if STRING_POT_ENABLED 
-    // Byte 14: string pot (conveyor position)
-    pkt[14] = (uint8_t)(constrain(STRINGPOT_ReadDistance(), 0, 255)); // shouldn't go over 89 but following old code's convention
-#else
-    pkt[14] = 0xFF; 
-#endif 
-
     // Bytes 10-13: load cells
 #if LOAD_CELLS_ENABLED
     // TODO: fill from load cell driver
@@ -157,12 +152,12 @@ static void requestEvent() {
     pkt[10] = pkt[11] = pkt[12] = pkt[13] = 0xFF;
 #endif
 
+#if STRING_POT_ENABLED 
     // Byte 14: string pot (conveyor position)
-#if STRING_POT_ENABLED
-    pkt[14] = (uint8_t)(STRING_POT_Read() / 4095.0f * 255.0f); 
+    pkt[14] = (uint8_t)(constrain(STRINGPOT_ReadDistance(), 0, 255)); // shouldn't go over 89 but following old code's convention
 #else
-    pkt[14] = 0xFF;
-#endif
+    pkt[14] = 0xFF; 
+#endif 
 
     // Byte 15: gate position
 #if GATE_POS_ENABLED

@@ -2,13 +2,16 @@
 #include "config.h"
 #include "string_pot.h"
 
-static float potScale = 27.0f;
-static float potOffset = 0.719f;
+static bool moving = false;
+
+static constexpr float potScale = 27.0f;
+static constexpr float potOffset = 0.719f;
 
 static float cachedDistance = 0.0f;
 
 static float minDistance = 0.0f;
-static float maxDistance = 1023.0f;  
+static constexpr float maxDistance = (potScale * 3.3f) - potOffset; //88.381
+static float maxRawReading = 1023.0f;
 
 void STRINGPOT_Init()
 {
@@ -21,10 +24,11 @@ float STRINGPOT_ReadDistance()
     int raw = analogRead(STRING_POT_PIN); 
 
     // convert to voltage
-    float voltage = raw * (3.3f / maxDistance); 
+    float voltage = raw * (3.3f / maxRawReading); 
 
     // convert to distance using calibration
-    cachedDistance = potScale * voltage - potOffset; // at this point the largest number using the set variables is 88.381
+    cachedDistance = potScale * voltage - potOffset;
+    cachedDistance = constrain(cachedDistance, minDistance, maxDistance);
 
     return cachedDistance;
 }
