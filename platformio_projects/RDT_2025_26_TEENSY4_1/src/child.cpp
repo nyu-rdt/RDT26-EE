@@ -181,7 +181,7 @@ bool child_update() {
 
     if (newCommand) {
         newCommand = false;
-        lastCommandTime = millis();
+        lastCommandTime = millis();    
 #if SERIAL_DEBUG && !PLOT_DATA
         Serial.print("cmd: 0x");
         Serial.println(latestCommand, HEX);
@@ -237,8 +237,7 @@ bool child_update() {
         Serial.print(">Enc2:"); Serial.println(ROTARY_ENCODER_getEncoderAngle(2), 1);
 #endif
 #if STRING_POT_ENABLED
-        // TODO: replace with string pot driver read when available
-        Serial.print(">StrPot:"); Serial.println(analogRead(A0));
+        Serial.print(">StrPot:"); Serial.println(analogRead(STRING_POT_PIN));        
 #endif
         Serial.println();
     }

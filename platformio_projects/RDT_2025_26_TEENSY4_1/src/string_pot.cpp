@@ -2,8 +2,6 @@
 #include "config.h"
 #include "string_pot.h"
 
-static bool moving = false;
-
 static constexpr float potScale = 27.0f;
 static constexpr float potOffset = 0.719f;
 
