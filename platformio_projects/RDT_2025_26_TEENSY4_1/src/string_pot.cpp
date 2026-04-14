@@ -2,6 +2,9 @@
 #include "config.h"
 #include "string_pot.h"
 
+static bool moving = false;
+static int STRINGPOT_state = STRING_MIDDLE;
+
 static constexpr float potScale = 27.0f;
 static constexpr float potOffset = 0.719f;
 
@@ -31,5 +34,16 @@ float STRINGPOT_ReadDistance()
     return cachedDistance;
 }
 
+void STRINGPOT_SetMoving(bool isMoving) {
+    moving = isMoving;
+}
+
+void STRINGPOT_UpdateState(){
+    // test to see if these thresholds make sense
+    STRINGPOT_state = moving ? STRING_MOVING :
+                      (cachedDistance > 1013.0f) ? STRING_HIGHEST :
+                      (cachedDistance < 10.0f) ? STRING_LOWEST :
+                      STRING_MIDDLE;                       
+}
 
 

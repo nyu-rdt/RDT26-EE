@@ -84,6 +84,7 @@
 #define STRING_MOVING = 0
 #define STRING_LOWEST = 1
 #define STRING_HIGHEST = 2 
+#define STRING_MIDDLE = 3
 
 // Microstepping pins on DRV8825:
 #define STEPPER_M0_PIN 10
