@@ -178,6 +178,7 @@ static void requestEvent() {
 
 bool child_update() {
     SYSTEM_Update();
+    DEPO_DOOR_Update();
 
     if (newCommand) {
         newCommand = false;
@@ -216,6 +217,10 @@ bool child_update() {
     if (millis() - lastCurrentMs >= CURRENT_PERIOD_MS) {
         lastCurrentMs = millis();
         CURRENT_SENSORS_Update(currents);
+
+#if (DEPOSITION_DOOR_CURRENT_SENSOR_INDEX >= 0) && (DEPOSITION_DOOR_CURRENT_SENSOR_INDEX < NUM_CURRENT_SENSORS)
+        DEPO_DOOR_SetMeasuredCurrent(currents[DEPOSITION_DOOR_CURRENT_SENSOR_INDEX]);
+#endif
     }
 #endif
 
@@ -365,7 +370,15 @@ static void grp_ExcavationVert(uint8_t param) {
 }
 
 static void grp_DepositionDoor(uint8_t param) {
-    DEPO_DOOR_SetDirection(GET_DIRECTION(param));
+    int direction = GET_DIRECTION(param);
+
+    if (direction > 0) {
+        DEPO_DOOR_Open();
+    } else if (direction < 0) {
+        DEPO_DOOR_Close();
+    } else {
+        DEPO_DOOR_Stop();
+    }
 }
 
 static void grp_DepositionVib(uint8_t param) {
