@@ -6,7 +6,9 @@
 #include "stepper_driver.h"
 #include "depo_door_driver.h"
 #include "vib_motor_driver.h"
+#if STRING_POT_ENABLED
 #include "string_pot.h"
+#endif
 #include "system.h"
 #if CURRENT_SENSE_ENABLED
 #include "current_sensors.h"
@@ -77,7 +79,9 @@ void child_init() {
     STEPPER_Init();
     DEPO_DOOR_Init();
     VIB_Init();
+#if STRING_POT_ENABLED
     STRINGPOT_Init();
+#endif
 #if CURRENT_SENSE_ENABLED
     CURRENT_SENSORS_Init();
     lastCurrentMs = millis();
@@ -242,7 +246,7 @@ bool child_update() {
         Serial.print(">Enc2:"); Serial.println(ROTARY_ENCODER_getEncoderAngle(2), 1);
 #endif
 #if STRING_POT_ENABLED
-        Serial.print(">StrPot:"); Serial.println(analogRead(STRING_POT_PIN));        
+        Serial.print(">StrPot:"); Serial.println(STRINGPOT_ReadDistance(), 2);
 #endif
         Serial.println();
     }

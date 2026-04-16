@@ -5,14 +5,8 @@
 static bool moving = false;
 static int STRINGPOT_state = STRING_MIDDLE;
 
-static constexpr float potScale = 27.0f;
-static constexpr float potOffset = 0.719f;
-
 static float cachedDistance = 0.0f;
-
-static float minDistance = 0.0f;
-static constexpr float maxDistance = (potScale * 3.3f) - potOffset; //88.381
-static float maxRawReading = 1023.0f;
+static int lastRaw = 0;
 
 void STRINGPOT_Init()
 {
@@ -22,16 +16,18 @@ void STRINGPOT_Init()
 
 float STRINGPOT_ReadDistance()
 {
-    int raw = analogRead(STRING_POT_PIN); 
+    lastRaw = analogRead(STRING_POT_PIN);
 
-    // convert to voltage
-    float voltage = raw * (3.3f / maxRawReading); 
-
-    // convert to distance using calibration
-    cachedDistance = potScale * voltage - potOffset;
-    cachedDistance = constrain(cachedDistance, minDistance, maxDistance);
+    // convert to voltage, then to distance using calibration from config.h
+    float voltage = lastRaw * (3.3f / STRING_POT_MAX_RAW);
+    cachedDistance = STRING_POT_SCALE * voltage - STRING_POT_OFFSET;
 
     return cachedDistance;
+}
+
+int STRINGPOT_GetLastRaw()
+{
+    return lastRaw;
 }
 
 void STRINGPOT_SetMoving(bool isMoving) {
@@ -39,11 +35,8 @@ void STRINGPOT_SetMoving(bool isMoving) {
 }
 
 void STRINGPOT_UpdateState(){
-    // test to see if these thresholds make sense
-    STRINGPOT_state = moving ? STRING_MOVING :
-                      (cachedDistance > 1013.0f) ? STRING_HIGHEST :
-                      (cachedDistance < 10.0f) ? STRING_LOWEST :
-                      STRING_MIDDLE;                       
+    STRINGPOT_state = moving                                        ? STRING_MOVING  :
+                      (cachedDistance > STRING_POT_HIGHEST_THRESHOLD) ? STRING_HIGHEST :
+                      (cachedDistance < STRING_POT_LOWEST_THRESHOLD)  ? STRING_LOWEST  :
+                      STRING_MIDDLE;
 }
-
-

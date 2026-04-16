@@ -17,9 +17,9 @@ static unsigned long lastPrintMs = 0;
 static float observedMin = 1.0e9f;
 static float observedMax = -1.0e9f;
 
-// Driver clamp/calibration endpoints from string_pot.cpp.
+// Calibration endpoints from config.h
 static constexpr float expectedMin = 0.0f;
-static constexpr float expectedMax = (27.0f * 3.3f) - 0.719f; // 88.381
+static constexpr float expectedMax = STRING_POT_MAX_DISTANCE;
 
 void setup()
 {
@@ -42,9 +42,10 @@ void loop()
     }
     lastPrintMs = millis();
 
-    const int raw = analogRead(STRING_POT_PIN);
-    const float voltage = raw * (3.3f / 1023.0f);
+    // Call driver first — caches the raw reading internally
     const float distance = STRINGPOT_ReadDistance();
+    const int raw = STRINGPOT_GetLastRaw();
+    const float voltage = raw * (3.3f / STRING_POT_MAX_RAW);
 
     if (distance < observedMin) {
         observedMin = distance;

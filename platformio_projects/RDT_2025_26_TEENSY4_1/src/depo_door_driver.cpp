@@ -42,10 +42,14 @@ void DEPO_DOOR_Init() {
 }
 
 void DEPO_DOOR_SetDirection(int direction) {
-    int pulseWidthUs = getDoorPulseWidthUs(direction);
-    depoDoorActuator.writeMicroseconds(pulseWidthUs);
+    int newDirection = (direction > 0) ? 1 : (direction < 0 ? -1 : 0);
+    // Avoid resetting motionStartMs if already moving in the same direction
+    if (newDirection == activeDirection) {
+        return;
+    }
 
-    activeDirection = (direction > 0) ? 1 : (direction < 0 ? -1 : 0);
+    depoDoorActuator.writeMicroseconds(getDoorPulseWidthUs(direction));
+    activeDirection = newDirection;
     if (activeDirection > 0) {
         doorState = DEPO_DOOR_STATE_OPENING;
         motionStartMs = millis();

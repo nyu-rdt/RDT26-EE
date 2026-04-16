@@ -80,10 +80,19 @@
 #define STEPPER_ENABLE_PIN 8
 
 #define STRING_POT_PIN 39
+// String pot calibration — board-specific, tune after physical testing
+#define STRING_POT_SCALE     27.0f
+#define STRING_POT_OFFSET    0.719f
+#define STRING_POT_MAX_RAW   1023.0f
+// Max measurable distance: scale * 3.3V - offset ≈ 88.38
+#define STRING_POT_MAX_DISTANCE ((STRING_POT_SCALE * 3.3f) - STRING_POT_OFFSET)
+// Position thresholds in distance units — tune after physical testing
+#define STRING_POT_LOWEST_THRESHOLD   5.0f
+#define STRING_POT_HIGHEST_THRESHOLD  83.0f
 // String Potentiometer States
 #define STRING_MOVING 0
 #define STRING_LOWEST 1
-#define STRING_HIGHEST 2 
+#define STRING_HIGHEST 2
 #define STRING_MIDDLE 3
 
 // Microstepping pins on DRV8825:
@@ -106,8 +115,8 @@
 #define DEPOSITION_DOOR_PULSE_STOP_US 1500
 #define DEPOSITION_DOOR_PULSE_OPEN_US 2500
 #define DEPOSITION_DOOR_PULSE_CLOSE_US 500
-#define DEPOSITION_DOOR_OPEN_TRAVEL_MS 3000
-#define DEPOSITION_DOOR_CLOSE_TRAVEL_MS 3000
+#define DEPOSITION_DOOR_OPEN_TRAVEL_MS 3000UL
+#define DEPOSITION_DOOR_CLOSE_TRAVEL_MS 3000UL
 
 // Optional current-based stop detection for linear actuator end-of-travel.
 // Use CURRENT_SCALING-calibrated amperes from the selected current channel.
