@@ -5,7 +5,7 @@
 #include "deposition.h"
 
 static SystemStopLocomotionFn stopLocomotion = nullptr;
-static SystemStopExcavationFn stopExcavation = nullptr;
+// static SystemStopExcavationFn stopExcavation = nullptr;
 volatile bool relay_state = false;
 volatile bool relay_3s_low = false;
 volatile bool relay_6s_low = false;
@@ -56,9 +56,6 @@ uint8_t SYSTEM_GetRelayStatus() {
 void SYSTEM_StopAllMotors() {
     if (stopLocomotion != nullptr) {
         stopLocomotion();
-    }
-    if (stopExcavation != nullptr) {
-        stopExcavation();
     }
 
     EXCAV_Stop();

@@ -5,7 +5,7 @@
 
 static Servo depoDoorActuator;
 
-static DepoDoorState doorState = DEPO_DOOR_STATE_CLOSED;
+volatile static DepoDoorState doorState = DEPO_DOOR_STATE_CLOSED;
 static int activeDirection = 0;
 static unsigned long motionStartMs = 0;
 static volatile float doorCurrentAmps = 0.0f;

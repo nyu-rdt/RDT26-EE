@@ -7,7 +7,7 @@
 static uint8_t speedLevel = 1;  // 0-3
 static uint8_t currentMode = GRP_LOCO_STOP;
 
-char* message = "W/A/S/D=Move | E/Q=Speed | X/Space=Stop | U/J/H=Belt Fwd/Rev/Stop | O/L/K=Vert Fwd/Rev/Stop | R/F=Door Open/Close | T/G=Vib On/Off | I=Request Data";
+const char* message = "W/A/S/D=Move | E/Q=Speed | X/Space=Stop | U/J/H=Belt Fwd/Rev/Stop | O/L/K=Vert Fwd/Rev/Stop | R/F=Door Open/Close | T/G=Vib On/Off | I=Request Data";
 
 static void printStatus(const char* mode) {
     Serial.print("Mode: ");
