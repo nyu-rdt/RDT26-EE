@@ -30,6 +30,17 @@ int STRINGPOT_GetLastRaw()
     return lastRaw;
 }
 
+// Returns the last computed distance without triggering a new ADC read.
+// Use this from ISR context (e.g. requestEvent) — safe to call anytime.
+float STRINGPOT_GetCachedDistance()
+{
+    return cachedDistance;
+}
+
+int STRINGPOT_GetState() {
+    return STRINGPOT_state;
+}
+
 void STRINGPOT_SetMoving(bool isMoving) {
     moving = isMoving;
 }

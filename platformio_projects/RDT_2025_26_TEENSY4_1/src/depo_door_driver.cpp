@@ -10,26 +10,6 @@ static int activeDirection = 0;
 static unsigned long motionStartMs = 0;
 static float doorCurrentAmps = 0.0f;
 
-#ifndef DEPOSITION_DOOR_OPEN_TRAVEL_MS
-#define DEPOSITION_DOOR_OPEN_TRAVEL_MS 3000UL
-#endif
-
-#ifndef DEPOSITION_DOOR_CLOSE_TRAVEL_MS
-#define DEPOSITION_DOOR_CLOSE_TRAVEL_MS 3000UL
-#endif
-
-#ifndef DEPOSITION_DOOR_CURRENT_THRESHOLD_A
-#define DEPOSITION_DOOR_CURRENT_THRESHOLD_A 8.0f
-#endif
-
-#ifndef DEPOSITION_DOOR_CURRENT_DETECT_MIN_MS
-#define DEPOSITION_DOOR_CURRENT_DETECT_MIN_MS 250UL
-#endif
-
-#ifndef DEPOSITION_DOOR_ENABLE_CURRENT_STOP
-#define DEPOSITION_DOOR_ENABLE_CURRENT_STOP 1
-#endif
-
 static int getDoorPulseWidthUs(int direction) {
     return (direction > 0) ? DEPOSITION_DOOR_PULSE_OPEN_US:
             (direction < 0) ? DEPOSITION_DOOR_PULSE_CLOSE_US:

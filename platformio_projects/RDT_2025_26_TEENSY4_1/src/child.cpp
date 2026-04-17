@@ -57,6 +57,10 @@ static unsigned long lastCurrentMs = 0;
 static unsigned long lastPlotMs = 0;
 #endif
 
+#if STRING_POT_ENABLED
+static unsigned long lastPotReadMs = 0;
+#endif
+
 #if RAMP_UP
 static float currentLeft = 0.0f, currentRight = 0.0f;
 static float targetLeft = 0.0f, targetRight = 0.0f;
@@ -156,9 +160,9 @@ static void requestEvent() {
     pkt[10] = pkt[11] = pkt[12] = pkt[13] = 0xFF;
 #endif
 
-#if STRING_POT_ENABLED 
-    // Byte 14: string pot (conveyor position)
-    pkt[14] = (uint8_t)(constrain(STRINGPOT_ReadDistance(), 0, 255)); // shouldn't go over 89 but following old code's convention
+#if STRING_POT_ENABLED
+    // Byte 14: string pot — cached value updated in child_update(), safe to read here
+    pkt[14] = (uint8_t)(constrain(STRINGPOT_GetCachedDistance() * (255.0f / STRING_POT_MAX_DISTANCE), 0, 255));
 #else
     pkt[14] = 0xFF; 
 #endif 
@@ -216,6 +220,14 @@ bool child_update() {
     }
 #endif
     STEPPER_Update(EXCAVATION_STEP_PERIOD); // manages the stepper motor
+
+#if STRING_POT_ENABLED
+    if (millis() - lastPotReadMs >= 50) {
+        lastPotReadMs = millis();
+        STRINGPOT_ReadDistance();
+        STRINGPOT_UpdateState();
+    }
+#endif
 
 #if CURRENT_SENSE_ENABLED
     if (millis() - lastCurrentMs >= CURRENT_PERIOD_MS) {
