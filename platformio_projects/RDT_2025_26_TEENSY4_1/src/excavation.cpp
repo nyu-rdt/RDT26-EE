@@ -7,8 +7,10 @@
 #include "string_pot.h"
 #endif
 
-// Belt direction: +1 up, -1 down, 0 stopped
+// Belt spin direction (CAN motor): +1 forward, -1 reverse, 0 stopped
 static int beltDirection = 0;
+// Vertical direction (stepper — raises/lowers the belt assembly): +1 up, -1 down, 0 stopped
+static int vertDirection = 0;
 
 #if RAMP_UP
 static float targetSpeed = 0.0f;
@@ -35,6 +37,7 @@ static void applyBeltSpeed(float speed) {
 
 void EXCAV_Init() {
     beltDirection = 0;
+    vertDirection = 0;
     STEPPER_Init();
 #if STRING_POT_ENABLED
     STRINGPOT_Init();
@@ -68,12 +71,13 @@ void EXCAV_Update() {
     }
 #endif
 
-    // Stop belt if we've reached the travel limit we're moving toward
+    // Stop vertical movement if the assembly has reached the travel limit it's moving toward.
+    // Keyed on vertDirection (stepper) — the string pot measures vertical position, not belt spin.
 #if STRING_POT_ENABLED
-    if (beltDirection != 0) {
+    if (vertDirection != 0) {
         int state = STRINGPOT_GetState();
-        if ((beltDirection > 0 && state == STRING_HIGHEST) ||
-            (beltDirection < 0 && state == STRING_LOWEST)) {
+        if ((vertDirection > 0 && state == STRING_HIGHEST) ||
+            (vertDirection < 0 && state == STRING_LOWEST)) {
             EXCAV_Stop();
         }
     }
@@ -81,28 +85,33 @@ void EXCAV_Update() {
 }
 
 void EXCAV_SetBeltDirection(int direction) {
+    beltDirection = (direction > 0) ? 1 : (direction < 0) ? -1 : 0;
+    applyBeltSpeed(beltDirection * EXCAVATION_DUTY_CYCLE);
+}
+
+void EXCAV_SetVertDirection(int direction) {
     int newDir = (direction > 0) ? 1 : (direction < 0) ? -1 : 0;
 
 #if STRING_POT_ENABLED
-    // Force a fresh read so we don't guard on state that's up to 50ms old
+    // Force a fresh read — don't guard on state up to 50ms stale
     STRINGPOT_ReadDistance();
     STRINGPOT_UpdateState();
     int state = STRINGPOT_GetState();
     if ((newDir > 0 && state == STRING_HIGHEST) ||
         (newDir < 0 && state == STRING_LOWEST)) {
+        // Already at limit — ensure stepper is stopped rather than silently ignoring
+        vertDirection = 0;
+        STEPPER_SetDirection(0);
+        STRINGPOT_SetMoving(false);
         return;
     }
 #endif
 
-    beltDirection = newDir;
+    vertDirection = newDir;
 #if STRING_POT_ENABLED
-    STRINGPOT_SetMoving(beltDirection != 0);
+    STRINGPOT_SetMoving(vertDirection != 0);
 #endif
-    applyBeltSpeed(beltDirection * EXCAVATION_DUTY_CYCLE);
-}
-
-void EXCAV_SetVertDirection(int direction) {
-    STEPPER_SetDirection(direction);
+    STEPPER_SetDirection(vertDirection);
 }
 
 float EXCAV_GetConveyorDistance() {
@@ -115,6 +124,7 @@ float EXCAV_GetConveyorDistance() {
 
 void EXCAV_Stop() {
     beltDirection = 0;
+    vertDirection = 0;
 #if RAMP_UP
     // Reset ramp state so we don't slew back up after the stop
     targetSpeed = 0.0f;
