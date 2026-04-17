@@ -3,12 +3,9 @@
 #include "child.h"
 #include "config.h"
 #include "can_driver.h"
-#include "stepper_driver.h"
+#include "excavation.h"
 #include "depo_door_driver.h"
 #include "vib_motor_driver.h"
-#if STRING_POT_ENABLED
-#include "string_pot.h"
-#endif
 #include "system.h"
 #if CURRENT_SENSE_ENABLED
 #include "current_sensors.h"
@@ -56,14 +53,9 @@ static float currents[NUM_CURRENT_SENSORS] = {0};
 static unsigned long lastPlotMs = 0;
 #endif
 
-#if STRING_POT_ENABLED
-static unsigned long lastPotReadMs = 0;
-#endif
-
 #if RAMP_UP
 static float currentLeft = 0.0f, currentRight = 0.0f;
 static float targetLeft = 0.0f, targetRight = 0.0f;
-static float targetExcav = 0.0f, currentExcav = 0.0f;
 static unsigned long lastTxMs = 0;
 
 static float slew(float cur, float tgt, float maxDelta) {
@@ -79,12 +71,9 @@ void child_init() {
 
     SYSTEM_Init();
     CAN_Init();
-    STEPPER_Init();
+    EXCAV_Init();
     DEPO_DOOR_Init();
     VIB_Init();
-#if STRING_POT_ENABLED
-    STRINGPOT_Init();
-#endif
 #if CURRENT_SENSE_ENABLED
     CURRENT_SENSORS_Init();
 #endif
@@ -96,14 +85,12 @@ void child_init() {
 
 #if RAMP_UP
     currentLeft = currentRight = targetLeft = targetRight = 0.0f;
-    currentExcav = targetExcav = 0.0f;
     lastTxMs = millis();
 #if SERIAL_DEBUG && !PLOT_DATA
     Serial.println("Ready (ramping ON)");
 #endif
 #else
     CAN_SendLocomotion(0.0f, 0.0f);
-    CAN_SendExcavation(0.0f);
 #if SERIAL_DEBUG && !PLOT_DATA
     Serial.println("Ready");
 #endif
@@ -159,8 +146,8 @@ static void requestEvent() {
 #endif
 
 #if STRING_POT_ENABLED
-    // Byte 14: string pot — cached value updated in child_update(), safe to read here
-    pkt[14] = (uint8_t)(constrain(STRINGPOT_GetCachedDistance() * (255.0f / STRING_POT_MAX_DISTANCE), 0, 255));
+    // Byte 14: string pot — cached by EXCAV_Update(), ISR-safe to read here
+    pkt[14] = (uint8_t)(constrain(EXCAV_GetConveyorDistance() * (255.0f / STRING_POT_MAX_DISTANCE), 0, 255));
 #else
     pkt[14] = 0xFF;
 #endif
@@ -211,20 +198,10 @@ bool child_update() {
         lastTxMs = millis();
         currentLeft = slew(currentLeft, targetLeft, MAX_SPEED_DELTA_PER_TICK);
         currentRight = slew(currentRight, targetRight, MAX_SPEED_DELTA_PER_TICK);
-        currentExcav = slew(currentExcav, targetExcav, MAX_EXCAV_DELTA_PER_TICK);
         CAN_SendLocomotion(currentLeft, currentRight);
-        CAN_SendExcavation(currentExcav);
     }
 #endif
-    STEPPER_Update(EXCAVATION_STEP_PERIOD); // manages the stepper motor
-
-#if STRING_POT_ENABLED
-    if (millis() - lastPotReadMs >= 50) {
-        lastPotReadMs = millis();
-        STRINGPOT_ReadDistance();
-        STRINGPOT_UpdateState();
-    }
-#endif
+    EXCAV_Update();
 
 #if CURRENT_SENSE_ENABLED
     // Call every loop — CURRENT_SENSORS_Update has internal CHANNEL_SETTLE_MS gating,
@@ -255,7 +232,7 @@ bool child_update() {
         Serial.print(">Enc2:"); Serial.println(ROTARY_ENCODER_getEncoderAngle(2), 1);
 #endif
 #if STRING_POT_ENABLED
-        Serial.print(">StrPot:"); Serial.println(STRINGPOT_GetCachedDistance(), 2);
+        Serial.print(">StrPot:"); Serial.println(EXCAV_GetConveyorDistance(), 2);
 #endif
         Serial.println();
     }
@@ -305,20 +282,12 @@ static void sendLocomotion(float left, float right) {
 #endif
 }
 
-static void sendExcavation(float speed) {
-#if RAMP_UP
-    targetExcav = speed;
-#else
-    CAN_SendExcavation(speed);
-#endif
-}
-
 static void stopLocomotion() {
     sendLocomotion(0.0f, 0.0f);
 }
 
 static void stopExcavation() {
-    sendExcavation(0.0f);
+    EXCAV_Stop();
 }
 
 
@@ -374,12 +343,11 @@ static void grp_Deposition(uint8_t param) {
 #endif
 
 static void grp_ExcavationBelt(uint8_t param) {
-    float spd = GET_DIRECTION(param) * EXCAVATION_DUTY_CYCLE;
-    sendExcavation(spd);
+    EXCAV_SetBeltDirection(GET_DIRECTION(param));
 }
 
 static void grp_ExcavationVert(uint8_t param) {
-    STEPPER_SetDirection(GET_DIRECTION(param)); 
+    EXCAV_SetVertDirection(GET_DIRECTION(param));
 }
 
 static void grp_DepositionDoor(uint8_t param) {

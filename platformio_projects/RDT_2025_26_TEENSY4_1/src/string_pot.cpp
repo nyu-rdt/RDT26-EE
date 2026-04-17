@@ -46,8 +46,12 @@ void STRINGPOT_SetMoving(bool isMoving) {
 }
 
 void STRINGPOT_UpdateState(){
-    STRINGPOT_state = moving                                        ? STRING_MOVING  :
-                      (cachedDistance > STRING_POT_HIGHEST_THRESHOLD) ? STRING_HIGHEST :
-                      (cachedDistance < STRING_POT_LOWEST_THRESHOLD)  ? STRING_LOWEST  :
-                      STRING_MIDDLE;
+    // Check thresholds first — a limit takes priority over the moving flag
+    // so the belt can't mask an overtravel condition by still being in motion
+    if (cachedDistance > STRING_POT_HIGHEST_THRESHOLD)
+        STRINGPOT_state = STRING_HIGHEST;
+    else if (cachedDistance < STRING_POT_LOWEST_THRESHOLD)
+        STRINGPOT_state = STRING_LOWEST;
+    else
+        STRINGPOT_state = moving ? STRING_MOVING : STRING_MIDDLE;
 }
