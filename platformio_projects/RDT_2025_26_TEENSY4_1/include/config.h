@@ -75,10 +75,25 @@
 // Tune down toward 900 µs only after verifying reliable start under full mechanical load.
 #define EXCAVATION_STEP_PERIOD 1000 // microseconds, time between each step change in excavation speed
 
-
 #define STEPPER_DIR_PIN 6
 #define STEPPER_STEP_PIN 7
 #define STEPPER_ENABLE_PIN 8
+
+#define STRING_POT_PIN 39
+// String pot calibration — board-specific, tune after physical testing
+#define STRING_POT_SCALE     27.0f
+#define STRING_POT_OFFSET    0.719f
+#define STRING_POT_MAX_RAW   1023.0f
+// Max measurable distance: scale * 3.3V - offset ≈ 88.38
+#define STRING_POT_MAX_DISTANCE ((STRING_POT_SCALE * 3.3f) - STRING_POT_OFFSET)
+// Position thresholds in distance units — tune after physical testing
+#define STRING_POT_LOWEST_THRESHOLD   5.0f
+#define STRING_POT_HIGHEST_THRESHOLD  83.0f
+// String Potentiometer States
+#define STRING_MOVING 0
+#define STRING_LOWEST 1
+#define STRING_HIGHEST 2
+#define STRING_MIDDLE 3
 
 // Microstepping pins on DRV8825:
 #define STEPPER_M0_PIN 10
@@ -100,6 +115,15 @@
 #define DEPOSITION_DOOR_PULSE_STOP_US 1500
 #define DEPOSITION_DOOR_PULSE_OPEN_US 2500
 #define DEPOSITION_DOOR_PULSE_CLOSE_US 500
+#define DEPOSITION_DOOR_OPEN_TRAVEL_MS 3000UL
+#define DEPOSITION_DOOR_CLOSE_TRAVEL_MS 3000UL
+
+// Optional current-based stop detection for linear actuator end-of-travel.
+// Use CURRENT_SCALING-calibrated amperes from the selected current channel.
+#define DEPOSITION_DOOR_ENABLE_CURRENT_STOP 1
+#define DEPOSITION_DOOR_CURRENT_SENSOR_INDEX 0
+#define DEPOSITION_DOOR_CURRENT_THRESHOLD_A 8.0f
+#define DEPOSITION_DOOR_CURRENT_DETECT_MIN_MS 250
 
 #define VIB_MOTOR_PIN 30
 

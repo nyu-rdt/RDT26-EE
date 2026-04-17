@@ -6,6 +6,9 @@
 #include "stepper_driver.h"
 #include "depo_door_driver.h"
 #include "vib_motor_driver.h"
+#if STRING_POT_ENABLED
+#include "string_pot.h"
+#endif
 #include "system.h"
 #if CURRENT_SENSE_ENABLED
 #include "current_sensors.h"
@@ -47,11 +50,14 @@ static GroupHandler groups[16] = {nullptr};
 
 #if CURRENT_SENSE_ENABLED
 static float currents[NUM_CURRENT_SENSORS] = {0};
-static unsigned long lastCurrentMs = 0;
 #endif
 
 #if PLOT_DATA
 static unsigned long lastPlotMs = 0;
+#endif
+
+#if STRING_POT_ENABLED
+static unsigned long lastPotReadMs = 0;
 #endif
 
 #if RAMP_UP
@@ -76,9 +82,11 @@ void child_init() {
     STEPPER_Init();
     DEPO_DOOR_Init();
     VIB_Init();
+#if STRING_POT_ENABLED
+    STRINGPOT_Init();
+#endif
 #if CURRENT_SENSE_ENABLED
     CURRENT_SENSORS_Init();
-    lastCurrentMs = millis();
 #endif
 #if ROTARY_ENCODERS_ENABLED
     ROTARY_ENCODER_Init();
@@ -150,9 +158,9 @@ static void requestEvent() {
     pkt[10] = pkt[11] = pkt[12] = pkt[13] = 0xFF;
 #endif
 
-    // Byte 14: string pot (conveyor position)
 #if STRING_POT_ENABLED
-    pkt[14] = (uint8_t)(STRING_POT_Read() / 4095.0f * 255.0f);
+    // Byte 14: string pot — cached value updated in child_update(), safe to read here
+    pkt[14] = (uint8_t)(constrain(STRINGPOT_GetCachedDistance() * (255.0f / STRING_POT_MAX_DISTANCE), 0, 255));
 #else
     pkt[14] = 0xFF;
 #endif
@@ -176,10 +184,11 @@ static void requestEvent() {
 
 bool child_update() {
     SYSTEM_Update();
+    DEPO_DOOR_Update();
 
     if (newCommand) {
         newCommand = false;
-        lastCommandTime = millis();
+        lastCommandTime = millis();    
 #if SERIAL_DEBUG && !PLOT_DATA
         Serial.print("cmd: 0x");
         Serial.println(latestCommand, HEX);
@@ -210,11 +219,23 @@ bool child_update() {
 #endif
     STEPPER_Update(EXCAVATION_STEP_PERIOD); // manages the stepper motor
 
-#if CURRENT_SENSE_ENABLED
-    if (millis() - lastCurrentMs >= CURRENT_PERIOD_MS) {
-        lastCurrentMs = millis();
-        CURRENT_SENSORS_Update(currents);
+#if STRING_POT_ENABLED
+    if (millis() - lastPotReadMs >= 50) {
+        lastPotReadMs = millis();
+        STRINGPOT_ReadDistance();
+        STRINGPOT_UpdateState();
     }
+#endif
+
+#if CURRENT_SENSE_ENABLED
+    // Call every loop — CURRENT_SENSORS_Update has internal CHANNEL_SETTLE_MS gating,
+    // so channels advance at ~10ms each (80ms full cycle). The outer timer was
+    // redundant and caused the door's current channel to refresh too slowly for
+    // current-based end-stop detection to work reliably.
+    CURRENT_SENSORS_Update(currents);
+#if (DEPOSITION_DOOR_CURRENT_SENSOR_INDEX >= 0) && (DEPOSITION_DOOR_CURRENT_SENSOR_INDEX < NUM_CURRENT_SENSORS)
+    DEPO_DOOR_SetMeasuredCurrent(currents[DEPOSITION_DOOR_CURRENT_SENSOR_INDEX]);
+#endif
 #endif
 
 #if PLOT_DATA
@@ -235,8 +256,7 @@ bool child_update() {
         Serial.print(">Enc2:"); Serial.println(ROTARY_ENCODER_getEncoderAngle(2), 1);
 #endif
 #if STRING_POT_ENABLED
-        // TODO: replace with string pot driver read when available
-        Serial.print(">StrPot:"); Serial.println(analogRead(A0));
+        Serial.print(">StrPot:"); Serial.println(STRINGPOT_GetCachedDistance(), 2);
 #endif
         Serial.println();
     }
@@ -364,7 +384,15 @@ static void grp_ExcavationVert(uint8_t param) {
 }
 
 static void grp_DepositionDoor(uint8_t param) {
-    DEPO_DOOR_SetDirection(GET_DIRECTION(param));
+    int direction = GET_DIRECTION(param);
+
+    if (direction > 0) {
+        DEPO_DOOR_Open();
+    } else if (direction < 0) {
+        DEPO_DOOR_Close();
+    } else {
+        DEPO_DOOR_Stop();
+    }
 }
 
 static void grp_DepositionVib(uint8_t param) {
