@@ -31,7 +31,7 @@ static unsigned long motionStartMs = 0;
 static unsigned long openDurationMs = 0;
 static unsigned long closeDurationMs = 0;
 static unsigned long lastPrintMs = 0;
-static DepoDoorState lastState = DEPO_DOOR_STATE_STOPPED;
+static DepoDoorState lastState = DEPO_DOOR_STATE_CLOSED;
 
 static constexpr unsigned long kPrintPeriodMs = 100;
 static constexpr unsigned long kHoldOpenMs = 1000;
@@ -39,13 +39,10 @@ static constexpr unsigned long kHoldCloseMs = 1000;
 
 static const char* doorStateToString(DepoDoorState state) {
     switch (state) {
-        case DEPO_DOOR_STATE_STOPPED: return "STOPPED";
+        case DEPO_DOOR_STATE_CLOSED:  return "CLOSED";
+        case DEPO_DOOR_STATE_OPENED:  return "OPENED";
         case DEPO_DOOR_STATE_OPENING: return "OPENING";
         case DEPO_DOOR_STATE_CLOSING: return "CLOSING";
-        case DEPO_DOOR_STATE_OPENED: return "OPENED";
-        case DEPO_DOOR_STATE_CLOSED: return "CLOSED";
-        case DEPO_DOOR_STATE_TIMEOUT_OPEN: return "TIMEOUT_OPEN";
-        case DEPO_DOOR_STATE_TIMEOUT_CLOSE: return "TIMEOUT_CLOSE";
         default: return "UNKNOWN";
     }
 }

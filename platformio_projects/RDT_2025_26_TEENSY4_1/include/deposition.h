@@ -1,0 +1,14 @@
+#pragma once
+#include "depo_door_driver.h"
+
+void DEPO_Init();
+void DEPO_Update(float* currents, int numCurrents);
+
+void DEPO_OpenDoor();
+void DEPO_CloseDoor();
+void DEPO_SetVib(int direction);
+
+void DEPO_EmergencyStop();
+
+// Returns the last cached door state — ISR-safe (no hardware access).
+DepoDoorState DEPO_GetDoorState();

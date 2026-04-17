@@ -5,10 +5,12 @@
 
 static Servo depoDoorActuator;
 
-static DepoDoorState doorState = DEPO_DOOR_STATE_STOPPED;
+volatile static DepoDoorState doorState = DEPO_DOOR_STATE_CLOSED;
 static int activeDirection = 0;
 static unsigned long motionStartMs = 0;
-static float doorCurrentAmps = 0.0f;
+static volatile float doorCurrentAmps = 0.0f;
+static bool isArmed = false;
+static unsigned long armReadyMs = 0;
 
 static int getDoorPulseWidthUs(int direction) {
     return (direction > 0) ? DEPOSITION_DOOR_PULSE_OPEN_US:
@@ -18,7 +20,11 @@ static int getDoorPulseWidthUs(int direction) {
 
 void DEPO_DOOR_Init() {
     depoDoorActuator.attach(DEPOSITION_DOOR_ACTUATOR_PIN, 500, 2500);
-    DEPO_DOOR_Stop();
+    depoDoorActuator.writeMicroseconds(getDoorPulseWidthUs(0));
+    activeDirection = 0;
+    doorState = DEPO_DOOR_STATE_CLOSED;
+    isArmed = false;
+    armReadyMs = millis() + DEPOSITION_DOOR_ARM_DELAY_MS;
 }
 
 void DEPO_DOOR_SetDirection(int direction) {
@@ -37,28 +43,42 @@ void DEPO_DOOR_SetDirection(int direction) {
     } else if (activeDirection < 0) {
         doorState = DEPO_DOOR_STATE_CLOSING;
         motionStartMs = millis();
-    } else {
-        doorState = DEPO_DOOR_STATE_STOPPED;
     }
+}
+
+static bool checkArmed() {
+    if (isArmed) return true;
+    if (millis() >= armReadyMs) {
+        isArmed = true;
+        return true;
+    }
+#if SERIAL_DEBUG
+    Serial.println("DEPO DOOR: command rejected — actuator not yet armed");
+#endif
+    return false;
 }
 
 void DEPO_DOOR_Open() {
-    if (activeDirection != 1) {
-        DEPO_DOOR_SetDirection(1);
-    }
+    if (!checkArmed()) return;
+    if (activeDirection == 1) return;
+    if (doorState == DEPO_DOOR_STATE_OPENED) return;
+    DEPO_DOOR_SetDirection(1);
 }
 
 void DEPO_DOOR_Close() {
-    if (activeDirection != -1) {
-        DEPO_DOOR_SetDirection(-1);
-    }
+    if (!checkArmed()) return;
+    if (activeDirection == -1) return;
+    if (doorState == DEPO_DOOR_STATE_CLOSED) return;
+    DEPO_DOOR_SetDirection(-1);
 }
 
-void DEPO_DOOR_Stop() {
-    int pulseWidthUs = getDoorPulseWidthUs(0);
-    depoDoorActuator.writeMicroseconds(pulseWidthUs);
+void DEPO_DOOR_EmergencyStop() {
+    depoDoorActuator.writeMicroseconds(getDoorPulseWidthUs(0));
     activeDirection = 0;
-    doorState = DEPO_DOOR_STATE_STOPPED;
+    // State intentionally preserved: OPENING/CLOSING tells SW the last known direction.
+#if SERIAL_DEBUG
+    Serial.println("DEPO DOOR: emergency stop — position unknown");
+#endif
 }
 
 void DEPO_DOOR_SetMeasuredCurrent(float currentAmps) {
@@ -75,27 +95,26 @@ void DEPO_DOOR_Update() {
     unsigned long travelLimit = (activeDirection > 0) ? DEPOSITION_DOOR_OPEN_TRAVEL_MS : DEPOSITION_DOOR_CLOSE_TRAVEL_MS;
 
 #if DEPOSITION_DOOR_ENABLE_CURRENT_STOP
-    // If the actuator current spikes after startup, assume we've hit travel limit.
+    // CURRENT_DETECT_MIN_MS is the startup blind spot. Real worst-case detection latency is
+    // CURRENT_DETECT_MIN_MS + current sensor cycle time (~80 ms for 8 channels at 10 ms each).
     if (elapsed >= DEPOSITION_DOOR_CURRENT_DETECT_MIN_MS && doorCurrentAmps >= DEPOSITION_DOOR_CURRENT_THRESHOLD_A) {
-        if (activeDirection > 0) {
-            doorState = DEPO_DOOR_STATE_OPENED;
-        } else {
-            doorState = DEPO_DOOR_STATE_CLOSED;
-        }
+        doorState = (activeDirection > 0) ? DEPO_DOOR_STATE_OPENED : DEPO_DOOR_STATE_CLOSED;
         activeDirection = 0;
         depoDoorActuator.writeMicroseconds(getDoorPulseWidthUs(0));
+#if SERIAL_DEBUG
+        Serial.println(doorState == DEPO_DOOR_STATE_OPENED ? "DEPO DOOR: current stop — opened" : "DEPO DOOR: current stop — closed");
+#endif
         return;
     }
 #endif
 
     if (elapsed >= travelLimit) {
-        if (activeDirection > 0) {
-            doorState = DEPO_DOOR_STATE_TIMEOUT_OPEN;
-        } else {
-            doorState = DEPO_DOOR_STATE_TIMEOUT_CLOSE;
-        }
+        doorState = (activeDirection > 0) ? DEPO_DOOR_STATE_OPENED : DEPO_DOOR_STATE_CLOSED;
         activeDirection = 0;
         depoDoorActuator.writeMicroseconds(getDoorPulseWidthUs(0));
+#if SERIAL_DEBUG
+        Serial.println(doorState == DEPO_DOOR_STATE_OPENED ? "DEPO DOOR: timeout — opened" : "DEPO DOOR: timeout — closed");
+#endif
     }
 }
 
@@ -105,5 +124,4 @@ DepoDoorState DEPO_DOOR_GetState() {
 
 bool DEPO_DOOR_IsBusy() {
     return (activeDirection != 0);
-
 }
