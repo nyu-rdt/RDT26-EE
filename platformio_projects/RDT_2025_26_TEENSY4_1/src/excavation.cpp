@@ -50,6 +50,9 @@ void EXCAV_Init() {
 #else
     CAN_SendExcavation(0.0f);
 #endif
+#if SERIAL_DEBUG
+    Serial.println("[excav] init");
+#endif
 }
 
 void EXCAV_Update() {
@@ -72,13 +75,18 @@ void EXCAV_Update() {
 #endif
 
     // Stop vertical movement if the assembly has reached the travel limit it's moving toward.
-    // Keyed on vertDirection (stepper) — the string pot measures vertical position, not belt spin.
+    // Stepper-only — belt spin is independent and may still be running (e.g. digging in position).
 #if STRING_POT_ENABLED
     if (vertDirection != 0) {
         int state = STRINGPOT_GetState();
         if ((vertDirection > 0 && state == STRING_HIGHEST) ||
             (vertDirection < 0 && state == STRING_LOWEST)) {
-            EXCAV_Stop();
+            vertDirection = 0;
+            STEPPER_SetDirection(0);
+            STRINGPOT_SetMoving(false);
+#if SERIAL_DEBUG
+            Serial.println("[excav] travel limit reached — stepper stopped, belt unchanged");
+#endif
         }
     }
 #endif
@@ -87,6 +95,10 @@ void EXCAV_Update() {
 void EXCAV_SetBeltDirection(int direction) {
     beltDirection = (direction > 0) ? 1 : (direction < 0) ? -1 : 0;
     applyBeltSpeed(beltDirection * EXCAVATION_DUTY_CYCLE);
+#if SERIAL_DEBUG
+    Serial.print("[excav] belt: ");
+    Serial.println(beltDirection > 0 ? "fwd" : beltDirection < 0 ? "rev" : "stop");
+#endif
 }
 
 void EXCAV_SetVertDirection(int direction) {
@@ -103,6 +115,10 @@ void EXCAV_SetVertDirection(int direction) {
         vertDirection = 0;
         STEPPER_SetDirection(0);
         STRINGPOT_SetMoving(false);
+#if SERIAL_DEBUG
+        Serial.print("[excav] vert blocked at limit, pos=");
+        Serial.println(STRINGPOT_GetCachedDistance(), 2);
+#endif
         return;
     }
 #endif
@@ -112,6 +128,10 @@ void EXCAV_SetVertDirection(int direction) {
     STRINGPOT_SetMoving(vertDirection != 0);
 #endif
     STEPPER_SetDirection(vertDirection);
+#if SERIAL_DEBUG
+    Serial.print("[excav] vert: ");
+    Serial.println(vertDirection > 0 ? "up" : vertDirection < 0 ? "down" : "stop");
+#endif
 }
 
 float EXCAV_GetConveyorDistance() {
@@ -134,5 +154,8 @@ void EXCAV_Stop() {
     STEPPER_SetDirection(0);
 #if STRING_POT_ENABLED
     STRINGPOT_SetMoving(false);
+#endif
+#if SERIAL_DEBUG
+    Serial.println("[excav] hard stop");
 #endif
 }
