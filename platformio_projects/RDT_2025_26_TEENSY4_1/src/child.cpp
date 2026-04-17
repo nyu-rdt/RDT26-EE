@@ -231,6 +231,9 @@ bool child_update() {
 #if STRING_POT_ENABLED
         Serial.print(">StrPot:"); Serial.println(EXCAV_GetConveyorDistance(), 2);
 #endif
+#if GATE_POS_ENABLED
+        Serial.print(">DD_state:"); Serial.println(static_cast<int>(DEPO_GetDoorState()));
+#endif
         Serial.println();
     }
 #endif
