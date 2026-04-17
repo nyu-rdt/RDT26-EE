@@ -385,8 +385,13 @@ static void grp_ExcavationVert(uint8_t param) {
 static void grp_DepositionDoor(uint8_t param) {
     if (param == 0) {
         DEPO_DOOR_Open();
-    } else {
+    } else if (param == 1) {
         DEPO_DOOR_Close();
+    } else {
+#if SERIAL_DEBUG
+        Serial.print("DEPO DOOR: unknown param ");
+        Serial.println(param);
+#endif
     }
 }
 
