@@ -63,6 +63,6 @@ void SYSTEM_StopAllMotors() {
     }
 
     STEPPER_SetDirection(0);
-    DEPO_DOOR_SetDirection(0);
+    DEPO_DOOR_EmergencyStop();
     VIB_drive(0);
 }
