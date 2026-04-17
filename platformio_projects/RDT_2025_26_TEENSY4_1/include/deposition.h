@@ -2,7 +2,7 @@
 #include "depo_door_driver.h"
 
 void DEPO_Init();
-void DEPO_Update(float* currents, int numCurrents);
+void DEPO_Update();
 
 void DEPO_OpenDoor();
 void DEPO_CloseDoor();

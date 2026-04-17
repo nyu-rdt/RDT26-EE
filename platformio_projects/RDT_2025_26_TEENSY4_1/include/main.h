@@ -5,9 +5,7 @@ static void ROVER_init();
 static void ROVER_update();
 
 static void receiveEvent(int numBytes);
-static void requestEvent();
-static bool processCommand(uint8_t cmd);
-
+static void processCommand(uint8_t cmd);
 static void registerHandlers();
 
 static void grp_Control(uint8_t param);

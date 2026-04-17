@@ -2,11 +2,13 @@
 #include <Wire.h>
 #include "main.h"
 #include "config.h"
+#include "system.h"
 #include "can_driver.h"
 #include "locomotion.h"
 #include "excavation.h"
 #include "deposition.h"
-#include "system.h"
+#include "comms.h"
+#include "debug.h"
 #if CURRENT_SENSE_ENABLED
 #include "current_sensors.h"
 #endif
@@ -14,33 +16,18 @@
 #include "rotary_encoders.h"
 #endif
 
-volatile uint8_t latestCommand = 0x10;
-volatile bool newCommand = false;
+typedef void (*GroupHandler)(uint8_t);
+
+static volatile uint8_t latestCommand = 0x10;
+static volatile bool newCommand = false;
 static unsigned long lastCommandTime = 0;
 static GroupHandler groups[16] = {nullptr};
 
-#if CURRENT_SENSE_ENABLED
-static float currents[NUM_CURRENT_SENSORS] = {0};
-#endif
+void setup()  { ROVER_init(); }
+void loop()   { ROVER_update(); }
 
-#if PLOT_DATA
-static unsigned long lastPlotMs = 0;
-#endif
-
-void setup() {
-    ROVER_init();
-}
-
-void loop() {
-    ROVER_update();
-}
-
-void ROVER_init(){
+void ROVER_init() {
     Serial.begin(115200);
-    Wire2.begin(I2C_CHILD_ADDRESS);
-    Wire2.onReceive(receiveEvent);
-    Wire2.onRequest(requestEvent);
-
     SYSTEM_Init();
     CAN_Init();
     LOCO_Init();
@@ -53,6 +40,9 @@ void ROVER_init(){
     ROTARY_ENCODER_Init();
 #endif
     SYSTEM_RegisterStopCallbacks(LOCO_EmergencyStop);
+    Wire2.begin(I2C_CHILD_ADDRESS);
+    Wire2.onReceive(receiveEvent);
+    COMMS_Init();
     registerHandlers();
 #if SERIAL_DEBUG && !PLOT_DATA
     Serial.println("Ready");
@@ -84,39 +74,12 @@ void ROVER_update() {
 
     LOCO_Update();
     EXCAV_Update();
-
 #if CURRENT_SENSE_ENABLED
-    CURRENT_SENSORS_Update(currents);
-    DEPO_Update(currents, NUM_CURRENT_SENSORS);
-#else
-    DEPO_Update(nullptr, 0);
+    CURRENT_SENSORS_Update();
 #endif
-
+    DEPO_Update();
 #if PLOT_DATA
-    if (millis() - lastPlotMs >= PLOT_PERIOD_MS) {
-        lastPlotMs = millis();
-#if CURRENT_SENSE_ENABLED
-        Serial.print(">I0:"); Serial.println(currents[0], 2);
-        Serial.print(">I1:"); Serial.println(currents[1], 2);
-        Serial.print(">I2:"); Serial.println(currents[2], 2);
-        Serial.print(">I3:"); Serial.println(currents[3], 2);
-        Serial.print(">I4:"); Serial.println(currents[4], 2);
-        Serial.print(">I5:"); Serial.println(currents[5], 2);
-        Serial.print(">I6:"); Serial.println(currents[6], 2);
-        Serial.print(">I7:"); Serial.println(currents[7], 2);
-#endif
-#if ROTARY_ENCODERS_ENABLED
-        Serial.print(">Enc1:"); Serial.println(ROTARY_ENCODER_getEncoderAngle(1), 1);
-        Serial.print(">Enc2:"); Serial.println(ROTARY_ENCODER_getEncoderAngle(2), 1);
-#endif
-#if STRING_POT_ENABLED
-        Serial.print(">StrPot:"); Serial.println(EXCAV_GetConveyorDistance(), 2);
-#endif
-#if GATE_POS_ENABLED
-        Serial.print(">DD_state:"); Serial.println(static_cast<int>(DEPO_GetDoorState()));
-#endif
-        Serial.println();
-    }
+    DEBUG_Update();
 #endif
 }
 
@@ -127,174 +90,64 @@ static void receiveEvent(int numBytes) {
     }
 }
 
-// Fires when master calls requestFrom() — always sends exactly DATA_PACKET_SIZE bytes.
-// Disabled sensors send 0xFF as a sentinel so SW can detect them.
-//
-// Packet layout (18 bytes):
-//   [0-7]   motor_currents[8]  uint8, 0-255 = 0-20A  (CURRENT_SENSE_ENABLED)
-//   [8]     left_encoder       uint8, 0-255 = 0-360°  (ROTARY_ENCODERS_ENABLED)
-//   [9]     right_encoder      uint8, 0-255 = 0-360°  (ROTARY_ENCODERS_ENABLED)
-//   [10-13] load_cells[4]      uint8 each             (LOAD_CELLS_ENABLED)
-//   [14]    string_pot         uint8 (conveyor pos)   (STRING_POT_ENABLED)
-//   [15]    depo_door_state    uint8, DepoDoorState enum value (GATE_POS_ENABLED)
-//   [16]    flags              uint8 (bit0=relay, bit1=3s_low, bit2=6s_low)
-//   [17]    fixes_attempted    uint8                  (no driver yet)
-
-static void requestEvent() {
-    uint8_t pkt[DATA_PACKET_SIZE];
-
-    // Bytes 0-7: motor currents (0-255 = 0-20A, scale = 255/20 = 12.75)
-#if CURRENT_SENSE_ENABLED
-    for (int i = 0; i < NUM_CURRENT_SENSORS; i++) {
-        pkt[i] = (uint8_t)(currents[i] * 12.75f);
-    }
-#else
-    for (int i = 0; i < NUM_CURRENT_SENSORS; i++) { pkt[i] = 0xFF; }
-#endif
-
-    // Bytes 8-9: encoder angles, 0-255 = 0-360°
-#if ROTARY_ENCODERS_ENABLED
-    pkt[8] = (uint8_t)(ROTARY_ENCODER_getEncoderAngle(1) * 255.0f / 360.0f);
-    pkt[9] = (uint8_t)(ROTARY_ENCODER_getEncoderAngle(2) * 255.0f / 360.0f);
-#else
-    pkt[8] = 0xFF;
-    pkt[9] = 0xFF;
-#endif
-
-    // Bytes 10-13: load cells
-#if LOAD_CELLS_ENABLED
-    // TODO: fill from load cell driver
-#else
-    pkt[10] = pkt[11] = pkt[12] = pkt[13] = 0xFF;
-#endif
-
-#if STRING_POT_ENABLED
-    // Byte 14: string pot — cached by EXCAV_Update(), ISR-safe to read here
-    pkt[14] = (uint8_t)(constrain(EXCAV_GetConveyorDistance() * (255.0f / STRING_POT_MAX_DISTANCE), 0, 255));
-#else
-    pkt[14] = 0xFF;
-#endif
-
-    // Byte 15: depo door state (DepoDoorState enum — see depo_door_driver.h)
-#if GATE_POS_ENABLED
-    pkt[15] = (uint8_t)DEPO_GetDoorState();
-#else
-    pkt[15] = 0xFF;
-#endif
-
-    // Byte 16: flags — bit0=relay, bit1=3s_low, bit2=6s_low
-    pkt[16] = SYSTEM_GetRelayStatus() & 0x07;
-    //TODO: add more flags here
-
-    pkt[17] = 0xFF; // fixes_attempted — no driver yet
-
-    Wire2.write(pkt, DATA_PACKET_SIZE);
-}
-
-static bool processCommand(uint8_t cmd) {
+static void processCommand(uint8_t cmd) {
     uint8_t group = CMD_GROUP(cmd);
     uint8_t param = CMD_PARAM(cmd);
-
-    if (groups[group] != nullptr) {
-        groups[group](param);
-        return true;
-    }
-    return false;
+    if (groups[group] != nullptr) groups[group](param);
 }
 
 static void registerHandlers() {
-    groups[GRP_CONTROL]    = grp_Control;
-    groups[GRP_LOCO_STOP]  = grp_LocoStop;
-    groups[GRP_FORWARD]    = grp_Forward;
-    groups[GRP_BACKWARD]   = grp_Backward;
-    groups[GRP_LEFT]       = grp_TurnLeft;
-    groups[GRP_RIGHT]      = grp_TurnRight;
-    #if USE_OLD_HEX_MAPPING
+    groups[GRP_CONTROL]   = grp_Control;
+    groups[GRP_LOCO_STOP] = grp_LocoStop;
+    groups[GRP_FORWARD]   = grp_Forward;
+    groups[GRP_BACKWARD]  = grp_Backward;
+    groups[GRP_LEFT]      = grp_TurnLeft;
+    groups[GRP_RIGHT]     = grp_TurnRight;
+#if USE_OLD_HEX_MAPPING
     groups[GRP_EXCAVATION] = grp_Excavation;
     groups[GRP_DEPOSITION] = grp_Deposition;
-    #else
+#else
     groups[GRP_EXCAVATION_BELT] = grp_ExcavationBelt;
     groups[GRP_EXCAVATION_VERT] = grp_ExcavationVert;
     groups[GRP_DEPOSITION_DOOR] = grp_DepositionDoor;
-    groups[GRP_DEPOSITION_VIB] = grp_DepositionVib;
-    #endif
-    groups[GRP_DATA]       = grp_Data;
+    groups[GRP_DEPOSITION_VIB]  = grp_DepositionVib;
+#endif
+    groups[GRP_DATA] = grp_Data;
 }
 
 // Group Handlers
 static void grp_Control(uint8_t param) {
-    if (param == 0x01) {
-        SYSTEM_StopAllMotors();
-    }
+    if (param == 0x01) SYSTEM_StopAllMotors();
 }
 
-static void grp_LocoStop(uint8_t param) {
-    LOCO_Stop();
-}
-
-static void grp_Forward(uint8_t param) {
-    float spd = GET_SPEED(param);
-    LOCO_SetSpeeds(-spd, spd);
-}
-
-static void grp_Backward(uint8_t param) {
-    float spd = GET_SPEED(param);
-    LOCO_SetSpeeds(spd, -spd);
-}
-
-static void grp_TurnLeft(uint8_t param) {
-    float spd = GET_SPEED(param);
-    LOCO_SetSpeeds(spd, spd);
-}
-
-static void grp_TurnRight(uint8_t param) {
-    float spd = GET_SPEED(param);
-    LOCO_SetSpeeds(-spd, -spd);
-}
+static void grp_LocoStop(uint8_t param)  { LOCO_Stop(); }
+static void grp_Forward(uint8_t param)   { LOCO_SetSpeeds(-GET_SPEED(param),  GET_SPEED(param)); }
+static void grp_Backward(uint8_t param)  { LOCO_SetSpeeds( GET_SPEED(param), -GET_SPEED(param)); }
+static void grp_TurnLeft(uint8_t param)  { LOCO_SetSpeeds( GET_SPEED(param),  GET_SPEED(param)); }
+static void grp_TurnRight(uint8_t param) { LOCO_SetSpeeds(-GET_SPEED(param), -GET_SPEED(param)); }
 
 #if USE_OLD_HEX_MAPPING
 static void grp_Excavation(uint8_t param) {
-    if (param < 3) {
-        grp_ExcavationVert(param);
-    } else {
-        grp_ExcavationBelt(param - 3);
-    }
+    if (param < 3) grp_ExcavationVert(param);
+    else           grp_ExcavationBelt(param - 3);
 }
 
 static void grp_Deposition(uint8_t param) {
-    if (param < 2) {
-        grp_DepositionDoor(param);
-    } else {
-        grp_DepositionVib(param - 2);
-    }
+    if (param < 2) grp_DepositionDoor(param);
+    else           grp_DepositionVib(param - 2);
 }
 #endif
 
-static void grp_ExcavationBelt(uint8_t param) {
-    EXCAV_SetBeltDirection(GET_DIRECTION(param));
-}
-
-static void grp_ExcavationVert(uint8_t param) {
-    EXCAV_SetVertDirection(GET_DIRECTION(param));
-}
+static void grp_ExcavationBelt(uint8_t param) { EXCAV_SetBeltDirection(GET_DIRECTION(param)); }
+static void grp_ExcavationVert(uint8_t param) { EXCAV_SetVertDirection(GET_DIRECTION(param)); }
 
 static void grp_DepositionDoor(uint8_t param) {
-    if (param == 0) {
-        DEPO_OpenDoor();
-    } else if (param == 1) {
-        DEPO_CloseDoor();
-    } else {
+    if      (param == 0) DEPO_OpenDoor();
+    else if (param == 1) DEPO_CloseDoor();
 #if SERIAL_DEBUG
-        Serial.print("DEPO DOOR: unknown param ");
-        Serial.println(param);
+    else { Serial.print("DEPO DOOR: unknown param "); Serial.println(param); }
 #endif
-    }
 }
 
-static void grp_DepositionVib(uint8_t param) {
-    DEPO_SetVib(GET_DIRECTION(param));
-}
-
-static void grp_Data(uint8_t param) {
-    // response is sent by requestEvent() when master calls Wire.requestFrom()
-}
+static void grp_DepositionVib(uint8_t param) { DEPO_SetVib(GET_DIRECTION(param)); }
+static void grp_Data(uint8_t param) {}
