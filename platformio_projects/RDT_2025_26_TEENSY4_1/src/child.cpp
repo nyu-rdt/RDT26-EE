@@ -126,7 +126,7 @@ static void receiveEvent(int numBytes) {
 //   [9]     right_encoder      uint8, 0-255 = 0-360°  (ROTARY_ENCODERS_ENABLED)
 //   [10-13] load_cells[4]      uint8 each             (LOAD_CELLS_ENABLED)
 //   [14]    string_pot         uint8 (conveyor pos)   (STRING_POT_ENABLED)
-//   [15]    gate_pos           uint8                  (GATE_POS_ENABLED)
+//   [15]    depo_door_state    uint8, DepoDoorState enum value (GATE_POS_ENABLED)
 //   [16]    flags              uint8 (bit0=relay, bit1=3s_low, bit2=6s_low)
 //   [17]    fixes_attempted    uint8                  (no driver yet)
 static void requestEvent() {
@@ -165,14 +165,13 @@ static void requestEvent() {
     pkt[14] = 0xFF;
 #endif
 
-    // Byte 15: gate position
+    // Byte 15: depo door state (DepoDoorState enum — see depo_door_driver.h)
 #if GATE_POS_ENABLED
-    // TODO: fill from gate position driver
-    
+    pkt[15] = (uint8_t)DEPO_DOOR_GetState();
 #else
     pkt[15] = 0xFF;
 #endif
-
+    
     // Byte 16: flags — bit0=relay, bit1=3s_low, bit2=6s_low
     pkt[16] = SYSTEM_GetRelayStatus() & 0x07;
     //TODO: add more flags here

@@ -32,8 +32,8 @@
     #define CURRENT_SENSE_ENABLED   1
     #define ROTARY_ENCODERS_ENABLED 1
     #define LOAD_CELLS_ENABLED      0
-    #define STRING_POT_ENABLED      0
-    #define GATE_POS_ENABLED        0
+    #define STRING_POT_ENABLED      1
+    #define GATE_POS_ENABLED        1
 #endif
 
 #define ENC1_A 21
