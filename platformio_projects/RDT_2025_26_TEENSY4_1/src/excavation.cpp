@@ -84,7 +84,9 @@ void EXCAV_SetBeltDirection(int direction) {
     int newDir = (direction > 0) ? 1 : (direction < 0) ? -1 : 0;
 
 #if STRING_POT_ENABLED
-    // Reject if already at the limit in the requested direction
+    // Force a fresh read so we don't guard on state that's up to 50ms old
+    STRINGPOT_ReadDistance();
+    STRINGPOT_UpdateState();
     int state = STRINGPOT_GetState();
     if ((newDir > 0 && state == STRING_HIGHEST) ||
         (newDir < 0 && state == STRING_LOWEST)) {
