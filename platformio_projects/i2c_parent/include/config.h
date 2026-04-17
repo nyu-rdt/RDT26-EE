@@ -32,6 +32,12 @@
 #define REVERSE 2
 #define STOP 0
 
+// Deposition params (GRP_DEPOSITION lower nibble) — keep in sync with child firmware
+#define DEPO_DOOR_OPEN  0
+#define DEPO_DOOR_CLOSE 1
+#define DEPO_VIB_OFF    2
+#define DEPO_VIB_ON     3
+
 
 // Build single-byte command expected by i2c_can_child_tony.
 #define BUILD_I2C_CMD(group, param) ((((group) & 0x0F) << 4) | ((param) & 0x0F))

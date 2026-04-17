@@ -7,7 +7,7 @@
 static uint8_t speedLevel = 1;  // 0-3
 static uint8_t currentMode = GRP_LOCO_STOP;
 
-char* message = "W/A/S/D=Move | E/Q=Speed | X/Space=Stop | U/J/H=Belt Fwd/Rev/Stop | O/L/K=Vert Fwd/Rev/Stop | R/F/V=Door Open/Close/Stop | T/G=Vib On/Off | I=Request Data";
+char* message = "W/A/S/D=Move | E/Q=Speed | X/Space=Stop | U/J/H=Belt Fwd/Rev/Stop | O/L/K=Vert Fwd/Rev/Stop | R/F=Door Open/Close | T/G=Vib On/Off | I=Request Data";
 
 static void printStatus(const char* mode) {
     Serial.print("Mode: ");
@@ -97,31 +97,26 @@ static void processKey(char key) {
                 i2c_parent_sendCommand(currentMode, STOP); // vert stop
                 printStatus("STOP excav");
             break;
-        // deposition door control (old mapping: GRP_DEPOSITION params 0-2 = door stop/open/close)
+        // deposition door control: 0=open, 1=close (door self-stops, no stop command)
         case 'R':
                 currentMode = GRP_DEPOSITION;
-                i2c_parent_sendCommand(currentMode, FORWARD); // door open
+                i2c_parent_sendCommand(currentMode, DEPO_DOOR_OPEN);
                 printStatus("OPEN depo DOOR");
             break;
         case 'F':
                 currentMode = GRP_DEPOSITION;
-                i2c_parent_sendCommand(currentMode, REVERSE); // door close
+                i2c_parent_sendCommand(currentMode, DEPO_DOOR_CLOSE);
                 printStatus("CLOSE depo DOOR");
             break;
-        case 'V':
-                currentMode = GRP_DEPOSITION;
-                i2c_parent_sendCommand(currentMode, STOP); // door stop
-                printStatus("STOP depo DOOR");
-            break;
-        // deposition vibration control (old mapping: GRP_DEPOSITION params 3-5 = vib stop/on/rev)
+        // deposition vibration control: 2=vib off, 3=vib on
         case 'T':
                 currentMode = GRP_DEPOSITION;
-                i2c_parent_sendCommand(currentMode, FORWARD + 3); // vib on
+                i2c_parent_sendCommand(currentMode, DEPO_VIB_ON);
                 printStatus("ON depo VIB");
             break;
         case 'G':
                 currentMode = GRP_DEPOSITION;
-                i2c_parent_sendCommand(currentMode, STOP + 3); // vib off
+                i2c_parent_sendCommand(currentMode, DEPO_VIB_OFF);
                 printStatus("OFF depo VIB");
             break;
         case 'I': {
