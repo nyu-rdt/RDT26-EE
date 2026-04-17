@@ -383,14 +383,10 @@ static void grp_ExcavationVert(uint8_t param) {
 }
 
 static void grp_DepositionDoor(uint8_t param) {
-    int direction = GET_DIRECTION(param);
-
-    if (direction > 0) {
+    if (param == 0) {
         DEPO_DOOR_Open();
-    } else if (direction < 0) {
-        DEPO_DOOR_Close();
     } else {
-        DEPO_DOOR_Stop();
+        DEPO_DOOR_Close();
     }
 }
 
