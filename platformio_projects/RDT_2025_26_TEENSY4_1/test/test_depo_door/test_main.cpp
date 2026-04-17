@@ -14,7 +14,6 @@
 #if CURRENT_SENSE_ENABLED
 #include "current_sensors.h"
 static float currents[NUM_CURRENT_SENSORS] = {0};
-static unsigned long lastCurrentMs = 0;
 #endif
 
 enum DoorTestPhase {
@@ -58,7 +57,6 @@ void setup() {
 
 #if CURRENT_SENSE_ENABLED
     CURRENT_SENSORS_Init();
-    lastCurrentMs = millis();
     Serial.println("# current sensors: ok");
 #else
     Serial.println("# current sensors: DISABLED in config.h");
@@ -76,14 +74,10 @@ void loop() {
     const unsigned long now = millis();
 
 #if CURRENT_SENSE_ENABLED
-    if (now - lastCurrentMs >= CURRENT_PERIOD_MS) {
-        lastCurrentMs = now;
-        CURRENT_SENSORS_Update(currents);
-
+    CURRENT_SENSORS_Update(currents);
 #if (DEPOSITION_DOOR_CURRENT_SENSOR_INDEX >= 0) && (DEPOSITION_DOOR_CURRENT_SENSOR_INDEX < NUM_CURRENT_SENSORS)
-        DEPO_DOOR_SetMeasuredCurrent(currents[DEPOSITION_DOOR_CURRENT_SENSOR_INDEX]);
+    DEPO_DOOR_SetMeasuredCurrent(currents[DEPOSITION_DOOR_CURRENT_SENSOR_INDEX]);
 #endif
-    }
 #endif
 
     DEPO_DOOR_Update();

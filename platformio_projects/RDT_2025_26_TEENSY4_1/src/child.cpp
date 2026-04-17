@@ -50,7 +50,6 @@ static GroupHandler groups[16] = {nullptr};
 
 #if CURRENT_SENSE_ENABLED
 static float currents[NUM_CURRENT_SENSORS] = {0};
-static unsigned long lastCurrentMs = 0;
 #endif
 
 #if PLOT_DATA
@@ -88,7 +87,6 @@ void child_init() {
 #endif
 #if CURRENT_SENSE_ENABLED
     CURRENT_SENSORS_Init();
-    lastCurrentMs = millis();
 #endif
 #if ROTARY_ENCODERS_ENABLED
     ROTARY_ENCODER_Init();
@@ -164,8 +162,8 @@ static void requestEvent() {
     // Byte 14: string pot — cached value updated in child_update(), safe to read here
     pkt[14] = (uint8_t)(constrain(STRINGPOT_GetCachedDistance() * (255.0f / STRING_POT_MAX_DISTANCE), 0, 255));
 #else
-    pkt[14] = 0xFF; 
-#endif 
+    pkt[14] = 0xFF;
+#endif
 
     // Byte 15: gate position
 #if GATE_POS_ENABLED
@@ -230,14 +228,14 @@ bool child_update() {
 #endif
 
 #if CURRENT_SENSE_ENABLED
-    if (millis() - lastCurrentMs >= CURRENT_PERIOD_MS) {
-        lastCurrentMs = millis();
-        CURRENT_SENSORS_Update(currents);
-
+    // Call every loop — CURRENT_SENSORS_Update has internal CHANNEL_SETTLE_MS gating,
+    // so channels advance at ~10ms each (80ms full cycle). The outer timer was
+    // redundant and caused the door's current channel to refresh too slowly for
+    // current-based end-stop detection to work reliably.
+    CURRENT_SENSORS_Update(currents);
 #if (DEPOSITION_DOOR_CURRENT_SENSOR_INDEX >= 0) && (DEPOSITION_DOOR_CURRENT_SENSOR_INDEX < NUM_CURRENT_SENSORS)
-        DEPO_DOOR_SetMeasuredCurrent(currents[DEPOSITION_DOOR_CURRENT_SENSOR_INDEX]);
+    DEPO_DOOR_SetMeasuredCurrent(currents[DEPOSITION_DOOR_CURRENT_SENSOR_INDEX]);
 #endif
-    }
 #endif
 
 #if PLOT_DATA
@@ -258,7 +256,7 @@ bool child_update() {
         Serial.print(">Enc2:"); Serial.println(ROTARY_ENCODER_getEncoderAngle(2), 1);
 #endif
 #if STRING_POT_ENABLED
-        Serial.print(">StrPot:"); Serial.println(STRINGPOT_ReadDistance(), 2);
+        Serial.print(">StrPot:"); Serial.println(STRINGPOT_GetCachedDistance(), 2);
 #endif
         Serial.println();
     }

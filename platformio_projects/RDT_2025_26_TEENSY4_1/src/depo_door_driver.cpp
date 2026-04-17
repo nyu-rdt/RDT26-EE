@@ -30,6 +30,7 @@ void DEPO_DOOR_SetDirection(int direction) {
 
     depoDoorActuator.writeMicroseconds(getDoorPulseWidthUs(direction));
     activeDirection = newDirection;
+    doorCurrentAmps = 0.0f; // clear stale current so it doesn't trip detection on the new move
     if (activeDirection > 0) {
         doorState = DEPO_DOOR_STATE_OPENING;
         motionStartMs = millis();
