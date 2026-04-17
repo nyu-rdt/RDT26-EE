@@ -42,10 +42,8 @@ void SYSTEM_Update() {
 
 
 
-void SYSTEM_RegisterStopCallbacks(SystemStopLocomotionFn stopLocomotionFn,
-                                  SystemStopExcavationFn stopExcavationFn) {
+void SYSTEM_RegisterStopCallbacks(SystemStopLocomotionFn stopLocomotionFn) {
     stopLocomotion = stopLocomotionFn;
-    stopExcavation = stopExcavationFn;
 }
 
 // Returns relay pin states packed into one byte: bit0=relay, bit1=3s_low, bit2=6s_low

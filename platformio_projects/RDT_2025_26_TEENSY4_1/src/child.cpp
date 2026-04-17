@@ -78,7 +78,7 @@ void child_init() {
 #if ROTARY_ENCODERS_ENABLED
     ROTARY_ENCODER_Init();
 #endif
-    SYSTEM_RegisterStopCallbacks(stopLocomotion, stopExcavation);
+    SYSTEM_RegisterStopCallbacks(stopLocomotion);
     registerHandlers();
 
 #if RAMP_UP
