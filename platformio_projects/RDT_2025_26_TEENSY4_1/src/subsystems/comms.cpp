@@ -2,7 +2,7 @@
 #include <Wire.h>
 #include "config.h"
 #include "comms.h"
-#include "system.h"
+#include "ee_box.h"
 #include "excavation.h"
 #include "deposition.h"
 #if CURRENT_SENSE_ENABLED
@@ -30,7 +30,6 @@ void COMMS_Init() {
 //   [15]    depo_door_state    uint8, DepoDoorState enum value (GATE_POS_ENABLED)
 //   [16]    flags              uint8 (bit0=relay, bit1=3s_low, bit2=6s_low)
 //   [17]    fixes_attempted    uint8                  (no driver yet)
-
 static void requestEvent() {
     uint8_t pkt[DATA_PACKET_SIZE];
 
@@ -69,7 +68,7 @@ static void requestEvent() {
     pkt[15] = 0xFF;
 #endif
 
-    pkt[16] = SYSTEM_GetRelayStatus() & 0x07;
+    pkt[16] = EE_BOX_GetRelayStatus() & 0x07;
     pkt[17] = 0xFF; // fixes_attempted — no driver yet
 
     Wire2.write(pkt, DATA_PACKET_SIZE);

@@ -2,7 +2,8 @@
 #include <Wire.h>
 #include "main.h"
 #include "config.h"
-#include "system.h"
+#include "ee_box.h"
+#include "estop.h"
 #include "can_driver.h"
 #include "locomotion.h"
 #include "excavation.h"
@@ -28,7 +29,7 @@ void loop()   { ROVER_update(); }
 
 void ROVER_init() {
     Serial.begin(115200);
-    SYSTEM_Init();
+    EE_BOX_Init();
     CAN_Init();
     LOCO_Init();
     EXCAV_Init();
@@ -39,7 +40,7 @@ void ROVER_init() {
 #if ROTARY_ENCODERS_ENABLED
     ROTARY_ENCODER_Init();
 #endif
-    SYSTEM_RegisterStopCallbacks(LOCO_EmergencyStop);
+    ESTOP_RegisterCallbacks(LOCO_EmergencyStop);
     Wire2.begin(I2C_CHILD_ADDRESS);
     Wire2.onReceive(receiveEvent);
     COMMS_Init();
@@ -50,7 +51,7 @@ void ROVER_init() {
 }
 
 void ROVER_update() {
-    SYSTEM_Update();
+    EE_BOX_Update();
 
     if (newCommand) {
         newCommand = false;
@@ -67,7 +68,7 @@ void ROVER_update() {
 #if SERIAL_DEBUG && !PLOT_DATA
         Serial.println("Command timeout");
 #endif
-        SYSTEM_StopAllMotors();
+        ESTOP_StopAllMotors();
         lastCommandTime = millis();
     }
 #endif
@@ -117,7 +118,7 @@ static void registerHandlers() {
 
 // Group Handlers
 static void grp_Control(uint8_t param) {
-    if (param == 0x01) SYSTEM_StopAllMotors();
+    if (param == 0x01) ESTOP_StopAllMotors();
 }
 
 static void grp_LocoStop(uint8_t param)  { LOCO_Stop(); }
