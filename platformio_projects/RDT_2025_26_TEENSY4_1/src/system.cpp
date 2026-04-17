@@ -1,9 +1,8 @@
 #include <Arduino.h>
 #include "config.h"
 #include "system.h"
-#include "stepper_driver.h"
-#include "depo_door_driver.h"
-#include "vib_motor_driver.h"
+#include "excavation.h"
+#include "deposition.h"
 
 static SystemStopLocomotionFn stopLocomotion = nullptr;
 static SystemStopExcavationFn stopExcavation = nullptr;
@@ -62,7 +61,6 @@ void SYSTEM_StopAllMotors() {
         stopExcavation();
     }
 
-    STEPPER_SetDirection(0);
-    DEPO_DOOR_EmergencyStop();
-    VIB_drive(0);
+    EXCAV_Stop();
+    DEPO_EmergencyStop();
 }

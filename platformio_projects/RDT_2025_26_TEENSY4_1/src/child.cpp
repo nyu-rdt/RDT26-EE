@@ -4,8 +4,7 @@
 #include "config.h"
 #include "can_driver.h"
 #include "excavation.h"
-#include "depo_door_driver.h"
-#include "vib_motor_driver.h"
+#include "deposition.h"
 #include "system.h"
 #if CURRENT_SENSE_ENABLED
 #include "current_sensors.h"
@@ -72,8 +71,7 @@ void child_init() {
     SYSTEM_Init();
     CAN_Init();
     EXCAV_Init();
-    DEPO_DOOR_Init();
-    VIB_Init();
+    DEPO_Init();
 #if CURRENT_SENSE_ENABLED
     CURRENT_SENSORS_Init();
 #endif
@@ -154,7 +152,7 @@ static void requestEvent() {
 
     // Byte 15: depo door state (DepoDoorState enum — see depo_door_driver.h)
 #if GATE_POS_ENABLED
-    pkt[15] = (uint8_t)DEPO_DOOR_GetState();
+    pkt[15] = (uint8_t)DEPO_GetDoorState();
 #else
     pkt[15] = 0xFF;
 #endif
@@ -170,7 +168,6 @@ static void requestEvent() {
 
 bool child_update() {
     SYSTEM_Update();
-    DEPO_DOOR_Update();
 
     if (newCommand) {
         newCommand = false;
@@ -209,9 +206,9 @@ bool child_update() {
     // redundant and caused the door's current channel to refresh too slowly for
     // current-based end-stop detection to work reliably.
     CURRENT_SENSORS_Update(currents);
-#if (DEPOSITION_DOOR_CURRENT_SENSOR_INDEX >= 0) && (DEPOSITION_DOOR_CURRENT_SENSOR_INDEX < NUM_CURRENT_SENSORS)
-    DEPO_DOOR_SetMeasuredCurrent(currents[DEPOSITION_DOOR_CURRENT_SENSOR_INDEX]);
-#endif
+    DEPO_Update(currents, NUM_CURRENT_SENSORS);
+#else
+    DEPO_Update(nullptr, 0);
 #endif
 
 #if PLOT_DATA
@@ -352,9 +349,9 @@ static void grp_ExcavationVert(uint8_t param) {
 
 static void grp_DepositionDoor(uint8_t param) {
     if (param == 0) {
-        DEPO_DOOR_Open();
+        DEPO_OpenDoor();
     } else if (param == 1) {
-        DEPO_DOOR_Close();
+        DEPO_CloseDoor();
     } else {
 #if SERIAL_DEBUG
         Serial.print("DEPO DOOR: unknown param ");
@@ -364,7 +361,7 @@ static void grp_DepositionDoor(uint8_t param) {
 }
 
 static void grp_DepositionVib(uint8_t param) {
-    VIB_drive(GET_DIRECTION(param));
+    DEPO_SetVib(GET_DIRECTION(param));
 }
 
 
