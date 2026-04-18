@@ -7,7 +7,7 @@
 #define SERIAL_DEBUG   1
 // PLOT_DATA outputs sensor data in Teleplot format (>name:value).
 // Mutually exclusive with SERIAL_DEBUG — enabling both corrupts the plotter stream.
-#define PLOT_DATA      0
+#define PLOT_DATA      1
 #define PLOT_PERIOD_MS 50
 #define USE_TIMEOUT    1
 #define ANALOG_VIB_CONTROL 0
