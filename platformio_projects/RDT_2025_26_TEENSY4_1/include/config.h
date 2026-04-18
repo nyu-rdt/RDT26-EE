@@ -57,7 +57,7 @@
 // 1000 µs gives margin; tune down toward 900 µs only after verifying reliable
 // start under full mechanical load.
 #define EXCAVATION_STEP_PERIOD_DOWN 1500  // µs full step period descending (slower — active dig)
-#define EXCAVATION_STEP_PERIOD_UP   1000  // µs full step period ascending (faster — recovery)
+#define EXCAVATION_STEP_PERIOD_UP   1050  // µs full step period ascending (faster — recovery)
 
 #define STEPS_PER_REVOLUTION        200   // full-step count
 #define MICROSTEPPING_FACTOR        1     // 1, 2, 4, 8, 16, or 32
@@ -76,16 +76,21 @@
 
 
 // ── Deposition ────────────────────────────────────────────────────────────────
-#define DEPOSITION_DOOR_ARM_DELAY_MS      2000
-#define DEPOSITION_DOOR_PULSE_STOP_US     1500
-#define DEPOSITION_DOOR_PULSE_OPEN_US     2500
-#define DEPOSITION_DOOR_PULSE_CLOSE_US    500
-#define DEPOSITION_DOOR_OPEN_TRAVEL_MS    3000UL
-#define DEPOSITION_DOOR_CLOSE_TRAVEL_MS   3000UL
+// Time-based control: tune OPEN/CLOSE_TRAVEL_MS on hardware before first use
+#define DEPOSITION_DOOR_OPEN_TRAVEL_MS    5000UL  // TODO: measure on hardware
+#define DEPOSITION_DOOR_CLOSE_TRAVEL_MS   5000UL  // TODO: measure on hardware
 
-#define DEPOSITION_DOOR_ENABLE_CURRENT_STOP    1
+// PWM speed control via ENA pin — follows same pattern as ANALOG_VIB_CONTROL
+// When 0, ENA is driven HIGH (full speed)
+#define ANALOG_DOOR_CONTROL 1
+#if ANALOG_DOOR_CONTROL
+    #define DEPOSITION_DOOR_ENA_DUTY  128  // TODO: tune (0-255)
+#endif
+
+// Current-based end-stop detection — set to 1 once threshold is measured on hardware
+#define DEPOSITION_DOOR_ENABLE_CURRENT_STOP    0
 #define DEPOSITION_DOOR_CURRENT_SENSOR_INDEX   0
-#define DEPOSITION_DOOR_CURRENT_THRESHOLD_A    8.0f
+#define DEPOSITION_DOOR_CURRENT_THRESHOLD_A    8.0f  // TODO: measure on hardware
 #define DEPOSITION_DOOR_CURRENT_DETECT_MIN_MS  250
 
 #if ANALOG_VIB_CONTROL

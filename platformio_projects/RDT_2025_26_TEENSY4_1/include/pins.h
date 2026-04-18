@@ -33,8 +33,10 @@
 // Excavation string pot
 #define STRING_POT_PIN 39
 
-// Deposition door actuator
-#define DEPOSITION_DOOR_ACTUATOR_PIN 9
+// Deposition door H-bridge (IN1, IN2, ENA)
+#define DEPOSITION_DOOR_IN1_PIN 40
+#define DEPOSITION_DOOR_IN2_PIN 41
+#define DEPOSITION_DOOR_ENA_PIN 14
 
 // Vibration motor
 #define VIB_MOTOR_PIN 30
