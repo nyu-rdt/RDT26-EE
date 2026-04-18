@@ -61,8 +61,8 @@
 #define MICROSTEPPING_FACTOR        1     // 1, 2, 4, 8, 16, or 32
 
 // String pot calibration — board-specific, tune after physical testing
-#define STRING_POT_SCALE            27.0f
-#define STRING_POT_OFFSET           0.719f
+#define STRING_POT_SCALE            37.125f
+#define STRING_POT_OFFSET           -3.511f
 #define STRING_POT_MAX_RAW          1023.0f
 #define STRING_POT_MAX_DISTANCE     ((STRING_POT_SCALE * 3.3f) - STRING_POT_OFFSET)
 #define STRING_POT_LOWEST_THRESHOLD  5.0f
@@ -71,6 +71,7 @@
 #define STRING_LOWEST 1
 #define STRING_HIGHEST 2
 #define STRING_MIDDLE 3
+
 
 // ── Deposition ────────────────────────────────────────────────────────────────
 #define DEPOSITION_DOOR_ARM_DELAY_MS      2000

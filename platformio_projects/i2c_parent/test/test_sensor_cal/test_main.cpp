@@ -48,8 +48,8 @@ static constexpr float kCurrentPackScale  = 12.75f;
 static constexpr float kAngleScale        = 360.0f / 255.0f;
 // Mirrored from child firmware config.h — keep in sync.
 static constexpr float kCurrentScaleChild = 33.0f / 1023.0f;
-static constexpr float kSPScaleChild  = 27.0f;
-static constexpr float kSPOffsetChild = 0.719f;
+static constexpr float kSPScaleChild  = 37.125f;
+static constexpr float kSPOffsetChild = -3.511f;
 static constexpr uint8_t kSentinel = 0xFF;
 
 // ── Runtime state ─────────────────────────────────────────────────────────────
@@ -169,7 +169,12 @@ static void waitEnterWithMotor(const char* prompt) {
     while (true) {
         if (Serial.available()) {
             char c = (char)Serial.read();
-            if (c == '\n' || c == '\r') break;
+            if (c == '\n' || c == '\r') {
+                delay(5);
+                while (Serial.available() && (Serial.peek() == '\n' || Serial.peek() == '\r'))
+                    Serial.read();
+                break;
+            }
             if (c != 'C' && c != 'c') handleInput(c);
         }
         unsigned long now = millis();
@@ -196,7 +201,12 @@ static float readFloat(const char* prompt) {
     while (true) {
         if (Serial.available()) {
             char c = (char)Serial.read();
-            if (c == '\n' || c == '\r') break;
+            if (c == '\n' || c == '\r') {
+                delay(5);
+                while (Serial.available() && (Serial.peek() == '\n' || Serial.peek() == '\r'))
+                    Serial.read();
+                break;
+            }
             if (idx < sizeof(buf) - 1) buf[idx++] = c;
         }
         if (millis() - lastKa >= kKeepAliveMs) {
@@ -220,11 +230,13 @@ static void calStringPot() {
     }
 
     // Point 1
+    delay(2000);
     waitEnterWithMotor("Drive stepper to POSITION 1 (O=up L=down K=stop).");
     uint8_t raw1   = sPkt[14]; // already in cm
     float actual1  = readFloat("Measured actual distance at position 1 (cm): ");
 
     // Point 2
+    delay(2000);
     waitEnterWithMotor("Drive stepper to POSITION 2 (O=up L=down K=stop).");
     uint8_t raw2   = sPkt[14];
     float actual2  = readFloat("Measured actual distance at position 2 (cm): ");

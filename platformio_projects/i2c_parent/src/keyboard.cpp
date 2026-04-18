@@ -6,6 +6,8 @@
 #if USE_WASD
 static uint8_t speedLevel = 1;  // 0-3
 static uint8_t currentMode = GRP_LOCO_STOP;
+static unsigned long lastSendTime = 0;
+static const unsigned long KEEPALIVE_INTERVAL_MS = 300;
 
 const char* message = "W/A/S/D=Move | E/Q=Speed | X/Space=Stop | U/J/H=Belt Fwd/Rev/Stop | O/L/K=Vert Fwd/Rev/Stop | R/F=Door Open/Close | T/G=Vib On/Off | I=Request Data";
 
@@ -174,6 +176,14 @@ void keyboard_update() {
     while (Serial.available() > 0) {
         char key = Serial.read();
         processKey(key);
+        lastSendTime = millis();
+    }
+
+    // Prevent child timeout from firing ESTOP across all subsystems.
+    // GRP_CONTROL param 0 is a no-op on the child — it just resets lastCommandTime.
+    if (millis() - lastSendTime >= KEEPALIVE_INTERVAL_MS) {
+        i2c_parent_sendCommand(GRP_LOCO_STOP, 0);
+        lastSendTime = millis();
     }
 }
 #endif
