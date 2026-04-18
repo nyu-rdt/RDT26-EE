@@ -72,6 +72,7 @@
 #define STRING_HIGHEST 2
 #define STRING_MIDDLE 3
 
+
 // ── Deposition ────────────────────────────────────────────────────────────────
 #define DEPOSITION_DOOR_ARM_DELAY_MS      2000
 #define DEPOSITION_DOOR_PULSE_STOP_US     1500
