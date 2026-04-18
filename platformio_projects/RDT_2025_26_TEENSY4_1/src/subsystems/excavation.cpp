@@ -134,6 +134,10 @@ void EXCAV_SetVertDirection(int direction) {
 #endif
 }
 
+bool EXCAV_GetBeltActive() {
+    return beltDirection != 0;
+}
+
 float EXCAV_GetConveyorDistance() {
 #if STRING_POT_ENABLED
     return STRINGPOT_GetCachedDistance();

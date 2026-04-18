@@ -46,6 +46,7 @@
 
 // ── Locomotion ────────────────────────────────────────────────────────────────
 #define LOCOMOTION_DUTY_CYCLE       0.33f
+#define LOCOMOTION_DUTY_CYCLE_EXCAV 0.15f  // reduced cap while belt is spinning
 #define TX_PERIOD_MS                20
 #define MAX_SPEED_DELTA_PER_TICK    0.01f
 
@@ -125,10 +126,10 @@
 
 #define SPEED_TABLE { 0.25f, 0.50f, 0.75f, 1.00f }
 
-static inline float getSpeed(uint8_t idx) {
+static inline float getSpeed(uint8_t idx, float duty = LOCOMOTION_DUTY_CYCLE) {
     static constexpr float t[] = SPEED_TABLE;
     if (idx > 3U) idx = 3U;
-    return t[idx] * LOCOMOTION_DUTY_CYCLE;
+    return t[idx] * duty;
 }
 
 #define GET_SPEED(idx)     (getSpeed(static_cast<uint8_t>(idx)))

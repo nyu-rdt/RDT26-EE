@@ -122,10 +122,10 @@ static void grp_Control(uint8_t param) {
 }
 
 static void grp_LocoStop(uint8_t param)  { LOCO_Stop(); }
-static void grp_Forward(uint8_t param)   { LOCO_SetSpeeds(-GET_SPEED(param),  GET_SPEED(param)); }
-static void grp_Backward(uint8_t param)  { LOCO_SetSpeeds( GET_SPEED(param), -GET_SPEED(param)); }
-static void grp_TurnLeft(uint8_t param)  { LOCO_SetSpeeds( GET_SPEED(param),  GET_SPEED(param)); }
-static void grp_TurnRight(uint8_t param) { LOCO_SetSpeeds(-GET_SPEED(param), -GET_SPEED(param)); }
+static void grp_Forward(uint8_t param)   { float s = getSpeed(param, EXCAV_GetBeltActive() ? LOCOMOTION_DUTY_CYCLE_EXCAV : LOCOMOTION_DUTY_CYCLE); LOCO_SetSpeeds(-s,  s); }
+static void grp_Backward(uint8_t param)  { float s = getSpeed(param, EXCAV_GetBeltActive() ? LOCOMOTION_DUTY_CYCLE_EXCAV : LOCOMOTION_DUTY_CYCLE); LOCO_SetSpeeds( s, -s); }
+static void grp_TurnLeft(uint8_t param)  { float s = getSpeed(param, EXCAV_GetBeltActive() ? LOCOMOTION_DUTY_CYCLE_EXCAV : LOCOMOTION_DUTY_CYCLE); LOCO_SetSpeeds( s,  s); }
+static void grp_TurnRight(uint8_t param) { float s = getSpeed(param, EXCAV_GetBeltActive() ? LOCOMOTION_DUTY_CYCLE_EXCAV : LOCOMOTION_DUTY_CYCLE); LOCO_SetSpeeds(-s, -s); }
 
 #if USE_OLD_HEX_MAPPING
 static void grp_Excavation(uint8_t param) {
