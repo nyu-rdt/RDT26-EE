@@ -135,7 +135,11 @@ void EXCAV_SetVertDirection(int direction) {
 }
 
 bool EXCAV_GetBeltActive() {
+#if RAMP_UP
+    return beltDirection != 0 || fabsf(currentSpeed) > 0.01f;
+#else
     return beltDirection != 0;
+#endif
 }
 
 float EXCAV_GetConveyorDistance() {

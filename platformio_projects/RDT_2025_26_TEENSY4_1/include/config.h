@@ -56,8 +56,8 @@
 // ~900 µs is the no-load speed limit (established by stepper_test).
 // 1000 µs gives margin; tune down toward 900 µs only after verifying reliable
 // start under full mechanical load.
-#define EXCAVATION_STEP_PERIOD_DOWN 1500  // µs half-period descending (slower — active dig)
-#define EXCAVATION_STEP_PERIOD_UP   1000   // µs half-period ascending (faster — recovery)
+#define EXCAVATION_STEP_PERIOD_DOWN 1500  // µs full step period descending (slower — active dig)
+#define EXCAVATION_STEP_PERIOD_UP   1000  // µs full step period ascending (faster — recovery)
 
 #define STEPS_PER_REVOLUTION        200   // full-step count
 #define MICROSTEPPING_FACTOR        1     // 1, 2, 4, 8, 16, or 32
