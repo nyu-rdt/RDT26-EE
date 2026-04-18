@@ -25,13 +25,13 @@ void DEPO_DOOR_Init() {
     pinMode(DEPOSITION_DOOR_IN2_PIN, OUTPUT);
     pinMode(DEPOSITION_DOOR_ENA_PIN, OUTPUT);
 
+    setMotorDirection(0);
+
 #if ANALOG_DOOR_CONTROL
     analogWrite(DEPOSITION_DOOR_ENA_PIN, DEPOSITION_DOOR_ENA_DUTY);
 #else
     digitalWrite(DEPOSITION_DOOR_ENA_PIN, HIGH);
 #endif
-
-    setMotorDirection(0);
     activeDirection = 0;
     doorState = DEPO_DOOR_STATE_CLOSED;
 }
