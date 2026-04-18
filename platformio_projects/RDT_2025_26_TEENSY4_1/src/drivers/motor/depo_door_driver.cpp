@@ -6,8 +6,6 @@ volatile static DepoDoorState doorState = DEPO_DOOR_STATE_CLOSED;
 static int activeDirection = 0;
 static unsigned long motionStartMs = 0;
 static volatile float doorCurrentAmps = 0.0f;
-static bool isArmed = false;
-static unsigned long armReadyMs = 0;
 
 static void setMotorDirection(int direction) {
     if (direction > 0) {
@@ -36,8 +34,6 @@ void DEPO_DOOR_Init() {
     setMotorDirection(0);
     activeDirection = 0;
     doorState = DEPO_DOOR_STATE_CLOSED;
-    isArmed = false;
-    armReadyMs = millis() + DEPOSITION_DOOR_ARM_DELAY_MS;
 }
 
 void DEPO_DOOR_SetDirection(int direction) {
@@ -58,27 +54,13 @@ void DEPO_DOOR_SetDirection(int direction) {
     }
 }
 
-static bool checkArmed() {
-    if (isArmed) return true;
-    if (millis() >= armReadyMs) {
-        isArmed = true;
-        return true;
-    }
-#if SERIAL_DEBUG
-    Serial.println("DEPO DOOR: command rejected — actuator not yet armed");
-#endif
-    return false;
-}
-
 void DEPO_DOOR_Open() {
-    if (!checkArmed()) return;
     if (activeDirection == 1) return;
     if (doorState == DEPO_DOOR_STATE_OPENED) return;
     DEPO_DOOR_SetDirection(1);
 }
 
 void DEPO_DOOR_Close() {
-    if (!checkArmed()) return;
     if (activeDirection == -1) return;
     if (doorState == DEPO_DOOR_STATE_CLOSED) return;
     DEPO_DOOR_SetDirection(-1);

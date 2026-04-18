@@ -54,6 +54,10 @@ void setup() {
     Serial.begin(115200);
 
     DEPO_DOOR_Init();
+    pinMode(2, OUTPUT);
+    digitalWrite(2, HIGH);
+    pinMode(8, OUTPUT);
+    digitalWrite(8, HIGH);
 
 #if CURRENT_SENSE_ENABLED
     CURRENT_SENSORS_Init();
