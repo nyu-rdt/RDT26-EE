@@ -64,7 +64,7 @@ void EXCAV_Update() {
     }
 #endif
 
-    STEPPER_Update(EXCAVATION_STEP_PERIOD);
+    STEPPER_Update(vertDirection < 0 ? EXCAVATION_STEP_PERIOD_DOWN : EXCAVATION_STEP_PERIOD_UP);
 
 #if RAMP_UP
     if (millis() - lastRampMs >= TX_PERIOD_MS) {
@@ -131,6 +131,14 @@ void EXCAV_SetVertDirection(int direction) {
 #if SERIAL_DEBUG
     Serial.print("[excav] vert: ");
     Serial.println(vertDirection > 0 ? "up" : vertDirection < 0 ? "down" : "stop");
+#endif
+}
+
+bool EXCAV_GetBeltActive() {
+#if RAMP_UP
+    return beltDirection != 0 || fabsf(currentSpeed) > 0.01f;
+#else
+    return beltDirection != 0;
 #endif
 }
 

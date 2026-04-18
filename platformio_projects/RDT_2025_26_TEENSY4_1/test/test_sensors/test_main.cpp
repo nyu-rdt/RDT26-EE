@@ -13,8 +13,6 @@
 
 #if CURRENT_SENSE_ENABLED
 #include "current_sensors.h"
-static float currents[NUM_CURRENT_SENSORS] = {0};
-static unsigned long last_current_ms = 0;
 #endif
 
 #if ROTARY_ENCODERS_ENABLED
@@ -37,7 +35,6 @@ void setup() {
 
 #if CURRENT_SENSE_ENABLED
     CURRENT_SENSORS_Init();
-    last_current_ms = millis();
     Serial.println("# current sensors: ok");
 #else
     Serial.println("# current sensors: DISABLED in config.h");
@@ -64,16 +61,14 @@ void loop() {
     static unsigned long last_plot_ms = 0;
 
 #if CURRENT_SENSE_ENABLED
-    if (millis() - last_current_ms >= CURRENT_PERIOD_MS) {
-        last_current_ms = millis();
-        CURRENT_SENSORS_Update(currents);
-    }
+    CURRENT_SENSORS_Update();
 #endif
 
     if (millis() - last_plot_ms >= PLOT_PERIOD_MS) {
         last_plot_ms = millis();
 
 #if CURRENT_SENSE_ENABLED
+        const float* currents = CURRENT_SENSORS_GetBuffer();
         for (int i = 0; i < NUM_CURRENT_SENSORS; i++) {
             Serial.print(">I"); Serial.print(i);
             Serial.print(":"); Serial.println(currents[i], 2);

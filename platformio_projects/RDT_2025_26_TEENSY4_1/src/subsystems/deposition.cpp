@@ -3,17 +3,19 @@
 #include "deposition.h"
 #include "depo_door_driver.h"
 #include "vib_motor_driver.h"
+#if CURRENT_SENSE_ENABLED
+#include "current_sensors.h"
+#endif
 
 void DEPO_Init() {
     DEPO_DOOR_Init();
     VIB_Init();
 }
 
-void DEPO_Update(float* currents, int numCurrents) {
+void DEPO_Update() {
 #if DEPOSITION_DOOR_ENABLE_CURRENT_STOP && CURRENT_SENSE_ENABLED
-    if (currents && DEPOSITION_DOOR_CURRENT_SENSOR_INDEX < numCurrents) {
-        DEPO_DOOR_SetMeasuredCurrent(currents[DEPOSITION_DOOR_CURRENT_SENSOR_INDEX]);
-    }
+    const float* currents = CURRENT_SENSORS_GetBuffer();
+    DEPO_DOOR_SetMeasuredCurrent(currents[DEPOSITION_DOOR_CURRENT_SENSOR_INDEX]);
 #endif
     DEPO_DOOR_Update();
 }

@@ -13,7 +13,6 @@
 
 #if CURRENT_SENSE_ENABLED
 #include "current_sensors.h"
-static float currents[NUM_CURRENT_SENSORS] = {0};
 #endif
 
 enum DoorTestPhase {
@@ -71,9 +70,9 @@ void loop() {
     const unsigned long now = millis();
 
 #if CURRENT_SENSE_ENABLED
-    CURRENT_SENSORS_Update(currents);
+    CURRENT_SENSORS_Update();
 #if (DEPOSITION_DOOR_CURRENT_SENSOR_INDEX >= 0) && (DEPOSITION_DOOR_CURRENT_SENSOR_INDEX < NUM_CURRENT_SENSORS)
-    DEPO_DOOR_SetMeasuredCurrent(currents[DEPOSITION_DOOR_CURRENT_SENSOR_INDEX]);
+    DEPO_DOOR_SetMeasuredCurrent(CURRENT_SENSORS_GetBuffer()[DEPOSITION_DOOR_CURRENT_SENSOR_INDEX]);
 #endif
 #endif
 
@@ -148,7 +147,7 @@ void loop() {
 
 #if CURRENT_SENSE_ENABLED && (DEPOSITION_DOOR_CURRENT_SENSOR_INDEX >= 0) && (DEPOSITION_DOOR_CURRENT_SENSOR_INDEX < NUM_CURRENT_SENSORS)
         Serial.print(">DD_current:");
-        Serial.println(currents[DEPOSITION_DOOR_CURRENT_SENSOR_INDEX], 2);
+        Serial.println(CURRENT_SENSORS_GetBuffer()[DEPOSITION_DOOR_CURRENT_SENSOR_INDEX], 2);
 #else
         Serial.println(">DD_current:-1");
 #endif
