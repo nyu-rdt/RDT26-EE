@@ -46,6 +46,7 @@
 
 // ── Locomotion ────────────────────────────────────────────────────────────────
 #define LOCOMOTION_DUTY_CYCLE       0.33f
+#define LOCOMOTION_DUTY_CYCLE_EXCAV 0.15f  // reduced cap while belt is spinning
 #define TX_PERIOD_MS                20
 #define MAX_SPEED_DELTA_PER_TICK    0.01f
 
@@ -55,7 +56,8 @@
 // ~900 µs is the no-load speed limit (established by stepper_test).
 // 1000 µs gives margin; tune down toward 900 µs only after verifying reliable
 // start under full mechanical load.
-#define EXCAVATION_STEP_PERIOD      1000  // µs between each stepper half-period
+#define EXCAVATION_STEP_PERIOD_DOWN 1500  // µs full step period descending (slower — active dig)
+#define EXCAVATION_STEP_PERIOD_UP   1000  // µs full step period ascending (faster — recovery)
 
 #define STEPS_PER_REVOLUTION        200   // full-step count
 #define MICROSTEPPING_FACTOR        1     // 1, 2, 4, 8, 16, or 32
@@ -126,10 +128,10 @@
 
 #define SPEED_TABLE { 0.25f, 0.50f, 0.75f, 1.00f }
 
-static inline float getSpeed(uint8_t idx) {
+static inline float getSpeed(uint8_t idx, float duty = LOCOMOTION_DUTY_CYCLE) {
     static constexpr float t[] = SPEED_TABLE;
     if (idx > 3U) idx = 3U;
-    return t[idx] * LOCOMOTION_DUTY_CYCLE;
+    return t[idx] * duty;
 }
 
 #define GET_SPEED(idx)     (getSpeed(static_cast<uint8_t>(idx)))

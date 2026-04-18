@@ -14,6 +14,9 @@ void EXCAV_SetBeltDirection(int direction);
 // Enforces string pot travel limits; stops and clears moving flag if already at the limit.
 void EXCAV_SetVertDirection(int direction);
 
+// Returns true while the belt motor is commanded to spin (i.e. actively digging).
+bool EXCAV_GetBeltActive();
+
 // Hard stop — belt, stepper, and moving flag. Called by e-stop and timeout.
 void EXCAV_Stop();
 
