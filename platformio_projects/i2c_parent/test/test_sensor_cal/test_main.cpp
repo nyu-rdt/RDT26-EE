@@ -43,11 +43,11 @@
 #include "config.h"
 
 // ── Decode constants ──────────────────────────────────────────────────────────
+#warning "test_sensor_cal: kCurrentScaleChild, kSPScaleChild, kSPOffsetChild are mirrored from child config.h — update them here whenever the child firmware changes or calibration suggestions will be wrong."
 static constexpr float kCurrentPackScale  = 12.75f;
 static constexpr float kAngleScale        = 360.0f / 255.0f;
-// Current CURRENT_SCALING from child config.h — needed to suggest updated value
+// Mirrored from child firmware config.h — keep in sync.
 static constexpr float kCurrentScaleChild = 33.0f / 1023.0f;
-// String pot child constants — only needed to back-compute new STRING_POT_SCALE
 static constexpr float kSPScaleChild  = 27.0f;
 static constexpr float kSPOffsetChild = 0.719f;
 static constexpr uint8_t kSentinel = 0xFF;
@@ -164,30 +164,44 @@ static void waitEnterWithMotor(const char* prompt) {
     Serial.println(prompt);
     Serial.println("  (Use motor keys to position. Stop with K/X before Enter.)");
     Serial.println("  (Keep-alive holds the last single command — stop loco before using stepper.)");
-    unsigned long lastKa = millis();
+    unsigned long lastKa   = millis();
+    unsigned long lastPoll = millis();
     while (true) {
         if (Serial.available()) {
             char c = (char)Serial.read();
             if (c == '\n' || c == '\r') break;
-            if (c != 'C' && c != 'c') handleInput(c); // motor keys work; block recursive wizard
+            if (c != 'C' && c != 'c') handleInput(c);
         }
-        if (millis() - lastKa >= kKeepAliveMs) {
+        unsigned long now = millis();
+        if (now - lastKa >= kKeepAliveMs) {
             sendKeepAlive();
-            lastKa = millis();
+            lastKa = now;
+        }
+        // Keep sPkt fresh so wizard reads reflect current position.
+        if (now - lastPoll >= kPollMs) {
+            uint8_t n = i2c_parent_requestData(sPkt, RESPONSE_BYTES);
+            sPktValid  = (n == RESPONSE_BYTES);
+            lastPoll   = now;
         }
     }
     Serial.println();
 }
 
-// Blocks for a typed number (no motor interaction needed — user is done positioning)
+// Blocks for a typed number. Sends keep-alives so an active command doesn't time
+// out mid-entry and disturb the measurement.
 static float readFloat(const char* prompt) {
     Serial.print(prompt);
     char buf[16]; uint8_t idx = 0;
+    unsigned long lastKa = millis();
     while (true) {
         if (Serial.available()) {
             char c = (char)Serial.read();
             if (c == '\n' || c == '\r') break;
             if (idx < sizeof(buf) - 1) buf[idx++] = c;
+        }
+        if (millis() - lastKa >= kKeepAliveMs) {
+            sendKeepAlive();
+            lastKa = millis();
         }
     }
     buf[idx] = '\0';
