@@ -64,7 +64,7 @@ void EXCAV_Update() {
     }
 #endif
 
-    STEPPER_Update(EXCAVATION_STEP_PERIOD);
+    STEPPER_Update(vertDirection < 0 ? EXCAVATION_STEP_PERIOD_DOWN : EXCAVATION_STEP_PERIOD_UP);
 
 #if RAMP_UP
     if (millis() - lastRampMs >= TX_PERIOD_MS) {
