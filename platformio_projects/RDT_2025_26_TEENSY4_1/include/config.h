@@ -95,6 +95,9 @@
 #define CURRENT_SCALING      (33.0f / 1023.0f)
 #define CURRENT_PERIOD_MS    200
 #define CHANNEL_SETTLE_MS    10
+// EWA smoothing factor. Higher = more responsive, less filtering. Lower = smoother, more lag.
+// At 0.4 and an 80ms channel cycle, time constant is ~157ms — well inside the 250ms stall window.
+#define CURRENT_EWA_ALPHA    0.4f
 
 // ── Rotary encoders ───────────────────────────────────────────────────────────
 #define ENCODER_COUNTS_PER_REV  8192.0f

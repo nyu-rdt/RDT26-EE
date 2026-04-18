@@ -23,8 +23,8 @@ void CURRENT_SENSORS_Init() {
 void CURRENT_SENSORS_Update() {
     unsigned long now = millis();
     if (now - last_channel_switch_ms >= CHANNEL_SETTLE_MS) {
-        int rawValue = analogRead(CURRENT_INPUT_PIN);
-        buffer[current_read_index] = rawValue * CURRENT_SCALING;
+        float raw = analogRead(CURRENT_INPUT_PIN) * CURRENT_SCALING;
+        buffer[current_read_index] = CURRENT_EWA_ALPHA * raw + (1.0f - CURRENT_EWA_ALPHA) * buffer[current_read_index];
         if (++current_read_index == NUM_CURRENT_SENSORS) current_read_index = 0;
         digitalWrite(CURRENT_SELECT_PIN_0, current_read_index & 0x01);
         digitalWrite(CURRENT_SELECT_PIN_1, (current_read_index >> 1) & 0x01);
