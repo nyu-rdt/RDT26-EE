@@ -5,7 +5,8 @@
 // state/current/timing telemetry in Teleplot format (>name:value).
 //
 // H-bridge wiring: IN1=pin40, IN2=pin41, ENA=pin14
-// Use DD_open_ms / DD_close_ms output to tune OPEN/CLOSE_TRAVEL_MS in config.h.
+// Use DD_open_ms / DD_close_ms output to tune DEPOSITION_DOOR_OPEN_TRAVEL_MS /
+// DEPOSITION_DOOR_CLOSE_TRAVEL_MS in config.h.
 // Set DEPOSITION_DOOR_ENABLE_CURRENT_STOP=1 in config.h once threshold is known.
 //
 // Build + upload:  pio run -e teensy41_depo_door_test -t upload
