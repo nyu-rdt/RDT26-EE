@@ -93,10 +93,10 @@
 #define NUM_CURRENT_SENSORS  8
 // 0-20A maps to 0-2V; ADC 0-3.3V → 0-1023. A = raw * (3.3/1023) * (20/2)
 #define CURRENT_SCALING      (33.0f / 1023.0f)
-#define CURRENT_PERIOD_MS    200
 #define CHANNEL_SETTLE_MS    10
 // EWA smoothing factor. Higher = more responsive, less filtering. Lower = smoother, more lag.
-// At 0.4 and an 80ms channel cycle, time constant is ~157ms — well inside the 250ms stall window.
+// Each channel is revisited every NUM_CURRENT_SENSORS * CHANNEL_SETTLE_MS ms (~80ms at current settings),
+// giving a time constant of ~157ms at alpha=0.4 — well inside the 250ms stall detection window.
 #define CURRENT_EWA_ALPHA    0.4f
 
 // ── Rotary encoders ───────────────────────────────────────────────────────────
