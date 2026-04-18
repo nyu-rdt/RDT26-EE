@@ -36,7 +36,8 @@ static void requestEvent() {
 #if CURRENT_SENSE_ENABLED
     const float* currents = CURRENT_SENSORS_GetBuffer();
     for (int i = 0; i < NUM_CURRENT_SENSORS; i++) {
-        pkt[i] = (uint8_t)(currents[i] * 12.75f);
+        float scaledCurrent = currents[i] * 12.75f;
+        pkt[i] = (uint8_t)constrain(scaledCurrent, 0.0f, 255.0f);
     }
 #else
     for (int i = 0; i < NUM_CURRENT_SENSORS; i++) { pkt[i] = 0xFF; }
