@@ -1,8 +1,8 @@
 #pragma once
 
 // I2C
-#define I2C_SDA_PIN 24
-#define I2C_SCL_PIN 25
+#define I2C_SDA_PIN 25
+#define I2C_SCL_PIN 24
 
 // EE Box — relay
 #define RELAY_DRIVER_PIN    2
