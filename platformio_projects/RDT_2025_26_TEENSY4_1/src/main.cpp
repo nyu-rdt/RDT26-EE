@@ -146,10 +146,12 @@ static void registerHandlers() {
 
 // Group Handlers
 static void grp_Control(uint8_t param) {
+    if (param == 0x01) {
 #if SERIAL_DEBUG && !PLOT_DATA
-    Serial.print("[estop] software sent estop cmd");
+        Serial.println("[estop] software sent estop cmd");
 #endif
-    if (param == 0x01) ESTOP_Trigger();
+        ESTOP_Trigger();
+    }
 }
 
 static void grp_LocoStop(uint8_t param)  { LOCO_Stop(); }
