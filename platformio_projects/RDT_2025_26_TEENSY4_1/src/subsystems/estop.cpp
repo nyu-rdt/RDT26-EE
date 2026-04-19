@@ -18,7 +18,6 @@ void ESTOP_StopAllMotors() {
 
 void ESTOP_Trigger() {
     ESTOP_StopAllMotors();
-    // EE_BOX_DisableRelay(); — decide whether relay cuts on e-stop
 #if SERIAL_DEBUG
     Serial.println("[estop] triggered");
 #endif

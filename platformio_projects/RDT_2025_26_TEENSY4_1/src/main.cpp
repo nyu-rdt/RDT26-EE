@@ -22,6 +22,8 @@ typedef void (*GroupHandler)(uint8_t);
 static volatile uint8_t latestCommand = 0x10;
 static volatile bool newCommand = false;
 static unsigned long lastCommandTime = 0;
+static bool timedOut = false;
+static bool killSwitchActive = false;
 static GroupHandler groups[16] = {nullptr};
 
 void setup()  { ROVER_init(); }
@@ -53,9 +55,28 @@ void ROVER_init() {
 void ROVER_update() {
     EE_BOX_Update();
 
+    if (!killSwitchActive && !EE_BOX_IsRelayEngaged()) {
+        killSwitchActive = true;
+#if SERIAL_DEBUG && !PLOT_DATA
+        Serial.println("[estop] kill switch engaged");
+#endif
+        ESTOP_Trigger();
+    } else if (killSwitchActive && EE_BOX_IsRelayEngaged()) {
+        killSwitchActive = false;
+#if SERIAL_DEBUG && !PLOT_DATA
+        Serial.println("[estop] kill switch released");
+#endif
+    }
+
     if (newCommand) {
         newCommand = false;
         lastCommandTime = millis();
+        if (timedOut) {
+            timedOut = false;
+#if SERIAL_DEBUG && !PLOT_DATA
+            Serial.println("[comms] restored");
+#endif
+        }
 #if SERIAL_DEBUG && !PLOT_DATA
         Serial.print("cmd: 0x");
         Serial.println(latestCommand, HEX);
@@ -64,12 +85,12 @@ void ROVER_update() {
     }
 
 #if USE_TIMEOUT
-    if (millis() - lastCommandTime > COMMAND_TIMEOUT_MS) {
+    if (!timedOut && millis() - lastCommandTime > COMMAND_TIMEOUT_MS) {
+        timedOut = true;
 #if SERIAL_DEBUG && !PLOT_DATA
-        Serial.println("Command timeout");
+        Serial.println("[timeout] comms lost");
 #endif
-        ESTOP_StopAllMotors();
-        lastCommandTime = millis();
+        ESTOP_Trigger();
     }
 #endif
 
@@ -89,6 +110,7 @@ static void receiveEvent(int numBytes) {
         latestCommand = Wire2.read();
         newCommand = true;
     }
+    while (Wire2.available()) Wire2.read();
 }
 
 static void processCommand(uint8_t cmd) {
@@ -118,7 +140,7 @@ static void registerHandlers() {
 
 // Group Handlers
 static void grp_Control(uint8_t param) {
-    if (param == 0x01) ESTOP_StopAllMotors();
+    if (param == 0x01) ESTOP_Trigger();
 }
 
 static void grp_LocoStop(uint8_t param)  { LOCO_Stop(); }

@@ -26,3 +26,7 @@ void EE_BOX_DisableRelay() { digitalWrite(RELAY_DRIVER_PIN, LOW); }
 uint8_t EE_BOX_GetRelayStatus() {
     return (uint8_t)(((uint8_t)relay_6s_low << 2) | ((uint8_t)relay_3s_low << 1) | (uint8_t)relay_state);
 }
+
+bool EE_BOX_IsRelayEngaged() {
+    return relay_state;
+}
