@@ -42,7 +42,9 @@ void ROVER_init() {
 #if ROTARY_ENCODERS_ENABLED
     ROTARY_ENCODER_Init();
 #endif
-    ESTOP_RegisterCallbacks(LOCO_EmergencyStop);
+    ESTOP_RegisterCallback(LOCO_EmergencyStop);
+    ESTOP_RegisterCallback(EXCAV_EmergencyStop);
+    ESTOP_RegisterCallback(DEPO_EmergencyStop);
     Wire2.begin(I2C_CHILD_ADDRESS);
     Wire2.onReceive(receiveEvent);
     COMMS_Init();
