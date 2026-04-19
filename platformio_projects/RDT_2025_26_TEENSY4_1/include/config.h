@@ -46,7 +46,7 @@
 
 // ── Locomotion ────────────────────────────────────────────────────────────────
 #define LOCOMOTION_DUTY_CYCLE       0.33f
-#define LOCOMOTION_DUTY_CYCLE_EXCAV 0.15f  // reduced cap while belt is spinning
+#define LOCOMOTION_DUTY_CYCLE_EXCAV 0.1f  // reduced cap while belt is spinning
 #define TX_PERIOD_MS                20
 #define MAX_SPEED_DELTA_PER_TICK    0.01f
 
