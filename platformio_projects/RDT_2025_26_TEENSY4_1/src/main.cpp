@@ -72,7 +72,6 @@ void ROVER_update() {
 
     if (newCommand) {
         newCommand = false;
-        if (!killSwitchActive) {
             lastCommandTime = millis();
             if (timedOut) {
                 timedOut = false;
@@ -84,6 +83,7 @@ void ROVER_update() {
             Serial.print("cmd: 0x");
             Serial.println(latestCommand, HEX);
 #endif
+        if (!killSwitchActive) {
             processCommand(latestCommand);
         }
     }
