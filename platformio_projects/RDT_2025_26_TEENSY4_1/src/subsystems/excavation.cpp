@@ -150,7 +150,7 @@ float EXCAV_GetConveyorDistance() {
 #endif
 }
 
-void EXCAV_Stop() {
+void EXCAV_EmergencyStop() {
     beltDirection = 0;
     vertDirection = 0;
 #if RAMP_UP
