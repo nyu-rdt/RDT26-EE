@@ -70,18 +70,20 @@ void ROVER_update() {
 
     if (newCommand) {
         newCommand = false;
-        lastCommandTime = millis();
-        if (timedOut) {
-            timedOut = false;
+        if (!killSwitchActive) {
+            lastCommandTime = millis();
+            if (timedOut) {
+                timedOut = false;
 #if SERIAL_DEBUG && !PLOT_DATA
-            Serial.println("[comms] restored");
+                Serial.println("[comms] restored");
 #endif
+            }
+#if SERIAL_DEBUG && !PLOT_DATA
+            Serial.print("cmd: 0x");
+            Serial.println(latestCommand, HEX);
+#endif
+            processCommand(latestCommand);
         }
-#if SERIAL_DEBUG && !PLOT_DATA
-        Serial.print("cmd: 0x");
-        Serial.println(latestCommand, HEX);
-#endif
-        processCommand(latestCommand);
     }
 
 #if USE_TIMEOUT
@@ -110,6 +112,8 @@ static void receiveEvent(int numBytes) {
         latestCommand = Wire2.read();
         newCommand = true;
     }
+    // Drain extra bytes. If Jetson sends >1 byte, leftovers sit in the buffer and
+    // would be read as the command on the next receiveEvent, corrupting that command.
     while (Wire2.available()) Wire2.read();
 }
 
@@ -140,6 +144,9 @@ static void registerHandlers() {
 
 // Group Handlers
 static void grp_Control(uint8_t param) {
+#if SERIAL_DEBUG && !PLOT_DATA
+    Serial.print("[estop] software sent estop cmd");
+#endif
     if (param == 0x01) ESTOP_Trigger();
 }
 
