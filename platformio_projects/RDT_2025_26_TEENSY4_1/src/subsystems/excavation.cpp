@@ -216,9 +216,10 @@ bool EXCAV_IsBeltStalled() {
         return false;
     }
     if (now - stallWindowStartMs >= EXCAV_STALL_WINDOW_MS) {
-        bool stalled = (LOAD_CELL_GetTotalMass() - stallWindowStartMass) < EXCAV_STALL_MASS_DELTA_KG;
+        float currentMass = LOAD_CELL_GetTotalMass();
+        bool stalled = (currentMass - stallWindowStartMass) < EXCAV_STALL_MASS_DELTA_KG;
         stallWindowStartMs = now;
-        stallWindowStartMass = LOAD_CELL_GetTotalMass();
+        stallWindowStartMass = currentMass;
         return stalled;
     }
     return false;
