@@ -12,3 +12,7 @@ void DEPO_EmergencyStop();
 
 // Returns the last cached door state — ISR-safe (no hardware access).
 DepoDoorState DEPO_GetDoorState();
+
+// True when total bin mass is below LOAD_CELL_EMPTY_THRESHOLD_KG.
+// Always false when LOAD_CELLS_ENABLED=0.
+bool DEPO_IsBinEmpty();

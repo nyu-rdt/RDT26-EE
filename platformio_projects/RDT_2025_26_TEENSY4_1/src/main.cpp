@@ -16,6 +16,9 @@
 #if ROTARY_ENCODERS_ENABLED
 #include "rotary_encoders.h"
 #endif
+#if LOAD_CELLS_ENABLED
+#include "load_cell.h"
+#endif
 
 typedef void (*GroupHandler)(uint8_t);
 
@@ -41,6 +44,9 @@ void ROVER_init() {
 #endif
 #if ROTARY_ENCODERS_ENABLED
     ROTARY_ENCODER_Init();
+#endif
+#if LOAD_CELLS_ENABLED
+    LOAD_CELL_Init();
 #endif
     ESTOP_RegisterCallback(LOCO_EmergencyStop);
     ESTOP_RegisterCallback(EXCAV_EmergencyStop);

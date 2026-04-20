@@ -11,3 +11,7 @@ uint8_t EE_BOX_GetRelayStatus();
 
 // True when relay is energized (kill switch NOT pressed). False = mechanical e-stop active.
 bool EE_BOX_IsRelayEngaged();
+
+// True when any current channel exceeds CURRENT_OVERCURRENT_ANY_A.
+// Always false until that threshold is set in config.h.
+bool EE_BOX_IsOvercurrent();

@@ -23,3 +23,17 @@ void EXCAV_EmergencyStop();
 // Returns the last cached conveyor position (0 to STRING_POT_MAX_DISTANCE).
 // ISR-safe — does not trigger an ADC read.
 float EXCAV_GetConveyorDistance();
+
+// True when stepper is descending and current exceeds CURRENT_STEPPER_OBSTRUCT_A.
+// Always false until that threshold is set in config.h.
+bool EXCAV_IsArmObstructed();
+
+// True when belt is active and current stays below CURRENT_EXCAV_EMPTY_CUT_A
+// for longer than EXCAV_EMPTY_CUT_PERSIST_MS — nothing to excavate, reposition rover.
+// Always false until CURRENT_EXCAV_EMPTY_CUT_A is set in config.h.
+bool EXCAV_IsEmptyCut();
+
+// True when belt is active, current exceeds CURRENT_EXCAV_STALL_A, and mass
+// gain over EXCAV_STALL_WINDOW_MS is below EXCAV_STALL_MASS_DELTA_KG.
+// Always false when LOAD_CELLS_ENABLED=0 or CURRENT_EXCAV_STALL_A is unset.
+bool EXCAV_IsBeltStalled();

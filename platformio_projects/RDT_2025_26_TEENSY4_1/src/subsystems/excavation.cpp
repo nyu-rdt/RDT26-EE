@@ -6,6 +6,12 @@
 #if STRING_POT_ENABLED
 #include "string_pot.h"
 #endif
+#if CURRENT_SENSE_ENABLED
+#include "current_sensors.h"
+#endif
+#if LOAD_CELLS_ENABLED
+#include "load_cell.h"
+#endif
 
 // Belt spin direction (CAN motor): +1 forward, -1 reverse, 0 stopped
 static int beltDirection = 0;
@@ -165,5 +171,58 @@ void EXCAV_EmergencyStop() {
 #endif
 #if SERIAL_DEBUG
     Serial.println("[excav] hard stop");
+#endif
+}
+
+bool EXCAV_IsArmObstructed() {
+#if CURRENT_SENSE_ENABLED
+    if (CURRENT_STEPPER_OBSTRUCT_A == 0.0f) return false;
+    const float* c = CURRENT_SENSORS_GetBuffer();
+    return vertDirection < 0 && c[4] > CURRENT_STEPPER_OBSTRUCT_A;
+#else
+    return false;
+#endif
+}
+
+static unsigned long emptyCutOnsetMs = 0;
+bool EXCAV_IsEmptyCut() {
+#if CURRENT_SENSE_ENABLED
+    if (CURRENT_EXCAV_EMPTY_CUT_A == 0.0f) return false;
+    if (!EXCAV_GetBeltActive()) { emptyCutOnsetMs = 0; return false; }
+    const float* c = CURRENT_SENSORS_GetBuffer();
+    if (c[5] < CURRENT_EXCAV_EMPTY_CUT_A) {
+        if (emptyCutOnsetMs == 0) emptyCutOnsetMs = millis();
+        return (millis() - emptyCutOnsetMs) >= EXCAV_EMPTY_CUT_PERSIST_MS;
+    }
+    emptyCutOnsetMs = 0;
+    return false;
+#else
+    return false;
+#endif
+}
+
+static unsigned long stallWindowStartMs = 0;
+static float stallWindowStartMass = 0.0f;
+bool EXCAV_IsBeltStalled() {
+#if LOAD_CELLS_ENABLED && CURRENT_SENSE_ENABLED
+    if (CURRENT_EXCAV_STALL_A == 0.0f) return false;
+    if (!EXCAV_GetBeltActive()) { stallWindowStartMs = 0; return false; }
+    const float* c = CURRENT_SENSORS_GetBuffer();
+    if (c[5] < CURRENT_EXCAV_STALL_A) { stallWindowStartMs = 0; return false; }
+    unsigned long now = millis();
+    if (stallWindowStartMs == 0) {
+        stallWindowStartMs = now;
+        stallWindowStartMass = LOAD_CELL_GetTotalMass();
+        return false;
+    }
+    if (now - stallWindowStartMs >= EXCAV_STALL_WINDOW_MS) {
+        bool stalled = (LOAD_CELL_GetTotalMass() - stallWindowStartMass) < EXCAV_STALL_MASS_DELTA_KG;
+        stallWindowStartMs = now;
+        stallWindowStartMass = LOAD_CELL_GetTotalMass();
+        return stalled;
+    }
+    return false;
+#else
+    return false;
 #endif
 }
