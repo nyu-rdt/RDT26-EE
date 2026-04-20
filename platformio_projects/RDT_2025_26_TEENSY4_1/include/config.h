@@ -4,10 +4,10 @@
 
 // ── Feature flags ─────────────────────────────────────────────────────────────
 #define RAMP_UP        1
-#define SERIAL_DEBUG   1
+#define SERIAL_DEBUG   0
 // PLOT_DATA outputs sensor data in Teleplot format (>name:value).
 // Mutually exclusive with SERIAL_DEBUG — enabling both corrupts the plotter stream.
-#define PLOT_DATA      0
+#define PLOT_DATA      1
 #define PLOT_PERIOD_MS 50
 #define USE_TIMEOUT    1
 #define ANALOG_VIB_CONTROL 0
@@ -46,6 +46,7 @@
 
 // ── Locomotion ────────────────────────────────────────────────────────────────
 #define LOCOMOTION_DUTY_CYCLE       0.33f
+#define LOCOMOTION_DUTY_CYCLE_EXCAV 0.1f  // reduced cap while belt is spinning
 #define TX_PERIOD_MS                20
 #define MAX_SPEED_DELTA_PER_TICK    0.01f
 
@@ -55,34 +56,41 @@
 // ~900 µs is the no-load speed limit (established by stepper_test).
 // 1000 µs gives margin; tune down toward 900 µs only after verifying reliable
 // start under full mechanical load.
-#define EXCAVATION_STEP_PERIOD      1000  // µs between each stepper half-period
+#define EXCAVATION_STEP_PERIOD_DOWN 1500  // µs full step period descending (slower — active dig)
+#define EXCAVATION_STEP_PERIOD_UP   1050  // µs full step period ascending (faster — recovery)
 
 #define STEPS_PER_REVOLUTION        200   // full-step count
 #define MICROSTEPPING_FACTOR        1     // 1, 2, 4, 8, 16, or 32
 
 // String pot calibration — board-specific, tune after physical testing
-#define STRING_POT_SCALE            27.0f
-#define STRING_POT_OFFSET           0.719f
+#define STRING_POT_SCALE            37.125f
+#define STRING_POT_OFFSET           -3.511f
 #define STRING_POT_MAX_RAW          1023.0f
 #define STRING_POT_MAX_DISTANCE     ((STRING_POT_SCALE * 3.3f) - STRING_POT_OFFSET)
-#define STRING_POT_LOWEST_THRESHOLD  5.0f
-#define STRING_POT_HIGHEST_THRESHOLD 83.0f
+#define STRING_POT_LOWEST_THRESHOLD  13.0f
+#define STRING_POT_HIGHEST_THRESHOLD 31.0f
 #define STRING_MOVING 0
 #define STRING_LOWEST 1
 #define STRING_HIGHEST 2
 #define STRING_MIDDLE 3
 
-// ── Deposition ────────────────────────────────────────────────────────────────
-#define DEPOSITION_DOOR_ARM_DELAY_MS      2000
-#define DEPOSITION_DOOR_PULSE_STOP_US     1500
-#define DEPOSITION_DOOR_PULSE_OPEN_US     2500
-#define DEPOSITION_DOOR_PULSE_CLOSE_US    500
-#define DEPOSITION_DOOR_OPEN_TRAVEL_MS    3000UL
-#define DEPOSITION_DOOR_CLOSE_TRAVEL_MS   3000UL
 
-#define DEPOSITION_DOOR_ENABLE_CURRENT_STOP    1
+// ── Deposition ────────────────────────────────────────────────────────────────
+// Time-based control: tune OPEN/CLOSE_TRAVEL_MS on hardware before first use
+#define DEPOSITION_DOOR_OPEN_TRAVEL_MS    5000UL  // TODO: measure on hardware
+#define DEPOSITION_DOOR_CLOSE_TRAVEL_MS   5000UL  // TODO: measure on hardware
+
+// PWM speed control via ENA pin — follows same pattern as ANALOG_VIB_CONTROL
+// When 0, ENA is driven HIGH (full speed)
+#define ANALOG_DOOR_CONTROL 1
+#if ANALOG_DOOR_CONTROL
+    #define DEPOSITION_DOOR_ENA_DUTY  128  // TODO: tune (0-255)
+#endif
+
+// Current-based end-stop detection — set to 1 once threshold is measured on hardware
+#define DEPOSITION_DOOR_ENABLE_CURRENT_STOP    0
 #define DEPOSITION_DOOR_CURRENT_SENSOR_INDEX   0
-#define DEPOSITION_DOOR_CURRENT_THRESHOLD_A    8.0f
+#define DEPOSITION_DOOR_CURRENT_THRESHOLD_A    8.0f  // TODO: measure on hardware
 #define DEPOSITION_DOOR_CURRENT_DETECT_MIN_MS  250
 
 #if ANALOG_VIB_CONTROL
@@ -128,10 +136,10 @@
 
 #define SPEED_TABLE { 0.25f, 0.50f, 0.75f, 1.00f }
 
-static inline float getSpeed(uint8_t idx) {
+static inline float getSpeed(uint8_t idx, float duty = LOCOMOTION_DUTY_CYCLE) {
     static constexpr float t[] = SPEED_TABLE;
     if (idx > 3U) idx = 3U;
-    return t[idx] * LOCOMOTION_DUTY_CYCLE;
+    return t[idx] * duty;
 }
 
 #define GET_SPEED(idx)     (getSpeed(static_cast<uint8_t>(idx)))

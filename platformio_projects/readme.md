@@ -45,3 +45,34 @@ pio device monitor -p COM4
 you can join two terminals to see both sides at once by selecting two with ctrl and rightclicking then selecting "join terminals"
 
 in parent terminal, control direction with WASD, speed with E and Q, and stop with X or space.
+
+## xbox controller bridge (alternative to WASD):
+
+instead of using the serial monitor, you can plug an xbox controller into your laptop and use `platformio_projects/controller_bridge/controller_serial.py` to send commands directly.
+
+requires:
+```
+pip install pygame pyserial
+```
+
+usage:
+```bash
+python platformio_projects/controller_bridge/controller_serial.py COM4
+```
+(replace COM4 with the i2c_parent Teensy's port)
+
+| control | action |
+|---------|--------|
+| left stick | drive forward / backward |
+| right stick X | turn left / right |
+| A / B / Y | excavation positions |
+| LB / RB / Menu | belt outward / inward / stop |
+| D-pad ←/→ | bin open / close |
+| D-pad ↓/↑ | vibrate on / off |
+| either trigger | E-STOP |
+| View button | request sensor data (printed in terminal) |
+
+if buttons feel wrong, run with `--debug` to identify your controller's axis/button indices:
+```bash
+python platformio_projects/controller_bridge/controller_serial.py --debug
+```

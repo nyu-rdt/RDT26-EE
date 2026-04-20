@@ -22,6 +22,8 @@ typedef void (*GroupHandler)(uint8_t);
 static volatile uint8_t latestCommand = 0x10;
 static volatile bool newCommand = false;
 static unsigned long lastCommandTime = 0;
+static bool timedOut = false;
+static bool killSwitchActive = false;
 static GroupHandler groups[16] = {nullptr};
 
 void setup()  { ROVER_init(); }
@@ -40,7 +42,9 @@ void ROVER_init() {
 #if ROTARY_ENCODERS_ENABLED
     ROTARY_ENCODER_Init();
 #endif
-    ESTOP_RegisterCallbacks(LOCO_EmergencyStop);
+    ESTOP_RegisterCallback(LOCO_EmergencyStop);
+    ESTOP_RegisterCallback(EXCAV_EmergencyStop);
+    ESTOP_RegisterCallback(DEPO_EmergencyStop);
     Wire2.begin(I2C_CHILD_ADDRESS);
     Wire2.onReceive(receiveEvent);
     COMMS_Init();
@@ -53,23 +57,44 @@ void ROVER_init() {
 void ROVER_update() {
     EE_BOX_Update();
 
+    if (!killSwitchActive && !EE_BOX_IsRelayEngaged()) {
+        killSwitchActive = true;
+#if SERIAL_DEBUG && !PLOT_DATA
+        Serial.println("[estop] kill switch engaged");
+#endif
+        ESTOP_Trigger();
+    } else if (killSwitchActive && EE_BOX_IsRelayEngaged()) {
+        killSwitchActive = false;
+#if SERIAL_DEBUG && !PLOT_DATA
+        Serial.println("[estop] kill switch released");
+#endif
+    }
+
     if (newCommand) {
         newCommand = false;
-        lastCommandTime = millis();
+            lastCommandTime = millis();
+            if (timedOut) {
+                timedOut = false;
 #if SERIAL_DEBUG && !PLOT_DATA
-        Serial.print("cmd: 0x");
-        Serial.println(latestCommand, HEX);
+                Serial.println("[comms] restored");
 #endif
-        processCommand(latestCommand);
+            }
+#if SERIAL_DEBUG && !PLOT_DATA
+            Serial.print("cmd: 0x");
+            Serial.println(latestCommand, HEX);
+#endif
+        if (!killSwitchActive) {
+            processCommand(latestCommand);
+        }
     }
 
 #if USE_TIMEOUT
-    if (millis() - lastCommandTime > COMMAND_TIMEOUT_MS) {
+    if (!timedOut && millis() - lastCommandTime > COMMAND_TIMEOUT_MS) {
+        timedOut = true;
 #if SERIAL_DEBUG && !PLOT_DATA
-        Serial.println("Command timeout");
+        Serial.println("[timeout] comms lost");
 #endif
-        ESTOP_StopAllMotors();
-        lastCommandTime = millis();
+        ESTOP_Trigger();
     }
 #endif
 
@@ -89,6 +114,9 @@ static void receiveEvent(int numBytes) {
         latestCommand = Wire2.read();
         newCommand = true;
     }
+    // Drain extra bytes. If Jetson sends >1 byte, leftovers sit in the buffer and
+    // would be read as the command on the next receiveEvent, corrupting that command.
+    while (Wire2.available()) Wire2.read();
 }
 
 static void processCommand(uint8_t cmd) {
@@ -118,14 +146,19 @@ static void registerHandlers() {
 
 // Group Handlers
 static void grp_Control(uint8_t param) {
-    if (param == 0x01) ESTOP_StopAllMotors();
+    if (param == 0x01) {
+#if SERIAL_DEBUG && !PLOT_DATA
+        Serial.println("[estop] software sent estop cmd");
+#endif
+        ESTOP_Trigger();
+    }
 }
 
 static void grp_LocoStop(uint8_t param)  { LOCO_Stop(); }
-static void grp_Forward(uint8_t param)   { LOCO_SetSpeeds(-GET_SPEED(param),  GET_SPEED(param)); }
-static void grp_Backward(uint8_t param)  { LOCO_SetSpeeds( GET_SPEED(param), -GET_SPEED(param)); }
-static void grp_TurnLeft(uint8_t param)  { LOCO_SetSpeeds( GET_SPEED(param),  GET_SPEED(param)); }
-static void grp_TurnRight(uint8_t param) { LOCO_SetSpeeds(-GET_SPEED(param), -GET_SPEED(param)); }
+static void grp_Forward(uint8_t param)   { float s = getSpeed(param, EXCAV_GetBeltActive() ? LOCOMOTION_DUTY_CYCLE_EXCAV : LOCOMOTION_DUTY_CYCLE); LOCO_SetSpeeds(-s,  s); }
+static void grp_Backward(uint8_t param)  { float s = getSpeed(param, EXCAV_GetBeltActive() ? LOCOMOTION_DUTY_CYCLE_EXCAV : LOCOMOTION_DUTY_CYCLE); LOCO_SetSpeeds( s, -s); }
+static void grp_TurnLeft(uint8_t param)  { float s = getSpeed(param, EXCAV_GetBeltActive() ? LOCOMOTION_DUTY_CYCLE_EXCAV : LOCOMOTION_DUTY_CYCLE); LOCO_SetSpeeds( s,  s); }
+static void grp_TurnRight(uint8_t param) { float s = getSpeed(param, EXCAV_GetBeltActive() ? LOCOMOTION_DUTY_CYCLE_EXCAV : LOCOMOTION_DUTY_CYCLE); LOCO_SetSpeeds(-s, -s); }
 
 #if USE_OLD_HEX_MAPPING
 static void grp_Excavation(uint8_t param) {

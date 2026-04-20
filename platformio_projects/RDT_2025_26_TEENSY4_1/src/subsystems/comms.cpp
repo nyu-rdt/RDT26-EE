@@ -26,7 +26,7 @@ void COMMS_Init() {
 //   [8]     left_encoder       uint8, 0-255 = 0-360°  (ROTARY_ENCODERS_ENABLED)
 //   [9]     right_encoder      uint8, 0-255 = 0-360°  (ROTARY_ENCODERS_ENABLED)
 //   [10-13] load_cells[4]      uint8 each             (LOAD_CELLS_ENABLED)
-//   [14]    string_pot         uint8 (conveyor pos)   (STRING_POT_ENABLED)
+//   [14]    string_pot         uint8, direct cm value (STRING_POT_ENABLED)
 //   [15]    depo_door_state    uint8, DepoDoorState enum value (GATE_POS_ENABLED)
 //   [16]    flags              uint8 (bit0=relay, bit1=3s_low, bit2=6s_low)
 //   [17]    fixes_attempted    uint8                  (no driver yet)
@@ -58,7 +58,7 @@ static void requestEvent() {
 #endif
 
 #if STRING_POT_ENABLED
-    pkt[14] = (uint8_t)(constrain(EXCAV_GetConveyorDistance() * (255.0f / STRING_POT_MAX_DISTANCE), 0, 255));
+    pkt[14] = (uint8_t)constrain(EXCAV_GetConveyorDistance(), 0.0f, 255.0f);
 #else
     pkt[14] = 0xFF;
 #endif

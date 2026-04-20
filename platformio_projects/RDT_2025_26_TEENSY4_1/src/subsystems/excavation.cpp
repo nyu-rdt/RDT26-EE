@@ -64,7 +64,7 @@ void EXCAV_Update() {
     }
 #endif
 
-    STEPPER_Update(EXCAVATION_STEP_PERIOD);
+    STEPPER_Update(vertDirection < 0 ? EXCAVATION_STEP_PERIOD_DOWN : EXCAVATION_STEP_PERIOD_UP);
 
 #if RAMP_UP
     if (millis() - lastRampMs >= TX_PERIOD_MS) {
@@ -134,6 +134,14 @@ void EXCAV_SetVertDirection(int direction) {
 #endif
 }
 
+bool EXCAV_GetBeltActive() {
+#if RAMP_UP
+    return beltDirection != 0 || fabsf(currentSpeed) > 0.01f;
+#else
+    return beltDirection != 0;
+#endif
+}
+
 float EXCAV_GetConveyorDistance() {
 #if STRING_POT_ENABLED
     return STRINGPOT_GetCachedDistance();
@@ -142,7 +150,7 @@ float EXCAV_GetConveyorDistance() {
 #endif
 }
 
-void EXCAV_Stop() {
+void EXCAV_EmergencyStop() {
     beltDirection = 0;
     vertDirection = 0;
 #if RAMP_UP

@@ -1,24 +1,34 @@
 #include <Arduino.h>
 #include "config.h"
 #include "estop.h"
-#include "excavation.h"
-#include "deposition.h"
 
-static StopFn stopLocomotion = nullptr;
+static constexpr uint8_t MAX_STOP_CALLBACKS = 8;
+static StopFn stopCallbacks[MAX_STOP_CALLBACKS];
+static uint8_t stopCallbackCount = 0;
 
-void ESTOP_RegisterCallbacks(StopFn stopLocomotionFn) {
-    stopLocomotion = stopLocomotionFn;
+void ESTOP_RegisterCallback(StopFn fn) {
+    if (fn != nullptr && stopCallbackCount < MAX_STOP_CALLBACKS) {
+        stopCallbacks[stopCallbackCount++] = fn;
+        return;
+    }
+
+#if SERIAL_DEBUG
+    if (fn == nullptr) {
+        Serial.println("[estop] register callback failed: null callback");
+    } else {
+        Serial.println("[estop] register callback failed: callback list full");
+    }
+#endif
 }
 
 void ESTOP_StopAllMotors() {
-    if (stopLocomotion != nullptr) stopLocomotion();
-    EXCAV_Stop();
-    DEPO_EmergencyStop();
+    for (uint8_t i = 0; i < stopCallbackCount; i++) {
+        stopCallbacks[i]();
+    }
 }
 
 void ESTOP_Trigger() {
     ESTOP_StopAllMotors();
-    // EE_BOX_DisableRelay(); — decide whether relay cuts on e-stop
 #if SERIAL_DEBUG
     Serial.println("[estop] triggered");
 #endif
