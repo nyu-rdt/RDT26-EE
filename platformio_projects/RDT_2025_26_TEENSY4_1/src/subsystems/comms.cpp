@@ -66,12 +66,15 @@ static void requestEvent() {
 #endif
 
 #if LOAD_CELLS_ENABLED
-    for (int i = 0; i < 4; i++) {
+    for (int i = 0; i < NUM_LOAD_CELLS; i++) {
         float kg = LOAD_CELL_GetMass(i);
         pkt[10 + i] = (uint8_t)constrain(kg * 10.0f, 0.0f, 255.0f); // 0-25.5 kg range, 0.1 kg resolution
     }
+    for (int i = NUM_LOAD_CELLS; i < 4; i++) {
+        pkt[10 + i] = 0xFF;
+    }
 #else
-    pkt[10] = pkt[11] = pkt[12] = pkt[13] = 0xFF;
+    for (int i = 0; i < 4; i++) { pkt[10 + i] = 0xFF; }
 #endif
 
 #if STRING_POT_ENABLED
