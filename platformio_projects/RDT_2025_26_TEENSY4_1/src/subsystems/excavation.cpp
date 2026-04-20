@@ -191,8 +191,9 @@ bool EXCAV_IsEmptyCut() {
     if (!EXCAV_GetBeltActive()) { emptyCutOnsetMs = 0; return false; }
     const float* c = CURRENT_SENSORS_GetBuffer();
     if (c[5] < CURRENT_EXCAV_EMPTY_CUT_A) {
-        if (emptyCutOnsetMs == 0) emptyCutOnsetMs = millis();
-        return (millis() - emptyCutOnsetMs) >= EXCAV_EMPTY_CUT_PERSIST_MS;
+        unsigned long now = millis();
+        if (emptyCutOnsetMs == 0) emptyCutOnsetMs = now;
+        return (now - emptyCutOnsetMs) >= EXCAV_EMPTY_CUT_PERSIST_MS;
     }
     emptyCutOnsetMs = 0;
     return false;
