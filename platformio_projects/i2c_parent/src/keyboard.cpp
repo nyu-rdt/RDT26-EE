@@ -62,7 +62,7 @@ static void processKey(char key) {
             }
             break;
         case 'X':
-            currenMode = GRP_CONTROL;
+            currentMode = GRP_CONTROL;
             i2c_parent_sendCommand(GRP_CONTROL, 0); // no-op, just
             printStatus("ESTOP");
             break;
