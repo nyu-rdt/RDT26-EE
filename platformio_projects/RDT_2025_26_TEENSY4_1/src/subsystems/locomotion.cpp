@@ -2,6 +2,9 @@
 #include "config.h"
 #include "locomotion.h"
 #include "can_driver.h"
+#if CURRENT_SENSE_ENABLED
+#include "current_sensors.h"
+#endif
 
 #if RAMP_UP
 static float currentLeft = 0.0f, currentRight = 0.0f;
@@ -59,5 +62,16 @@ void LOCO_EmergencyStop() {
     CAN_SendLocomotion(0.0f, 0.0f);
 #if SERIAL_DEBUG
     Serial.println("[loco] e-stop");
+#endif
+}
+
+bool LOCO_IsStalled() {
+#if CURRENT_SENSE_ENABLED && RAMP_UP
+    if (CURRENT_LOCO_STALL_A == 0.0f) return false;
+    if (targetLeft == 0.0f && targetRight == 0.0f) return false;
+    const float* c = CURRENT_SENSORS_GetBuffer();
+    return c[0] > CURRENT_LOCO_STALL_A || c[1] > CURRENT_LOCO_STALL_A;
+#else
+    return false;
 #endif
 }

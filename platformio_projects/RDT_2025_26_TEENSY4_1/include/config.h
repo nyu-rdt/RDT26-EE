@@ -74,6 +74,35 @@
 #define STRING_HIGHEST 2
 #define STRING_MIDDLE 3
 
+// ── Load cells ────────────────────────────────────────────────────────────────
+#define NUM_LOAD_CELLS               4
+#define LOAD_CELL_SCALE              1.0f   // TODO: calibrate (raw → kg)
+#define LOAD_CELL_EMPTY_THRESHOLD_KG 0.1f  // TODO: tune — bin empty below this
+
+// ── Telemetry flag thresholds ─────────────────────────────────────────────────
+// Current channel map: 0=left loco, 1=right loco, 2=vib, 3=depo door, 4=stepper, 5=excav belt
+#define CURRENT_LOCO_STALL_A         0.0f  // TODO: measure — loco stall current
+#define CURRENT_STEPPER_OBSTRUCT_A   0.0f  // TODO: measure — stepper obstruction spike
+#define CURRENT_EXCAV_EMPTY_CUT_A    0.0f  // TODO: measure — belt current at empty cut
+#define CURRENT_EXCAV_STALL_A        0.0f  // TODO: measure — belt stall current
+#define CURRENT_OVERCURRENT_ANY_A    0.0f  // TODO: measure — max safe current any channel
+#define EXCAV_EMPTY_CUT_PERSIST_MS   500   // belt must be below threshold this long before flagging
+#define EXCAV_STALL_MASS_DELTA_KG    0.05f // min mass gain expected per stall window
+#define EXCAV_STALL_WINDOW_MS        2000  // time window for excav stall mass-flow check
+
+// ── Telemetry flags (pkt[16]) ─────────────────────────────────────────────────
+// Set FLAGS_ENABLED=1 once all thresholds above are measured and filled in.
+// When 0, only FLAG_ESTOP is live — all other bits held at 0.
+#define FLAGS_ENABLED                0
+// All active-high: 1 = condition present.
+#define FLAG_ESTOP                (1 << 0)  // relay not engaged — hardware e-stop active
+#define FLAG_OVERCURRENT          (1 << 1)  // any current channel over threshold
+#define FLAG_MACRO_ACTIVE         (1 << 2)  // MCU running autonomous fix — don't send conflicting cmds
+#define FLAG_LOCO_STALL           (1 << 3)  // locomotion stalled under load — needs SW reset
+#define FLAG_EXCAV_ARM_OBSTRUCTED (1 << 4)  // stepper current spike while descending
+#define FLAG_EXCAV_EMPTY_CUT      (1 << 5)  // belt on, low current — nothing to excavate, reposition rover
+#define FLAG_EXCAV_STALL          (1 << 6)  // belt on, high current, no mass change — blocked
+#define FLAG_DEPO_BIN_EMPTY       (1 << 7)  // bin mass below empty threshold — deposition complete
 
 // ── Deposition ────────────────────────────────────────────────────────────────
 // Time-based control: tune OPEN/CLOSE_TRAVEL_MS on hardware before first use
