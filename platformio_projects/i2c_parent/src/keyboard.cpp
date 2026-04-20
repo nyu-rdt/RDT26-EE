@@ -9,6 +9,11 @@ static uint8_t currentMode = GRP_LOCO_STOP;
 static unsigned long lastSendTime = 0;
 static const unsigned long KEEPALIVE_INTERVAL_MS = 300;
 
+// Escape prefix used by controller_serial.py so raw hex commands
+// can coexist with WASD ASCII keys without collision.
+static const uint8_t SERIAL_ESCAPE = 0xFE;
+static bool escapeArmed = false;
+
 const char* message = "W/A/S/D=Move | E/Q=Speed | X/Space=Stop | U/J/H=Belt Fwd/Rev/Stop | O/L/K=Vert Fwd/Rev/Stop | R/F=Door Open/Close | T/G=Vib On/Off | I=Request Data";
 
 static void printStatus(const char* mode) {
@@ -178,8 +183,20 @@ void keyboard_init() {
 
 void keyboard_update() {
     while (Serial.available() > 0) {
-        char key = Serial.read();
-        processKey(key);
+        uint8_t b = Serial.read();
+
+        if (escapeArmed) {
+            escapeArmed = false;
+            i2c_parent_sendByte(b);
+            lastSendTime = millis();
+            continue;
+        }
+        if (b == SERIAL_ESCAPE) {
+            escapeArmed = true;
+            continue;
+        }
+
+        processKey((char)b);
         lastSendTime = millis();
     }
 
