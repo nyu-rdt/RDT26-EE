@@ -34,7 +34,7 @@ void DEPO_SetVib(int direction) {
 
 void DEPO_EmergencyStop() {
     DEPO_DOOR_EmergencyStop();
-    VIB_drive(0);
+    VIB_EmergencyStop();
 }
 
 DepoDoorState DEPO_GetDoorState() {
