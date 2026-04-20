@@ -109,6 +109,9 @@ void ROVER_update() {
 #if CURRENT_SENSE_ENABLED
     CURRENT_SENSORS_Update();
 #endif
+#if LOAD_CELLS_ENABLED
+    LOAD_CELL_Update();
+#endif
     DEPO_Update();
 #if PLOT_DATA
     DEBUG_Update();
