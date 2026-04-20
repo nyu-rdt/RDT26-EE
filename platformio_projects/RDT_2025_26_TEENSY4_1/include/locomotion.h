@@ -12,6 +12,6 @@ void LOCO_Stop();
 // Hard stop — bypasses ramp, sends zero immediately. Called by e-stop and timeout.
 void LOCO_EmergencyStop();
 
-// True when motors are commanded but current exceeds CURRENT_LOCO_STALL_A.
-// Always false until that threshold is set in config.h.
+// True when motors are commanded and current exceeds CURRENT_LOCO_STALL_A.
+// Stall detection depends on ramp tracking; when RAMP_UP is disabled this returns false.
 bool LOCO_IsStalled();
