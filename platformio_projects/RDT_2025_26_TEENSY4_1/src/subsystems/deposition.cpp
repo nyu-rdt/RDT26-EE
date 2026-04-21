@@ -3,6 +3,7 @@
 #include "deposition.h"
 #include "depo_door_driver.h"
 #include "vib_motor_driver.h"
+#include "load_cells.h"
 #if CURRENT_SENSE_ENABLED
 #include "current_sensors.h"
 #endif
@@ -18,6 +19,8 @@ void DEPO_Update() {
     DEPO_DOOR_SetMeasuredCurrent(currents[DEPOSITION_DOOR_CURRENT_SENSOR_INDEX]);
 #endif
     DEPO_DOOR_Update();
+    // Keep load-cell sampling running so deposition module can read weights
+    lc_update();
 }
 
 void DEPO_OpenDoor() {

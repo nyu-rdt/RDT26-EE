@@ -11,6 +11,9 @@
 #if ROTARY_ENCODERS_ENABLED
 #include "rotary_encoders.h"
 #endif
+#if LOAD_CELLS_ENABLED
+#include "load_cells.h"
+#endif
 
 static void requestEvent();
 
@@ -52,7 +55,10 @@ static void requestEvent() {
 #endif
 
 #if LOAD_CELLS_ENABLED
-    // TODO: fill from load cell driver
+    pkt[10] = lc_pack_cell(1);
+    pkt[11] = lc_pack_cell(2);
+    pkt[12] = lc_pack_cell(3);
+    pkt[13] = lc_pack_cell(4);
 #else
     pkt[10] = pkt[11] = pkt[12] = pkt[13] = 0xFF;
 #endif

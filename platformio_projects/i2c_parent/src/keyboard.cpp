@@ -159,6 +159,16 @@ static void processKey(char key) {
                 Serial.print(" R=");
                 Serial.print(buf[9] == 0xFF ? "N/A" : String(buf[9] * (360.0f / 255.0f), 1).c_str());
 #endif
+                
+#if LOAD_CELLS_ENABLED
+                Serial.print(" | load_cells(kg):");
+                for (uint8_t li = 0; li < 4; li++) {
+                    uint8_t v = buf[10 + li];
+                    Serial.print(" LC"); Serial.print(li + 1); Serial.print("=");
+                    if (v == 0xFF) Serial.print("N/A");
+                    else Serial.print(String(v * 0.1f, 1).c_str());
+                }
+#endif
                 Serial.println();
             } else {
                 Serial.print("[DATA] read failed, got ");
