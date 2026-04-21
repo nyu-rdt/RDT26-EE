@@ -3,7 +3,7 @@
 controller_serial.py  —  Xbox controller → i2c_parent Teensy serial bridge
 
 Mirrors the GCS manual control button layout but sends over USB serial
-instead of I2C. Requires the escape-byte patch in keyboard.cpp (0xFE prefix).
+instead of router. Requires the escape-byte patch in keyboard.cpp (0xFE prefix).
 
 Install deps:
     pip install pygame pyserial
