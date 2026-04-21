@@ -62,6 +62,7 @@
 #define STEPS_PER_REVOLUTION        200   // full-step count
 #define MICROSTEPPING_FACTOR        1     // 1, 2, 4, 8, 16, or 32
 
+
 // String pot calibration — board-specific, tune after physical testing
 #define STRING_POT_SCALE            37.125f
 #define STRING_POT_OFFSET           -3.511f
@@ -94,6 +95,7 @@
 // Set FLAGS_ENABLED=1 once all thresholds above are measured and filled in.
 // When 0, only FLAG_ESTOP is live — all other bits held at 0.
 #define FLAGS_ENABLED                0
+#define MACROS_ENABLED               0  // when 1, FLAG_MACRO_ACTIVE indicates autonomous fix in progress — ignore conflicting commands
 // All active-high: 1 = condition present.
 #define FLAG_ESTOP                (1 << 0)  // relay not engaged — hardware e-stop active
 #define FLAG_OVERCURRENT          (1 << 1)  // any current channel over threshold

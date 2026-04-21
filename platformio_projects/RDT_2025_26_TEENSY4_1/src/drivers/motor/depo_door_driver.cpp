@@ -2,10 +2,10 @@
 #include "config.h"
 #include "depo_door_driver.h"
 
-volatile static DepoDoorState doorState = DEPO_DOOR_STATE_CLOSED;
+static DepoDoorState doorState = DEPO_DOOR_STATE_CLOSED;
 static int activeDirection = 0;
 static unsigned long motionStartMs = 0;
-static volatile float doorCurrentAmps = 0.0f;
+static float doorCurrentAmps = 0.0f;
 
 static void setMotorDirection(int direction) {
     if (direction > 0) {
