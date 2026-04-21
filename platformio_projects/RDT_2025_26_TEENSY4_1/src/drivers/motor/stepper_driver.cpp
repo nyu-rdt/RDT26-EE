@@ -12,12 +12,9 @@
 #include "stepper_driver.h"
 #include "config.h" 
 
-#define STEPS_PER_REVOLUTION 200  // full-step count
-#define MICROSTEPPING_FACTOR 1  // set this to 1,2,4,8,16,32 depending on desired microstepping mode
-
-bool STEPPER_enable = false; // global variable to track if motor should be enabled
-unsigned long lastStepTime = 0; // track last step time for timing control, in microseconds
-bool isStepPinHigh = false; // track state of step pin for timing control
+static bool STEPPER_enable = false; // global variable to track if motor should be enabled
+static unsigned long lastStepTime = 0; // track last step time for timing control, in microseconds
+static bool isStepPinHigh = false; // track state of step pin for timing control
 
 void STEPPER_Init() {
     pinMode(STEPPER_DIR_PIN, OUTPUT);
