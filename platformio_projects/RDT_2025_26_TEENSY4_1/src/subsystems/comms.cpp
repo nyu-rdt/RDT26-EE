@@ -18,8 +18,28 @@
 
 static void requestEvent();
 
+// Written by COMMS_UpdateFlags() (main loop), read by requestEvent() (ISR).
+// volatile ensures the ISR always sees the latest byte written by the main loop.
+// uint8_t is a single-byte type so reads/writes are inherently atomic on Cortex-M.
+static volatile uint8_t s_flags = 0;
+
 void COMMS_Init() {
     Wire2.onRequest(requestEvent);
+}
+
+void COMMS_UpdateFlags() {
+    uint8_t flags = 0;
+    if (!EE_BOX_IsRelayEngaged()) flags |= FLAG_ESTOP;
+#if FLAGS_ENABLED
+    if (EE_BOX_IsOvercurrent())      flags |= FLAG_OVERCURRENT;
+    // FLAG_MACRO_ACTIVE: set by macro subsystem when implemented
+    if (LOCO_IsStalled())            flags |= FLAG_LOCO_STALL;
+    if (EXCAV_IsArmObstructed())     flags |= FLAG_EXCAV_ARM_OBSTRUCTED;
+    if (EXCAV_IsEmptyCut())          flags |= FLAG_EXCAV_EMPTY_CUT;
+    if (EXCAV_IsBeltStalled())       flags |= FLAG_EXCAV_STALL;
+    if (DEPO_IsBinEmpty())           flags |= FLAG_DEPO_BIN_EMPTY;
+#endif
+    s_flags = flags;
 }
 
 // Fires when master calls requestFrom() — always sends exactly DATA_PACKET_SIZE bytes.
@@ -37,13 +57,13 @@ void COMMS_Init() {
 //   [16]    flags              uint8, all active-high (FLAGS_ENABLED controls bits 1-7)
 //             bit0 FLAG_ESTOP                — relay not engaged, hardware e-stop active
 //             bit1 FLAG_OVERCURRENT          — any current channel over threshold
-//             bit2 FLAG_MACRO_ACTIVE         — MCU running autonomous fix, hold commands
+//             bit2 FLAG_MACRO_ACTIVE         — MCU running autonomous fix, hold commands (unimplemented)
 //             bit3 FLAG_LOCO_STALL           — locomotion stalled, needs SW reset
 //             bit4 FLAG_EXCAV_ARM_OBSTRUCTED — stepper current spike while descending
 //             bit5 FLAG_EXCAV_EMPTY_CUT      — belt on, low current, reposition rover
-//             bit6 FLAG_EXCAV_STALL          — belt on, high current, no mass change
+//             bit6 FLAG_EXCAV_STALL          — belt on, high current, no mass change; latched until belt stops
 //             bit7 FLAG_DEPO_BIN_EMPTY       — bin mass below empty threshold
-//   [17]    fixes_attempted    uint8                  (no driver yet)
+//   [17]    fixes_attempted    uint8, 0xFF = unimplemented sentinel
 static void requestEvent() {
     uint8_t pkt[DATA_PACKET_SIZE];
 
@@ -70,11 +90,8 @@ static void requestEvent() {
         float kg = LOAD_CELL_GetMass(i);
         pkt[10 + i] = (uint8_t)constrain(kg * 10.0f, 0.0f, 255.0f); // 0-25.5 kg range, 0.1 kg resolution
     }
-    for (int i = NUM_LOAD_CELLS; i < 4; i++) {
-        pkt[10 + i] = 0xFF;
-    }
 #else
-    for (int i = 0; i < 4; i++) { pkt[10 + i] = 0xFF; }
+    pkt[10] = pkt[11] = pkt[12] = pkt[13] = 0xFF;
 #endif
 
 #if STRING_POT_ENABLED
@@ -89,18 +106,7 @@ static void requestEvent() {
     pkt[15] = 0xFF;
 #endif
 
-    uint8_t flags = 0;
-    if (!EE_BOX_IsRelayEngaged())   flags |= FLAG_ESTOP;
-#if FLAGS_ENABLED
-    if (EE_BOX_IsOvercurrent())     flags |= FLAG_OVERCURRENT;
-    // FLAG_MACRO_ACTIVE: set by macro subsystem when implemented
-    if (LOCO_IsStalled())           flags |= FLAG_LOCO_STALL;
-    if (EXCAV_IsArmObstructed())    flags |= FLAG_EXCAV_ARM_OBSTRUCTED;
-    if (EXCAV_IsEmptyCut())         flags |= FLAG_EXCAV_EMPTY_CUT;
-    if (EXCAV_IsBeltStalled())      flags |= FLAG_EXCAV_STALL;
-    if (DEPO_IsBinEmpty())          flags |= FLAG_DEPO_BIN_EMPTY;
-#endif
-    pkt[16] = flags;
+    pkt[16] = s_flags;
     pkt[17] = 0xFF; // fixes_attempted — no driver yet
 
     Wire2.write(pkt, DATA_PACKET_SIZE);

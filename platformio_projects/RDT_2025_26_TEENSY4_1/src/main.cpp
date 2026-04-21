@@ -20,11 +20,10 @@
 #include "load_cell.h"
 #endif
 
-typedef void (*GroupHandler)(uint8_t);
 
 static volatile uint8_t latestCommand = 0x10;
 static volatile bool newCommand = false;
-static unsigned long lastCommandTime = 0;
+static unsigned long lastCommandTime;
 static bool timedOut = false;
 static bool killSwitchActive = false;
 static GroupHandler groups[16] = {nullptr};
@@ -113,9 +112,12 @@ void ROVER_update() {
     LOAD_CELL_Update();
 #endif
     DEPO_Update();
+    COMMS_UpdateFlags();
 #if PLOT_DATA
     DEBUG_Update();
 #endif
+
+lastCommandTime = millis(); // Prevent timeout while processing commands and updating subsystems
 }
 
 static void receiveEvent(int numBytes) {
@@ -187,7 +189,7 @@ static void grp_ExcavationVert(uint8_t param) { EXCAV_SetVertDirection(GET_DIREC
 static void grp_DepositionDoor(uint8_t param) {
     if      (param == 0) DEPO_OpenDoor();
     else if (param == 1) DEPO_CloseDoor();
-#if SERIAL_DEBUG
+#if SERIAL_DEBUG && !PLOT_DATA
     else { Serial.print("DEPO DOOR: unknown param "); Serial.println(param); }
 #endif
 }
