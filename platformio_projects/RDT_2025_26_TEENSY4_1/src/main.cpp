@@ -78,6 +78,9 @@ void ROVER_update() {
 
     if (newCommand) {
         newCommand = false;
+            uint8_t cmd = latestCommand;
+            uint8_t group = CMD_GROUP(cmd);
+            bool allowDuringKillSwitch = (group == GRP_CONTROL) || (group == GRP_DATA);
             lastCommandTime = millis();
             if (timedOut) {
                 timedOut = false;
@@ -87,10 +90,14 @@ void ROVER_update() {
             }
 #if SERIAL_DEBUG && !PLOT_DATA
             Serial.print("cmd: 0x");
-            Serial.println(latestCommand, HEX);
+            Serial.println(cmd, HEX);
 #endif
-        if (!killSwitchActive) {
-            processCommand(latestCommand);
+        if (!killSwitchActive || allowDuringKillSwitch) {
+            processCommand(cmd);
+#if SERIAL_DEBUG && !PLOT_DATA
+        } else {
+            Serial.println("[comms] command ignored while kill switch e-stop is active");
+#endif
         }
     }
 
