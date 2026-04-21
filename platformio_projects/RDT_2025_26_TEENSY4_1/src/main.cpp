@@ -57,6 +57,7 @@ void ROVER_init() {
 #if SERIAL_DEBUG && !PLOT_DATA
     Serial.println("Ready");
 #endif
+lastCommandTime = millis(); // Prevent timeout while processing commands and updating subsystems during init
 }
 
 void ROVER_update() {
@@ -116,8 +117,6 @@ void ROVER_update() {
 #if PLOT_DATA
     DEBUG_Update();
 #endif
-
-lastCommandTime = millis(); // Prevent timeout while processing commands and updating subsystems
 }
 
 static void receiveEvent(int numBytes) {
