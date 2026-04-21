@@ -2,6 +2,7 @@
 #include "config.h"
 #include "locomotion.h"
 #include "can_driver.h"
+#include "math_utils.h"
 #if CURRENT_SENSE_ENABLED
 #include "current_sensors.h"
 #endif
@@ -10,11 +11,6 @@
 static float currentLeft = 0.0f, currentRight = 0.0f;
 static float targetLeft = 0.0f, targetRight = 0.0f;
 static unsigned long lastTxMs = 0;
-
-static float slew(float cur, float tgt, float maxDelta) {
-    float d = tgt - cur;
-    return (d > maxDelta) ? cur + maxDelta : (d < -maxDelta) ? cur - maxDelta : tgt;
-}
 #endif
 
 void LOCO_Init() {

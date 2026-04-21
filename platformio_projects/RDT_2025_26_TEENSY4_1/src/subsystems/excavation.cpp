@@ -3,6 +3,7 @@
 #include "excavation.h"
 #include "can_driver.h"
 #include "stepper_driver.h"
+#include "math_utils.h"
 #if STRING_POT_ENABLED
 #include "string_pot.h"
 #endif
@@ -17,16 +18,13 @@
 static int beltDirection = 0;
 // Vertical direction (stepper — raises/lowers the belt assembly): +1 up, -1 down, 0 stopped
 static int vertDirection = 0;
+// Latched true when a belt stall is confirmed; cleared when belt stops or e-stop fires.
+static bool stallActive = false;
 
 #if RAMP_UP
 static float targetSpeed = 0.0f;
 static float currentSpeed = 0.0f;
 static unsigned long lastRampMs = 0;
-
-static float slew(float cur, float tgt, float maxDelta) {
-    float d = tgt - cur;
-    return (d > maxDelta) ? cur + maxDelta : (d < -maxDelta) ? cur - maxDelta : tgt;
-}
 #endif
 
 #if STRING_POT_ENABLED
@@ -100,6 +98,7 @@ void EXCAV_Update() {
 
 void EXCAV_SetBeltDirection(int direction) {
     beltDirection = (direction > 0) ? 1 : (direction < 0) ? -1 : 0;
+    if (beltDirection == 0) stallActive = false;
     applyBeltSpeed(beltDirection * EXCAVATION_DUTY_CYCLE);
 #if SERIAL_DEBUG
     Serial.print("[excav] belt: ");
@@ -159,6 +158,7 @@ float EXCAV_GetConveyorDistance() {
 void EXCAV_EmergencyStop() {
     beltDirection = 0;
     vertDirection = 0;
+    stallActive = false;
 #if RAMP_UP
     // Reset ramp state so we don't slew back up after the stop
     targetSpeed = 0.0f;
@@ -204,10 +204,17 @@ bool EXCAV_IsEmptyCut() {
 
 static unsigned long stallWindowStartMs = 0;
 static float stallWindowStartMass = 0.0f;
+
 bool EXCAV_IsBeltStalled() {
 #if LOAD_CELLS_ENABLED && CURRENT_SENSE_ENABLED
     if (CURRENT_EXCAV_STALL_A == 0.0f) return false;
-    if (!EXCAV_GetBeltActive()) { stallWindowStartMs = 0; return false; }
+    if (!EXCAV_GetBeltActive()) {
+        stallWindowStartMs = 0;
+        stallActive = false;
+        return false;
+    }
+    // Latch: once stalled, stay flagged until belt stops or e-stop clears it.
+    if (stallActive) return true;
     const float* c = CURRENT_SENSORS_GetBuffer();
     if (c[5] < CURRENT_EXCAV_STALL_A) { stallWindowStartMs = 0; return false; }
     unsigned long now = millis();
@@ -218,10 +225,12 @@ bool EXCAV_IsBeltStalled() {
     }
     if (now - stallWindowStartMs >= EXCAV_STALL_WINDOW_MS) {
         float currentMass = LOAD_CELL_GetTotalMass();
-        bool stalled = (currentMass - stallWindowStartMass) < EXCAV_STALL_MASS_DELTA_KG;
+        if ((currentMass - stallWindowStartMass) < EXCAV_STALL_MASS_DELTA_KG) {
+            stallActive = true;
+            return true;
+        }
         stallWindowStartMs = now;
         stallWindowStartMass = currentMass;
-        return stalled;
     }
     return false;
 #else
