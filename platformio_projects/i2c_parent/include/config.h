@@ -45,7 +45,7 @@
 // Must match child firmware config.h — keep in sync with RDT_2025_26_TEENSY4_1/include/config.h
 #define CURRENT_SENSE_ENABLED   1
 #define ROTARY_ENCODERS_ENABLED 1
-#define LOAD_CELLS_ENABLED      0
+#define LOAD_CELLS_ENABLED      1
 #define STRING_POT_ENABLED      0
 #define GATE_POS_ENABLED        0
 #define NUM_CURRENT_SENSORS     8

@@ -40,3 +40,13 @@
 
 // Vibration motor
 #define VIB_MOTOR_PIN 30
+
+// Load cells (HX711)
+#define LC_DOUT1 31
+#define LC_CLK1  32
+#define LC_DOUT2 33
+#define LC_CLK2  34
+#define LC_CLK3  35
+#define LC_DOUT3 36
+#define LC_DOUT4 37
+#define LC_CLK4  38

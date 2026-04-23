@@ -2,6 +2,7 @@
 #include <stdint.h>
 #include "pins.h"
 
+
 // ── Feature flags ─────────────────────────────────────────────────────────────
 #define RAMP_UP        1
 #define SERIAL_DEBUG   0
@@ -79,6 +80,12 @@
 // Time-based control: tune OPEN/CLOSE_TRAVEL_MS on hardware before first use
 #define DEPOSITION_DOOR_OPEN_TRAVEL_MS    5000UL  // TODO: measure on hardware
 #define DEPOSITION_DOOR_CLOSE_TRAVEL_MS   5000UL  // TODO: measure on hardware
+
+// ── Load Cells calibration factors ────────────────────────────────────────────
+#define LC_CAL1 -102.0f
+#define LC_CAL2  105.0f
+#define LC_CAL3 -102.0f
+#define LC_CAL4  111.0f
 
 // PWM speed control via ENA pin — follows same pattern as ANALOG_VIB_CONTROL
 // When 0, ENA is driven HIGH (full speed)
