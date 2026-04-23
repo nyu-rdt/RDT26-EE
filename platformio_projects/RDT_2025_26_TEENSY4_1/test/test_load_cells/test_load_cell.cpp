@@ -1,4 +1,4 @@
-// test/test_load_cell.cpp
+// test/test_load_cells/test_load_cell.cpp
 //
 // Single HX711 load-cell hardware monitor.
 // Based on the RDT_2024_PF sensors.cpp HX711 setup.
