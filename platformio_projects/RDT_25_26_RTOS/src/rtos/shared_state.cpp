@@ -1,5 +1,7 @@
 #include "shared_state.h"
 
+FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> gCan;
+
 QueueHandle_t      qI2cRxBytes   = nullptr;
 SemaphoreHandle_t  mCanTx        = nullptr;
 SemaphoreHandle_t  mDesiredState = nullptr;
