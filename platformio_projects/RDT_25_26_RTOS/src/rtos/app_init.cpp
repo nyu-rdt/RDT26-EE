@@ -26,26 +26,26 @@ void APP_Init() {
     Serial.begin(115200);
 
     // Energize relay immediately — fail-safe before scheduler starts.
-    // If setup() crashes the relay stays HIGH rather than floating.
-    pinMode(2, OUTPUT);              // RELAY_DRIVER_PIN
-    digitalWrite(2, HIGH);
+    // If setup() crashes after this point, the relay stays HIGH rather than floating.
+    pinMode(PIN_RELAY_DRIVER, OUTPUT);
+    digitalWrite(PIN_RELAY_DRIVER, HIGH);
 
-    // All actuator outputs default to safe (off) state
-    pinMode(6,  OUTPUT); digitalWrite(6,  LOW);    // STEPPER_DIR_PIN
-    pinMode(7,  OUTPUT); digitalWrite(7,  LOW);    // STEPPER_STEP_PIN
-    pinMode(8,  OUTPUT); digitalWrite(8,  HIGH);   // STEPPER_ENABLE_PIN (HIGH=disable)
-    pinMode(10, OUTPUT); digitalWrite(10, LOW);    // STEPPER_M0
-    pinMode(11, OUTPUT); digitalWrite(11, LOW);    // STEPPER_M1
-    pinMode(12, OUTPUT); digitalWrite(12, LOW);    // STEPPER_M2
-    pinMode(14, OUTPUT); digitalWrite(14, LOW);    // DEPO_DOOR_ENA_PIN
-    pinMode(40, OUTPUT); digitalWrite(40, LOW);    // DEPO_DOOR_IN1_PIN
-    pinMode(41, OUTPUT); digitalWrite(41, LOW);    // DEPO_DOOR_IN2_PIN
-    pinMode(30, OUTPUT); digitalWrite(30, LOW);    // VIB_MOTOR_PIN
+    // All actuator outputs default to safe (off) state before any task runs.
+    pinMode(PIN_STEPPER_DIR,    OUTPUT); digitalWrite(PIN_STEPPER_DIR,    LOW);
+    pinMode(PIN_STEPPER_STEP,   OUTPUT); digitalWrite(PIN_STEPPER_STEP,   LOW);
+    pinMode(PIN_STEPPER_ENABLE, OUTPUT); digitalWrite(PIN_STEPPER_ENABLE, HIGH);  // HIGH=disable
+    pinMode(PIN_STEPPER_M0,     OUTPUT); digitalWrite(PIN_STEPPER_M0,     LOW);
+    pinMode(PIN_STEPPER_M1,     OUTPUT); digitalWrite(PIN_STEPPER_M1,     LOW);
+    pinMode(PIN_STEPPER_M2,     OUTPUT); digitalWrite(PIN_STEPPER_M2,     LOW);
+    pinMode(PIN_DEPO_DOOR_ENA,  OUTPUT); digitalWrite(PIN_DEPO_DOOR_ENA,  LOW);
+    pinMode(PIN_DEPO_DOOR_IN1,  OUTPUT); digitalWrite(PIN_DEPO_DOOR_IN1,  LOW);
+    pinMode(PIN_DEPO_DOOR_IN2,  OUTPUT); digitalWrite(PIN_DEPO_DOOR_IN2,  LOW);
+    pinMode(PIN_VIB_MOTOR,      OUTPUT); digitalWrite(PIN_VIB_MOTOR,      LOW);
 
-    // Relay read inputs
-    pinMode(3, INPUT_PULLDOWN);    // RELAY_READ_PIN
-    pinMode(4, INPUT_PULLDOWN);    // RELAY_3S_LOW_PIN
-    pinMode(5, INPUT_PULLDOWN);    // RELAY_6S_LOW_PIN
+    // Relay and battery sense inputs
+    pinMode(PIN_RELAY_READ,   INPUT_PULLDOWN);
+    pinMode(PIN_RELAY_3S_LOW, INPUT_PULLDOWN);
+    pinMode(PIN_RELAY_6S_LOW, INPUT_PULLDOWN);
 
     s_can.begin();
     s_can.setBaudRate(500000);
@@ -68,7 +68,11 @@ void APP_Init() {
     configASSERT(xTaskCreate(TaskTelemetry,    "Telemetry",  STACK_TELEMETRY,  nullptr, PRI_TELEMETRY,  nullptr)         == pdPASS);
     configASSERT(xTaskCreate(TaskDebug,        "Debug",      STACK_DEBUG,      nullptr, PRI_DEBUG,      nullptr)         == pdPASS);
 
-    // Half-period of EXCAVATION_STEP_PERIOD_UP (1050µs → 525µs).
-    // MechanismTask will update direction; ISR just toggles the pin.
+    // Start the stepper IntervalTimer before vTaskStartScheduler().
+    // Safe because gStepperPlan.enabled initializes to 0 (zero-initialized .bss),
+    // so the ISR returns immediately without touching any pin until TaskMechanism
+    // explicitly sets enabled=1. Moving this into TaskMechanism's setup block
+    // would also be correct if stricter pre-scheduler ISR-free operation is needed.
+    // Half-period of EXCAVATION_STEP_PERIOD_UP (1050µs → 525µs half-period).
     s_stepTimer.begin(ISR_StepperTimer, 525);
 }
