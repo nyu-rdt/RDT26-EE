@@ -19,7 +19,6 @@ void ISR_I2C_OnReceive(int);
 void ISR_I2C_OnRequest();
 void ISR_StepperTimer();
 
-static FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> s_can;
 static IntervalTimer s_stepTimer;
 
 void APP_Init() {
@@ -47,8 +46,8 @@ void APP_Init() {
     pinMode(PIN_RELAY_3S_LOW, INPUT_PULLDOWN);
     pinMode(PIN_RELAY_6S_LOW, INPUT_PULLDOWN);
 
-    s_can.begin();
-    s_can.setBaudRate(500000);
+    gCan.begin();
+    gCan.setBaudRate(500000);
 
     // Create all IPC primitives before any ISR or task uses them
     SHARED_STATE_Init();

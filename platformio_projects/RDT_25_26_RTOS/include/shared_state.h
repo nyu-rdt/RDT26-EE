@@ -1,5 +1,6 @@
 #pragma once
 #include <Arduino.h>
+#include <FlexCAN_T4.h>
 #include "FreeRTOS.h"
 #include "task.h"
 #include "queue.h"
@@ -7,6 +8,9 @@
 #include "event_groups.h"
 #include "rtos_types.h"
 #include "rtos_config.h"
+
+// CAN bus instance owned here so MotorControlTask can write via mCanTx
+extern FlexCAN_T4<CAN1, RX_SIZE_256, TX_SIZE_16> gCan;
 
 // IPC handles
 extern QueueHandle_t      qI2cRxBytes;
