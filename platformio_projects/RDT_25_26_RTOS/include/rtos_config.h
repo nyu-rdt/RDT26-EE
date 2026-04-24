@@ -2,8 +2,8 @@
 #include <stdint.h>
 
 // Stack sizes (words)
-#define STACK_SAFETY        512
-#define STACK_CMD_DECODE    512
+#define STACK_SAFETY        640
+#define STACK_CMD_DECODE    640
 #define STACK_MOTOR_CTRL    640
 #define STACK_MECHANISM     640
 #define STACK_SENSOR        512
@@ -48,3 +48,26 @@
 // When 1: SafetyTask evaluates current thresholds and can set SAFETY_OVERCURRENT.
 // Still in testing — keep 0 until thresholds are measured and validated.
 #define STALL_DETECTION_ENABLED   0
+
+//  Pin assignments (make sue it matches whatever is currently in pins.h in superloop implem)
+#define PIN_RELAY_DRIVER    2
+#define PIN_RELAY_READ      3
+#define PIN_RELAY_3S_LOW    4
+#define PIN_RELAY_6S_LOW    5
+#define PIN_STEPPER_DIR     6
+#define PIN_STEPPER_STEP    7
+#define PIN_STEPPER_ENABLE  8
+#define PIN_STEPPER_M0      10
+#define PIN_STEPPER_M1      11
+#define PIN_STEPPER_M2      12
+#define PIN_DEPO_DOOR_ENA   14
+#define PIN_I2C_SDA         25
+#define PIN_I2C_SCL         24
+#define PIN_CURRENT_INPUT   26
+#define PIN_CURRENT_SEL0    27
+#define PIN_CURRENT_SEL1    28
+#define PIN_CURRENT_SEL2    29
+#define PIN_VIB_MOTOR       30
+#define PIN_STRING_POT      39
+#define PIN_DEPO_DOOR_IN1   40
+#define PIN_DEPO_DOOR_IN2   41
