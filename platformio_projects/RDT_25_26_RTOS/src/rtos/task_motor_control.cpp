@@ -51,13 +51,13 @@ void TaskMotorControl(void*) {
                 tgtExcav = gDesiredState.excav_belt_target;
                 xSemaphoreGive(mDesiredState);
             }
+            curLeft  = slew(curLeft,  tgtLeft,  0.01f);
+            curRight = slew(curRight, tgtRight, 0.01f);
+            curExcav = slew(curExcav, tgtExcav, 0.01f);
         } else {
-            tgtLeft = tgtRight = tgtExcav = 0.0f;
+            // Safety stop: cut immediately, do not slew
+            curLeft = curRight = curExcav = 0.0f;
         }
-
-        curLeft  = slew(curLeft,  tgtLeft,  0.01f);
-        curRight = slew(curRight, tgtRight, 0.01f);
-        curExcav = slew(curExcav, tgtExcav, 0.01f);
 
         if (xSemaphoreTake(mCanTx, pdMS_TO_TICKS(5)) == pdTRUE) {
             sendCAN(0x4C, curLeft);    // CAN_ID_LEFT_MOTOR
