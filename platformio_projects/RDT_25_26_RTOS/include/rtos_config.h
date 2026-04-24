@@ -71,3 +71,40 @@
 #define PIN_STRING_POT      39
 #define PIN_DEPO_DOOR_IN1   40
 #define PIN_DEPO_DOOR_IN2   41
+
+// Command protocol
+#define CMD_GROUP(c)       (((c) >> 4) & 0xF)
+#define CMD_PARAM(c)       ((c) & 0xF)
+
+#define GRP_CONTROL        0x0
+#define GRP_LOCO_STOP      0x1
+#define GRP_FORWARD        0x2
+#define GRP_BACKWARD       0x3
+#define GRP_LEFT           0x4
+#define GRP_RIGHT          0x5
+#define GRP_EXCAVATION     0x6
+#define GRP_DEPOSITION     0x7
+#define GRP_DATA           0x8
+
+// Subcommand constants for GRP_EXCAVATION (old mapping)
+#define EXCAV_VERT_STOP    0
+#define EXCAV_VERT_DOWN    1
+#define EXCAV_VERT_UP      2
+#define EXCAV_BELT_STOP    3
+#define EXCAV_BELT_FWD     4
+#define EXCAV_BELT_REV     5
+
+// Subcommand constants for GRP_DEPOSITION (old mapping)
+#define DEPO_DOOR_OPEN     0
+#define DEPO_DOOR_CLOSE    1
+#define DEPO_VIB_ON        2
+#define DEPO_VIB_OFF       3
+
+// Subcommand for GRP_CONTROL
+#define CTRL_SW_ESTOP      0x1
+
+// Speed table: param 0-3 normalized duty fraction
+static const float kSpeedTable[4] = { 0.25f, 0.50f, 0.75f, 1.00f };
+#define LOCO_DUTY          0.33f
+#define LOCO_DUTY_EXCAV    0.10f   // reduced cap while belt spinning
+#define EXCAV_BELT_DUTY    0.40f
