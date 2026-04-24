@@ -8,12 +8,12 @@ EventGroupHandle_t egSafetyBits  = nullptr;
 TaskHandle_t hMotorCtrlTask = nullptr;
 TaskHandle_t hMechanismTask = nullptr;
 
-DesiredState     gDesiredState   = {};
-SensorSnapshot   gSensorSnapshot = {};
-StepperPulsePlan gStepperPlan    = {};
+DesiredState              gDesiredState   = {};
+SensorSnapshot            gSensorSnapshot = {};
+volatile StepperPulsePlan gStepperPlan    = {};
 
-volatile uint8_t gTelemetryReady = 0;
-uint8_t gTelemetryBuf[2][18]    = {};
+volatile uint8_t gTelemetryReady    = 0;
+volatile uint8_t gTelemetryBuf[2][18] = {};
 
 volatile uint32_t diag_i2c_rx_overflow           = 0;
 volatile uint32_t diag_cmd_rejected_killswitch    = 0;
