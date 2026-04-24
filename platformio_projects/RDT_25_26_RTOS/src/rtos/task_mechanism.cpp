@@ -66,17 +66,29 @@ void TaskMechanism(void*) {
             // Vib motor
             digitalWrite(PIN_VIB_MOTOR, (vibCmd == 1) ? HIGH : LOW);
 
-            // Depo door state machine (time-based, mirrors superloop DEPO_Update)
+            // Depo door state machine (time-based).
+            // Any non-zero doorCmd is consumed immediately so it doesn't persist
+            // and re-trigger. Opposite commands while moving reverse direction.
+            auto consumeDoorCmd = [&]() {
+                if (xSemaphoreTake(mDesiredState, 0) == pdTRUE) {
+                    gDesiredState.depo_door_cmd = 0;
+                    xSemaphoreGive(mDesiredState);
+                }
+            };
             switch (doorState) {
                 case DoorState::IDLE:
-                    if (doorCmd ==  1) { doorOpen();  doorState = DoorState::OPENING; doorStartMs = millis(); }
-                    if (doorCmd == -1) { doorClose(); doorState = DoorState::CLOSING; doorStartMs = millis(); }
+                    if (doorCmd == 1)  { doorOpen();  doorState = DoorState::OPENING; doorStartMs = millis(); consumeDoorCmd(); }
+                    if (doorCmd == -1) { doorClose(); doorState = DoorState::CLOSING; doorStartMs = millis(); consumeDoorCmd(); }
                     break;
                 case DoorState::OPENING:
-                    if ((millis() - doorStartMs) >= 5000UL) { doorStop(); doorState = DoorState::IDLE; }
+                    if      (doorCmd == -1) { doorClose(); doorState = DoorState::CLOSING; doorStartMs = millis(); consumeDoorCmd(); }
+                    else if (doorCmd ==  1) { consumeDoorCmd(); }  // already going this way, don't re-trigger on finish
+                    else if ((millis() - doorStartMs) >= 5000UL)   { doorStop(); doorState = DoorState::IDLE; }
                     break;
                 case DoorState::CLOSING:
-                    if ((millis() - doorStartMs) >= 5000UL) { doorStop(); doorState = DoorState::IDLE; }
+                    if      (doorCmd ==  1) { doorOpen(); doorState = DoorState::OPENING; doorStartMs = millis(); consumeDoorCmd(); }
+                    else if (doorCmd == -1) { consumeDoorCmd(); }  // already going this way
+                    else if ((millis() - doorStartMs) >= 5000UL)   { doorStop(); doorState = DoorState::IDLE; }
                     break;
             }
         } else {
