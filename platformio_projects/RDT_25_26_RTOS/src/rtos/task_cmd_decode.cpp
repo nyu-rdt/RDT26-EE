@@ -82,10 +82,12 @@ void TaskCmdDecode(void*) {
                 if (param <= EXCAV_VERT_UP) {
                     gDesiredState.excav_vert_dir = (param == EXCAV_VERT_DOWN) ? -1
                                                  : (param == EXCAV_VERT_UP)   ?  1 : 0;
-                } else {
+                } else if (param <= EXCAV_BELT_REV) {
                     uint8_t bp = param - 3;
                     gDesiredState.excav_belt_target = (bp == 1) ?  EXCAV_BELT_DUTY
                                                     : (bp == 2) ? -EXCAV_BELT_DUTY : 0.0f;
+                } else {
+                    diag_cmd_invalid++;
                 }
                 break;
 
@@ -94,6 +96,7 @@ void TaskCmdDecode(void*) {
                 if (param == DEPO_DOOR_CLOSE) gDesiredState.depo_door_cmd = -1;
                 if (param == DEPO_VIB_ON)     gDesiredState.depo_vib_cmd  =  1;
                 if (param == DEPO_VIB_OFF)    gDesiredState.depo_vib_cmd  =  0;
+                if (param > DEPO_VIB_OFF)     diag_cmd_invalid++;
                 break;
 
             case GRP_DATA:
