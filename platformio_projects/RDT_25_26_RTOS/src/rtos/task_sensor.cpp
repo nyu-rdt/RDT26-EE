@@ -42,7 +42,7 @@ void TaskSensor(void*) {
 
         // String pot (arm position)
         float raw = (float)analogRead(STRING_POT_PIN_R);
-        gSensorSnapshot.string_pot_cm = (raw * 37.125f / 1023.0f * 3.3f) - 3.511f;
+        gSensorSnapshot.string_pot_cm = (raw * 37.125f / 1023.0f * 3.3f) + 3.511f;
 
         // Relay state for telemetry flags
         gSensorSnapshot.relay_engaged = (digitalRead(3) == HIGH);
