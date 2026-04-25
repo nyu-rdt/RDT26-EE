@@ -4,49 +4,43 @@
 #include "shared_state.h"
 #include "rtos_config.h"
 
-// Current mux: pins match superloop pins.h
-#define CS_INPUT   26
-#define CS_SEL0    27
-#define CS_SEL1    28
-#define CS_SEL2    29
-#define STRING_POT_PIN_R 39
-#define ENC1_A_R   21
-#define ENC1_B_R   20
-#define ENC2_A_R   19
-#define ENC2_B_R   18
-
-static float readCurrentChannel(uint8_t ch) {
-    digitalWrite(CS_SEL0, (ch >> 0) & 1);
-    digitalWrite(CS_SEL1, (ch >> 1) & 1);
-    digitalWrite(CS_SEL2, (ch >> 2) & 1);
-    vTaskDelay(pdMS_TO_TICKS(10));   // settle time
-    float raw = (float)analogRead(CS_INPUT);
-    return raw * (33.0f / 1023.0f);  // CURRENT_SCALING
+static void selectMuxChannel(uint8_t ch) {
+    digitalWrite(PIN_CURRENT_SEL0, (ch >> 0) & 1);
+    digitalWrite(PIN_CURRENT_SEL1, (ch >> 1) & 1);
+    digitalWrite(PIN_CURRENT_SEL2, (ch >> 2) & 1);
 }
 
 void TaskSensor(void*) {
-    // Setup mux pins
-    pinMode(CS_INPUT,  INPUT);
-    pinMode(CS_SEL0,   OUTPUT);
-    pinMode(CS_SEL1,   OUTPUT);
-    pinMode(CS_SEL2,   OUTPUT);
-    pinMode(STRING_POT_PIN_R, INPUT);
+    pinMode(PIN_CURRENT_INPUT,  INPUT);
+    pinMode(PIN_CURRENT_SEL0,   OUTPUT);
+    pinMode(PIN_CURRENT_SEL1,   OUTPUT);
+    pinMode(PIN_CURRENT_SEL2,   OUTPUT);
+    pinMode(PIN_STRING_POT,     INPUT);
+
+    // Pre-select channel 0 so the first vTaskDelayUntil provides full settle time
+    selectMuxChannel(0);
 
     TickType_t lastWake = xTaskGetTickCount();
     uint8_t    muxCh   = 0;
 
     for (;;) {
-        // Step one mux channel per tick (10ms per channel × 8 = 80ms full scan)
-        gSensorSnapshot.motor_currents[muxCh] = readCurrentChannel(muxCh);
-        muxCh = (muxCh + 1) % 8;
-
-        // String pot (arm position)
-        float raw = (float)analogRead(STRING_POT_PIN_R);
-        gSensorSnapshot.string_pot_cm = (raw * 37.125f / 1023.0f * 3.3f) + 3.511f;
-
-        // Relay state for telemetry flags
-        gSensorSnapshot.relay_engaged = (digitalRead(3) == HIGH);
-
         vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(PERIOD_SENSOR_MS));
+
+        // Read channel selected on the previous tick (settle time = task period)
+#if SENSOR_CURRENT_ENABLED
+        float raw = (float)analogRead(PIN_CURRENT_INPUT);
+        gSensorSnapshot.motor_currents[muxCh] = raw * (33.0f / 1023.0f);
+#endif
+
+        // Advance mux to next channel; it will be read next tick after settling
+        muxCh = (muxCh + 1) % 8;
+        selectMuxChannel(muxCh);
+
+#if SENSOR_STRING_POT_ENABLED
+        float rawPot = (float)analogRead(PIN_STRING_POT);
+        gSensorSnapshot.string_pot_cm = (rawPot * 37.125f / 1023.0f * 3.3f) + 3.511f;
+#endif
+
+        gSensorSnapshot.relay_engaged = (digitalRead(PIN_RELAY_READ) == HIGH);
     }
 }

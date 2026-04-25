@@ -46,16 +46,10 @@ void TaskTelemetry(void*) {
         // [17] sentinel
         pkt[17] = 0xFF;
 
-        // Verify byte count before making buffer live
-        bool ok = true;
-        for (int i = 0; i < 18; i++) {
-            // all fields set — no uninitialized bytes
-            (void)pkt[i];
-        }
-        if (!ok) {
-            diag_telemetry_serialize_errors++;
-        } else {
-            gTelemetryReady = build;   // atomic uint8 swap — ISR sees new buffer next request
-        }
+        // M7 store buffer: ensure all 18 bytes are visible to the ISR before
+        // the index flip is. Without this barrier the Cortex-M7 can retire the
+        // gTelemetryReady store before earlier pkt[] stores drain to memory.
+        __asm__ volatile("dmb" ::: "memory");
+        gTelemetryReady = build;   // atomic uint8 swap — ISR sees new buffer next request
     }
 }
