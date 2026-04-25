@@ -7,7 +7,8 @@
 #include "safety_bits.h"
 #include "rtos_config.h"
 
-enum class DoorState { IDLE, OPENING, CLOSING };
+// Values match superloop DepoDoorState enum exactly (used in telemetry byte 15).
+enum class DoorState { CLOSED = 0, OPENED = 1, OPENING = 2, CLOSING = 4 };
 
 static void doorStop() {
     digitalWrite(PIN_DEPO_DOOR_ENA, LOW);
@@ -27,7 +28,7 @@ static void doorClose() {
 
 void TaskMechanism(void*) {
     bool      stopped    = true;
-    DoorState doorState  = DoorState::IDLE;
+    DoorState doorState  = DoorState::CLOSED;
     uint32_t  doorStartMs = 0;
     TickType_t lastWake  = xTaskGetTickCount();
 
@@ -76,21 +77,24 @@ void TaskMechanism(void*) {
                 }
             };
             switch (doorState) {
-                case DoorState::IDLE:
+                case DoorState::CLOSED:
+                case DoorState::OPENED:
                     if (doorCmd == 1)  { doorOpen();  doorState = DoorState::OPENING; doorStartMs = millis(); consumeDoorCmd(); }
                     if (doorCmd == -1) { doorClose(); doorState = DoorState::CLOSING; doorStartMs = millis(); consumeDoorCmd(); }
                     break;
                 case DoorState::OPENING:
                     if      (doorCmd == -1) { doorClose(); doorState = DoorState::CLOSING; doorStartMs = millis(); consumeDoorCmd(); }
-                    else if (doorCmd ==  1) { consumeDoorCmd(); }  // already going this way, don't re-trigger on finish
-                    else if ((millis() - doorStartMs) >= 5000UL)   { doorStop(); doorState = DoorState::IDLE; }
+                    else if (doorCmd ==  1) { consumeDoorCmd(); }  // already opening, discard
+                    else if ((millis() - doorStartMs) >= DEPO_DOOR_OPEN_TRAVEL_MS) { doorStop(); doorState = DoorState::OPENED; }
                     break;
                 case DoorState::CLOSING:
                     if      (doorCmd ==  1) { doorOpen(); doorState = DoorState::OPENING; doorStartMs = millis(); consumeDoorCmd(); }
-                    else if (doorCmd == -1) { consumeDoorCmd(); }  // already going this way
-                    else if ((millis() - doorStartMs) >= 5000UL)   { doorStop(); doorState = DoorState::IDLE; }
+                    else if (doorCmd == -1) { consumeDoorCmd(); }  // already closing, discard
+                    else if ((millis() - doorStartMs) >= DEPO_DOOR_CLOSE_TRAVEL_MS) { doorStop(); doorState = DoorState::CLOSED; }
                     break;
             }
+            // Sync to SensorSnapshot each cycle — values match superloop DepoDoorState enum.
+            gSensorSnapshot.depo_door_state = static_cast<uint8_t>(doorState);
         } else {
             gStepperPlan.enabled = 0;
             digitalWrite(PIN_STEPPER_ENABLE, HIGH);
