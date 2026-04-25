@@ -9,7 +9,7 @@
 // Mutually exclusive with SERIAL_DEBUG — enabling both corrupts the plotter stream.
 #define PLOT_DATA      1
 #define PLOT_PERIOD_MS 50
-#define USE_TIMEOUT    1
+#define USE_TIMEOUT    0
 #define ANALOG_VIB_CONTROL 0
 #define USE_OLD_HEX_MAPPING 1
 

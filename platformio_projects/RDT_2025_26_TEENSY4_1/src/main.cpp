@@ -168,7 +168,7 @@ static void grp_Excavation(uint8_t param) {
 
 static void grp_Deposition(uint8_t param) {
     if (param < 2) grp_DepositionDoor(param);
-    else           grp_DepositionVib(param - 2);
+    else           grp_DepositionVib(3 - param);  // 0x72 on, 0x73 off
 }
 #endif
 
@@ -176,8 +176,8 @@ static void grp_ExcavationBelt(uint8_t param) { EXCAV_SetBeltDirection(GET_DIREC
 static void grp_ExcavationVert(uint8_t param) { EXCAV_SetVertDirection(GET_DIRECTION(param)); }
 
 static void grp_DepositionDoor(uint8_t param) {
-    if      (param == 0) DEPO_OpenDoor();
-    else if (param == 1) DEPO_CloseDoor();
+    if      (param == 0) DEPO_CloseDoor();  // 0x70 close
+    else if (param == 1) DEPO_OpenDoor();   // 0x71 open
 #if SERIAL_DEBUG
     else { Serial.print("DEPO DOOR: unknown param "); Serial.println(param); }
 #endif
