@@ -15,19 +15,24 @@ void TaskSafety(void*) {
 
         EventBits_t bits = 0;
 
-        // HW e-stop: relay read pin is 3
-        bool relayEngaged = (digitalRead(3) == HIGH);
+        bool relayEngaged = (digitalRead(PIN_RELAY_READ) == HIGH);
         if (!relayEngaged) bits |= SAFETY_HW_ESTOP;
 
-        // Comms timeout: read DesiredState.last_cmd_ms under mutex
-        uint32_t lastCmd = 0;
-        if (xSemaphoreTake(mDesiredState, 0) == pdTRUE) {
-            lastCmd = gDesiredState.last_cmd_ms;
+        // Read DesiredState fields under mutex. Timeout 1ms (not 0) to avoid
+        // a false comms-timeout on boot when lastCmd is still 0.
+        uint32_t lastCmd         = millis();   // default: no timeout if mutex miss
+        bool     swEstopPending  = false;
+        if (xSemaphoreTake(mDesiredState, pdMS_TO_TICKS(1)) == pdTRUE) {
+            lastCmd        = gDesiredState.last_cmd_ms;
+            swEstopPending = gDesiredState.sw_estop_requested;
+            if (swEstopPending) gDesiredState.sw_estop_requested = false;  // consume
             xSemaphoreGive(mDesiredState);
         }
         if ((millis() - lastCmd) > 500U) {   // COMMAND_TIMEOUT_MS
             bits |= SAFETY_COMMS_TIMEOUT;
+            if (!(prevBits & SAFETY_COMMS_TIMEOUT)) diag_timeout_events++;  // count transitions only
         }
+        if (swEstopPending) bits |= SAFETY_SW_ESTOP;
 
         // Write the bits — SafetyTask is the sole writer
         xEventGroupClearBits(egSafetyBits, SAFETY_ANY_STOP);

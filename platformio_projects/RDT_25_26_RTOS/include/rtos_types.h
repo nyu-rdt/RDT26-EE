@@ -10,6 +10,7 @@ typedef struct {
     int8_t   depo_door_cmd;      // -1=close, 0=hold, +1=open
     int8_t   depo_vib_cmd;       // 0=off, 1=on
     uint32_t last_cmd_ms;        // millis() at last command receipt
+    bool     sw_estop_requested; // set by CmdDecodeTask; cleared by SafetyTask after latching
 } DesiredState;
 
 typedef struct {
