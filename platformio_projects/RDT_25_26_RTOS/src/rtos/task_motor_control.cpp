@@ -59,7 +59,7 @@ void TaskMotorControl(void*) {
             curLeft = curRight = curExcav = 0.0f;
         }
 
-        if (xSemaphoreTake(mCanTx, pdMS_TO_TICKS(5)) == pdTRUE) {
+        if (xSemaphoreTake(mCanTx, portMAX_DELAY) == pdTRUE) {
             sendCAN(0x4C, curLeft);    // CAN_ID_LEFT_MOTOR
             sendCAN(0x78, curRight);   // CAN_ID_RIGHT_MOTOR
             sendCAN(0x48, curExcav);   // CAN_ID_EXCAVATION_MOTOR
