@@ -38,14 +38,15 @@ void TaskCmdDecode(void*) {
         switch (group) {
             case GRP_CONTROL:
                 if (param == CTRL_SW_ESTOP) {
-                    // One-shot: zero all motion targets immediately
-                    // Next command overwrites naturally
+                    // Zero all motion targets and raise the flag for SafetyTask to
+                    // latch into SAFETY_SW_ESTOP — keeps SafetyTask as sole bit writer.
                     gDesiredState.loco_left_target  = 0.0f;
                     gDesiredState.loco_right_target = 0.0f;
                     gDesiredState.excav_belt_target = 0.0f;
                     gDesiredState.excav_vert_dir    = 0;
                     gDesiredState.depo_door_cmd     = 0;
                     gDesiredState.depo_vib_cmd      = 0;
+                    gDesiredState.sw_estop_requested = true;
                 }
                 break;
 
