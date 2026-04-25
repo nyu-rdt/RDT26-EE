@@ -23,9 +23,14 @@ void TaskTelemetry(void*) {
             pkt[i] = (uint8_t)constrain(scaled, 0.0f, 255.0f);
         }
 
-        // [8-9] encoders — not yet wired in RTOS; send sentinel
+        // [8-9] encoders
+#if SENSOR_ENCODERS_ENABLED
+        pkt[8] = (uint8_t)constrain(gSensorSnapshot.encoder_left_deg,  0.0f, 255.0f);
+        pkt[9] = (uint8_t)constrain(gSensorSnapshot.encoder_right_deg, 0.0f, 255.0f);
+#else
         pkt[8] = 0xFF;
         pkt[9] = 0xFF;
+#endif
 
         // [10-13] load cells — not wired; sentinel
         pkt[10] = pkt[11] = pkt[12] = pkt[13] = 0xFF;

@@ -4,6 +4,8 @@
 #include "shared_state.h"
 #include "rtos_config.h"
 
+float ENCODER_GetAngle(uint8_t enc);
+
 static void selectMuxChannel(uint8_t ch) {
     digitalWrite(PIN_CURRENT_SEL0, (ch >> 0) & 1);
     digitalWrite(PIN_CURRENT_SEL1, (ch >> 1) & 1);
@@ -42,5 +44,10 @@ void TaskSensor(void*) {
 #endif
 
         gSensorSnapshot.relay_engaged = (digitalRead(PIN_RELAY_READ) == HIGH);
+
+#if SENSOR_ENCODERS_ENABLED
+        gSensorSnapshot.encoder_left_deg  = ENCODER_GetAngle(1);
+        gSensorSnapshot.encoder_right_deg = ENCODER_GetAngle(2);
+#endif
     }
 }
