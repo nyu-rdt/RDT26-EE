@@ -71,6 +71,17 @@
 #define PIN_STRING_POT      39
 #define PIN_DEPO_DOOR_IN1   40
 #define PIN_DEPO_DOOR_IN2   41
+#define PIN_ENC1_A          21
+#define PIN_ENC1_B          20
+#define PIN_ENC2_A          19
+#define PIN_ENC2_B          18
+
+// Encoder config
+#define ENCODER_COUNTS_PER_REV  8192.0f
+
+// Depo door travel limits (ms) — measure and update on hardware
+#define DEPO_DOOR_OPEN_TRAVEL_MS   5000UL
+#define DEPO_DOOR_CLOSE_TRAVEL_MS  5000UL
 
 // Command protocol
 #define CMD_GROUP(c)       (((c) >> 4) & 0xF)

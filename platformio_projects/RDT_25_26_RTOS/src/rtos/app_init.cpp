@@ -18,6 +18,7 @@ void TaskDebug(void*);
 void ISR_I2C_OnReceive(int);
 void ISR_I2C_OnRequest();
 void ISR_StepperTimer();
+void ENCODER_Init();
 
 static IntervalTimer s_stepTimer;
 
@@ -45,6 +46,8 @@ void APP_Init() {
     pinMode(PIN_RELAY_READ,   INPUT_PULLDOWN);
     pinMode(PIN_RELAY_3S_LOW, INPUT_PULLDOWN);
     pinMode(PIN_RELAY_6S_LOW, INPUT_PULLDOWN);
+
+    ENCODER_Init();
 
     gCan.begin();
     gCan.setBaudRate(500000);
