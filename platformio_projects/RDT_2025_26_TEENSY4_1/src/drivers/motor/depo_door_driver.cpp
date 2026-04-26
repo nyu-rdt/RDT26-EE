@@ -9,11 +9,11 @@ static volatile float doorCurrentAmps = 0.0f;
 
 static void setMotorDirection(int direction) {
     if (direction > 0) {
-        digitalWrite(DEPOSITION_DOOR_IN1_PIN, HIGH);
-        digitalWrite(DEPOSITION_DOOR_IN2_PIN, LOW);
-    } else if (direction < 0) {
         digitalWrite(DEPOSITION_DOOR_IN1_PIN, LOW);
         digitalWrite(DEPOSITION_DOOR_IN2_PIN, HIGH);
+    } else if (direction < 0) {
+        digitalWrite(DEPOSITION_DOOR_IN1_PIN, HIGH);
+        digitalWrite(DEPOSITION_DOOR_IN2_PIN, LOW);
     } else {
         digitalWrite(DEPOSITION_DOOR_IN1_PIN, LOW);
         digitalWrite(DEPOSITION_DOOR_IN2_PIN, LOW);

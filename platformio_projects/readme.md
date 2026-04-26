@@ -11,11 +11,11 @@ flags in config are mostly for testing. could move thos to test folder somehow p
 #### to upload main code:
 
 ```bash
-pio run -t upload -d platformio_projects/RDT_2025_26_TEENSY4_1
+pio run -t upload -d platformio_projects/RDT_2025_26_TEENSY4_1 -e teensy41
 ```
 or
 ```bash
-pio run -t upload -d platformio_projects/RDT_2025_26_TEENSY4_1 --upload-port COM3
+pio run -t upload -d platformio_projects/RDT_2025_26_TEENSY4_1 --upload-port COM3 -e teensy41
 ```
 (upload port is optional if you just have one mcu plugged in)
 
