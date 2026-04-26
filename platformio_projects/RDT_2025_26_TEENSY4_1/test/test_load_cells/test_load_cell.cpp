@@ -1,6 +1,6 @@
 // test/test_load_cells/test_load_cell.cpp
 //
-// Single HX711 load-cell hardware monitor.
+// Four-channel HX711 load-cell hardware monitor.
 // Based on the RDT_2024_PF sensors.cpp HX711 setup.
 //
 // Build + upload:  pio run -e teensy41_load_cell_test -t upload
@@ -9,19 +9,18 @@
 #include <Arduino.h>
 #include "HX711.h"
 
-// Select which load cell channel to test (1..4)
-static constexpr uint8_t kLoadCellIndex = 3;
-
-// Pin map and calibration factors from RDT_2024_PF/include/config.h.
-static constexpr uint8_t HX711_DOUT_PINS[4] = {24, 26, 34, 20};
-static constexpr uint8_t HX711_CLK_PINS[4] = {25, 27, 33, 21};
-static constexpr float HX711_CAL_FACTORS[4] = {-102.0f, 105.0f, -102.0f, 111.0f};
+// Self-contained test calibration values.
+static constexpr uint8_t HX711_DOUT_PINS[4] = {31, 33, 36, 37};
+static constexpr uint8_t HX711_CLK_PINS[4] = {32, 34, 35, 38};
+// static constexpr long HX711_OFFSETS[4] = {8286465L, 266032L, 76401L, 256867L};
+static constexpr float HX711_CAL_FACTORS[4] = {30.0f, 180.0f, 33.0f, 182.0f}; //{48, x, 41, x}
+static constexpr uint8_t kLoadCellCount = 4;
 
 // Keep sample count aligned with sensors.cpp for comparable behavior.
-static constexpr uint8_t kSamplesPerRead = 2;
+static constexpr uint8_t kSamplesPerRead = 10;
 static constexpr unsigned long kPrintPeriodMs = 100;
 
-static HX711 scale;
+static HX711 scales[kLoadCellCount];
 static unsigned long lastPrintMs = 0;
 
 void setup()
@@ -31,45 +30,63 @@ void setup()
         // Teensy USB serial warm-up (non-blocking timeout).
     }
 
-    if (kLoadCellIndex < 1 || kLoadCellIndex > 4) {
-        Serial.println("# ERROR: kLoadCellIndex must be 1..4");
-        return;
+    Serial.println("# init: all load cells tare in progress...");
+    for (uint8_t i = 0; i < kLoadCellCount; ++i) {
+        scales[i].begin(HX711_DOUT_PINS[i], HX711_CLK_PINS[i]);
+        scales[i].set_scale(HX711_CAL_FACTORS[i]);
+        scales[i].tare(20);
+
+        Serial.print("# load cell ");
+        Serial.print(i + 1);
+        Serial.println(" tare complete");
     }
 
-    const uint8_t idx = static_cast<uint8_t>(kLoadCellIndex - 1);
-    scale.begin(HX711_DOUT_PINS[idx], HX711_CLK_PINS[idx]);
-    scale.set_scale(HX711_CAL_FACTORS[idx]);
-
-    Serial.print("# load cell ");
-    Serial.print(kLoadCellIndex);
-    Serial.println(" init: tare in progress...");
-    scale.tare();
-
-    Serial.println("# load cell tare complete");
-    Serial.println("# Teleplot stream: LC_weight");
+    Serial.println("# Teleplot streams: LC1_weight, LC2_weight, LC3_weight, LC4_weight, LC_total_weight, LC_avg_weight");
 }
 
 void loop()
 {
-    if (kLoadCellIndex < 1 || kLoadCellIndex > 4) {
-        delay(500);
-        return;
-    }
-
     if (millis() - lastPrintMs < kPrintPeriodMs) {
         return;
     }
     lastPrintMs = millis();
 
-    const float weight = scale.get_units(kSamplesPerRead);
+    float weights[kLoadCellCount];
+    for (uint8_t i = 0; i < kLoadCellCount; ++i) {
+        const long rawAverage = scales[i].read_average(kSamplesPerRead);
+        const long offset = scales[i].get_offset();
+        const float scaleFactor = scales[i].get_scale();
+        const long netCounts = rawAverage - offset;
+        const float weight = static_cast<float>(netCounts) / scaleFactor;
+        weights[i] = weight;
 
-    // Teleplot-compatible line.
-    Serial.print(">LC_weight:");
-    Serial.println(weight, 3);
+        // Teleplot-compatible lines (one time-series per load cell).
+        Serial.print(">LC");
+        Serial.print(i + 1);
+        Serial.print("_weight:");
+        Serial.println(weight, 3);
+    }
 
-    // Human-readable terminal line.
-    Serial.print("load_cell_");
-    Serial.print(kLoadCellIndex);
-    Serial.print(" weight=");
-    Serial.println(weight, 3);
+    const float totalWeight = weights[0] + weights[1] + weights[2] + weights[3];
+    const float averageWeight = totalWeight / static_cast<float>(kLoadCellCount);
+
+    // Teleplot-compatible total and average line.
+    Serial.print(">LC_total_weight:");
+    Serial.println(totalWeight, 3);
+    Serial.print(">LC_avg_weight:");
+    Serial.println(averageWeight, 3);
+
+    // Human-readable combined diagnostic line.
+    Serial.print("weights kg-ish: LC1=");
+    Serial.print(weights[0], 3);
+    Serial.print(" LC2=");
+    Serial.print(weights[1], 3);
+    Serial.print(" LC3=");
+    Serial.print(weights[2], 3);
+    Serial.print(" LC4=");
+    Serial.println(weights[3], 3);
+    Serial.print(" LCs total=");
+    Serial.println(totalWeight, 3);
+    Serial.print(" LCs average=");
+    Serial.println(averageWeight, 3);
 }

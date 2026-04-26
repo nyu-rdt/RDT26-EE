@@ -81,11 +81,15 @@
 #define DEPOSITION_DOOR_OPEN_TRAVEL_MS    5000UL  // TODO: measure on hardware
 #define DEPOSITION_DOOR_CLOSE_TRAVEL_MS   5000UL  // TODO: measure on hardware
 
-// ── Load Cells calibration factors ────────────────────────────────────────────
-#define LC_CAL1 -102.0f
-#define LC_CAL2  105.0f
-#define LC_CAL3 -102.0f
-#define LC_CAL4  111.0f
+// ── Load Cells calibration ────────────────────────────────────────────────────
+#define LC_OFFSET1 8286465L
+#define LC_CAL1      48.210003f
+#define LC_OFFSET2 266032L
+#define LC_CAL2      86.651039f
+#define LC_OFFSET3 76401L
+#define LC_CAL3      41.126511f
+#define LC_OFFSET4 256867L
+#define LC_CAL4      96.797287f
 
 // PWM speed control via ENA pin — follows same pattern as ANALOG_VIB_CONTROL
 // When 0, ENA is driven HIGH (full speed)

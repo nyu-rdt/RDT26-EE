@@ -7,6 +7,7 @@ static HX711 _scales[LC_NUM_CELLS];
 // Pin table – index 0 = cell 1, etc.
 static const uint8_t _dout[LC_NUM_CELLS] = { LC_DOUT1, LC_DOUT2, LC_DOUT3, LC_DOUT4 };
 static const uint8_t _clk [LC_NUM_CELLS] = { LC_CLK1,  LC_CLK2,  LC_CLK3,  LC_CLK4  };
+static const long     _offset[LC_NUM_CELLS] = { LC_OFFSET1, LC_OFFSET2, LC_OFFSET3, LC_OFFSET4 };
 static const float   _cal [LC_NUM_CELLS] = { LC_CAL1,  LC_CAL2,  LC_CAL3,  LC_CAL4  };
 
 // Last readings
@@ -19,8 +20,8 @@ static unsigned long _lastPollTime    = 0;           // millis() of last poll at
 void lc_init() {
     for (uint8_t i = 0; i < LC_NUM_CELLS; i++) {
         _scales[i].begin(_dout[i], _clk[i]);
+        _scales[i].set_offset(_offset[i]);
         _scales[i].set_scale(_cal[i]);
-        _scales[i].tare();
     }
 }
 

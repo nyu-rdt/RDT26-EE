@@ -16,4 +16,3 @@ uint8_t lc_pack_cell(uint8_t cellIndex); // packed byte: 0.1 kg per LSB
 #ifndef LC_READ_INTERVAL_MS
 #define LC_READ_INTERVAL_MS 50
 #endif
-#endif
