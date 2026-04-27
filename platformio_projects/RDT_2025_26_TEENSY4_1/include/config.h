@@ -78,7 +78,7 @@
 // ── Deposition ────────────────────────────────────────────────────────────────
 // Time-based control: tune OPEN/CLOSE_TRAVEL_MS on hardware before first use
 #define DEPOSITION_DOOR_OPEN_TRAVEL_MS    5000UL  // TODO: measure on hardware
-#define DEPOSITION_DOOR_CLOSE_TRAVEL_MS   5000UL  // TODO: measure on hardware
+#define DEPOSITION_DOOR_CLOSE_TRAVEL_MS   7000UL  // TODO: measure on hardware
 
 // PWM speed control via ENA pin — follows same pattern as ANALOG_VIB_CONTROL
 // When 0, ENA is driven HIGH (full speed)
