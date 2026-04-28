@@ -92,6 +92,15 @@
 // Encoder config
 #define ENCODER_COUNTS_PER_REV  8192.0f
 
+// String pot limits, hysteresis, fault ceiling, and EMA tuning.
+// Thresholds match superloop STRING_POT_HIGHEST/LOWEST_THRESHOLD.
+// Readings above STRPOT_FAULT_HIGH_CM indicate a disconnected sensor.
+#define STRPOT_HIGHEST_CM      32.0f
+#define STRPOT_LOWEST_CM       13.0f
+#define STRPOT_HYST_CM          1.0f   // must move this far past limit before latch clears
+#define STRPOT_FAULT_HIGH_CM   50.0f   // above this = sensor disconnected/railed
+#define STRPOT_EMA_ALPHA        0.2f   // weight of each new sample in the EMA
+
 // Depo door travel limits (ms) — measure and update on hardware
 #define DEPO_DOOR_OPEN_TRAVEL_MS   5000UL
 #define DEPO_DOOR_CLOSE_TRAVEL_MS  5000UL
