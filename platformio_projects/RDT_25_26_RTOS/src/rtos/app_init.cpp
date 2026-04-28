@@ -39,7 +39,7 @@ void APP_Init() {
 #endif
 
 #if RTOS_SERIAL_DEBUG    // No flush here — avoid hanging if flush loops forever post-scheduler.
-#define DBG_CHECKPOINT(n) do { Serial.println("[init] step " #n); Serial.flush(); } while(0)
+#define DBG_CHECKPOINT(n) do { delay(2000); Serial.println("[init] step " #n); Serial.flush(); } while(0)
 #else
 #define DBG_CHECKPOINT(n) do { } while(0)
 #endif
@@ -74,11 +74,25 @@ void APP_Init() {
     DBG_CHECKPOINT(3);  // CAN
     gCan.begin();
     gCan.setBaudRate(500000);
-    // Reject all RX traffic. We never call gCan.read() — without this filter,
-    // every frame from other nodes fires the FlexCAN RX ISR (priority 128) which
-    // preempts SysTick (priority 240) and starves the FreeRTOS scheduler when
-    // wired to a busy bus. Confirmed: hang on robot, fine off-bus or simulated.
+
+    // Reject all incoming frames at the mailbox layer. We never call gCan.read()
+    // and register no listeners, so anything the controller copies into mailbox
+    // RAM is stale junk. even with the IRQ disabled below, this keeps
+    // mailbox state clean if something ever re-enables the IRQ later.
     gCan.setMBFilter(REJECT_ALL);
+
+    // Disable the FlexCAN NVIC IRQ entirely. The ISR's only job for us would be
+    // TX-completion bookkeeping (advancing the SW FIFO into mailboxes), but with
+    // 3 writes per 20 ms and 58 free mailboxes we never need the SW FIFO —
+    // writes go straight into a mailbox.
+    
+    // since SysTick (the FreeRTOS tick) sits at NVIC priority
+    // 240 and vPortSetupTimerInterrupt() resets every other IRQ to priority 128,
+    // CAN1 preempts SysTick. On the robot bus, each TX completion fires the
+    // FlexCAN ISR, which loops over mailboxes, reads/clears ESR1, and walks
+    // listener arrays — long enough that back-to-back ISR calls starve SysTick.
+    // No tick means every vTaskDelayUntil() blocks forever and the whole scheduler hangs.
+    // Killing the IRQ is free for us since we use none of its behavior.
     NVIC_DISABLE_IRQ(IRQ_CAN1);
 
     DBG_CHECKPOINT(4);  // shared state / IPC primitives
