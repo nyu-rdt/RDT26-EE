@@ -3,6 +3,11 @@
 #include "task.h"
 #include "shared_state.h"
 #include "rtos_config.h"
+#if SENSOR_LOAD_CELLS_ENABLED
+#include "HX711.h"
+static HX711   lcScales[LC_NUM_CELLS];
+static uint8_t lcCell = 0;
+#endif
 
 float ENCODER_GetAngle(uint8_t enc);
 
@@ -21,6 +26,19 @@ void TaskSensor(void*) {
     pinMode(PIN_CURRENT_SEL1,   OUTPUT);
     pinMode(PIN_CURRENT_SEL2,   OUTPUT);
     pinMode(PIN_STRING_POT,     INPUT);
+#if SENSOR_LOAD_CELLS_ENABLED
+    {
+        static const uint8_t dout[LC_NUM_CELLS] = { LC_DOUT1, LC_DOUT2, LC_DOUT3, LC_DOUT4 };
+        static const uint8_t clk [LC_NUM_CELLS] = { LC_CLK1,  LC_CLK2,  LC_CLK3,  LC_CLK4  };
+        static const long    off [LC_NUM_CELLS] = { LC_OFFSET1, LC_OFFSET2, LC_OFFSET3, LC_OFFSET4 };
+        static const float   cal [LC_NUM_CELLS] = { LC_CAL1, LC_CAL2, LC_CAL3, LC_CAL4 };
+        for (uint8_t i = 0; i < LC_NUM_CELLS; i++) {
+            lcScales[i].begin(dout[i], clk[i]);
+            lcScales[i].tare();
+            lcScales[i].set_scale(cal[i]);
+        }
+    }
+#endif
 
     // Pre-select channel 0 so the first vTaskDelayUntil provides full settle time
     selectMuxChannel(0);
@@ -50,6 +68,12 @@ void TaskSensor(void*) {
         if (strpotEma < 0.0f) strpotEma = measured;
         else strpotEma = STRPOT_EMA_ALPHA * measured + (1.0f - STRPOT_EMA_ALPHA) * strpotEma;
         gSensorSnapshot.string_pot_cm = strpotEma;
+#endif
+
+#if SENSOR_LOAD_CELLS_ENABLED
+        if (lcScales[lcCell].is_ready())
+            gSensorSnapshot.load_cells_kg[lcCell] = lcScales[lcCell].get_units(1);
+        lcCell = (lcCell + 1) % LC_NUM_CELLS;
 #endif
 
         gSensorSnapshot.relay_engaged = (digitalRead(PIN_RELAY_READ) == HIGH);

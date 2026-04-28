@@ -50,7 +50,7 @@
 // for that sensor is filled with 0xFF (sentinel, matches superloop convention).
 #define SENSOR_CURRENT_ENABLED    1   // 8-channel current mux (INA or shunt)
 #define SENSOR_ENCODERS_ENABLED   1   // rotary encoders (left + right wheels)
-#define SENSOR_LOAD_CELLS_ENABLED 0   // load cells (not used until calibrated)
+#define SENSOR_LOAD_CELLS_ENABLED 1   // load cells (not used until calibrated)
 #define SENSOR_STRING_POT_ENABLED 1   // excavation arm string potentiometer (always on)
 
 #define SIMULATE_CAN 0
@@ -91,6 +91,26 @@
 
 // Encoder config
 #define ENCODER_COUNTS_PER_REV  8192.0f
+
+// Load cell pins (HX711) and calibration.
+// Offsets and scales are placeholders — run a calibration routine on hardware before use.
+#define LC_NUM_CELLS   4
+#define LC_DOUT1       31
+#define LC_CLK1        32
+#define LC_DOUT2       33
+#define LC_CLK2        34
+#define LC_CLK3        35
+#define LC_DOUT3       36
+#define LC_DOUT4       37
+#define LC_CLK4        38
+#define LC_OFFSET1     0L
+#define LC_OFFSET2     0L
+#define LC_OFFSET3     0L
+#define LC_OFFSET4     0L
+#define LC_CAL1        50.0f
+#define LC_CAL2        50.0f
+#define LC_CAL3        50.0f
+#define LC_CAL4        50.0f
 
 // String pot limits, hysteresis, fault ceiling, and EMA tuning.
 // Thresholds match superloop STRING_POT_HIGHEST/LOWEST_THRESHOLD.
