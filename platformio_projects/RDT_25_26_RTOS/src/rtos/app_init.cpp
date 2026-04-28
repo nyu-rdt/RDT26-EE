@@ -25,6 +25,27 @@ static IntervalTimer s_stepTimer;
 void APP_Init() {
     Serial.begin(115200);
 
+#if RTOS_SERIAL_DEBUG
+    while (!Serial && millis() < 3000) {}
+    Serial.println("=== RDT26 RTOS BOOT ===");
+    Serial.printf("  Tasks:   Safety=%dms  CmdDecode=event  Motor=%dms  Mech=%dms\n",
+                  PERIOD_SAFETY_MS, PERIOD_MOTOR_CTRL_MS, PERIOD_MECHANISM_MS);
+    Serial.printf("  Sensor=%dms  Telemetry=%dms  Debug=%dms\n",
+                  PERIOD_SENSOR_MS, PERIOD_TELEMETRY_MS, PERIOD_DEBUG_MS);
+    Serial.printf("  Stall detection: %s\n", STALL_DETECTION_ENABLED ? "ON" : "OFF");
+    Serial.println("=======================");
+    Serial.flush();
+    delay(3000);
+#endif
+
+#if RTOS_SERIAL_DEBUG    // No flush here — avoid hanging if flush loops forever post-scheduler.
+#define DBG_CHECKPOINT(n) do { Serial.println("[init] step " #n); Serial.flush(); } while(0)
+#else
+#define DBG_CHECKPOINT(n) do { } while(0)
+#endif
+
+    DBG_CHECKPOINT(1);  // relay + gpio
+
     // Energize relay immediately — fail-safe before scheduler starts.
     // If setup() crashes after this point, the relay stays HIGH rather than floating.
     pinMode(PIN_RELAY_DRIVER, OUTPUT);
@@ -47,21 +68,28 @@ void APP_Init() {
     pinMode(PIN_RELAY_3S_LOW, INPUT_PULLDOWN);
     pinMode(PIN_RELAY_6S_LOW, INPUT_PULLDOWN);
 
+    DBG_CHECKPOINT(2);  // encoders
     ENCODER_Init();
 
+    DBG_CHECKPOINT(3);  // CAN
     gCan.begin();
     gCan.setBaudRate(500000);
+    // Reject all RX traffic. We never call gCan.read() — without this filter,
+    // every frame from other nodes fires the FlexCAN RX ISR (priority 128) which
+    // preempts SysTick (priority 240) and starves the FreeRTOS scheduler when
+    // wired to a busy bus. Confirmed: hang on robot, fine off-bus or simulated.
+    gCan.setMBFilter(REJECT_ALL);
+    NVIC_DISABLE_IRQ(IRQ_CAN1);
 
-    // Create all IPC primitives before any ISR or task uses them
+    DBG_CHECKPOINT(4);  // shared state / IPC primitives
     SHARED_STATE_Init();
 
-    // Register I2C callbacks after queues exist
-    Wire2.begin(0x08);   // I2C_CHILD_ADDRESS
+    DBG_CHECKPOINT(5);  // I2C
+    Wire2.begin(0x08);
     Wire2.onReceive(ISR_I2C_OnReceive);
-    Wire2.onRequest(ISR_I2C_OnRequest);
+   Wire2.onRequest(ISR_I2C_OnRequest);
 
-    // Motor task first so hMotorCtrlTask/hMechanismTask are valid
-    // before SafetyTask starts sending notifications
+    DBG_CHECKPOINT(6);  // task creation
     configASSERT(xTaskCreate(TaskMotorControl, "MotorCtrl",  STACK_MOTOR_CTRL, nullptr, PRI_MOTOR_CTRL, &hMotorCtrlTask) == pdPASS);
     configASSERT(xTaskCreate(TaskMechanism,    "Mechanism",  STACK_MECHANISM,  nullptr, PRI_MECHANISM,  &hMechanismTask) == pdPASS);
     configASSERT(xTaskCreate(TaskSafety,       "Safety",     STACK_SAFETY,     nullptr, PRI_SAFETY,     nullptr)         == pdPASS);
@@ -70,11 +98,8 @@ void APP_Init() {
     configASSERT(xTaskCreate(TaskTelemetry,    "Telemetry",  STACK_TELEMETRY,  nullptr, PRI_TELEMETRY,  nullptr)         == pdPASS);
     configASSERT(xTaskCreate(TaskDebug,        "Debug",      STACK_DEBUG,      nullptr, PRI_DEBUG,      nullptr)         == pdPASS);
 
-    // Start the stepper IntervalTimer before vTaskStartScheduler().
-    // Safe because gStepperPlan.enabled initializes to 0 (zero-initialized .bss),
-    // so the ISR returns immediately without touching any pin until TaskMechanism
-    // explicitly sets enabled=1. Moving this into TaskMechanism's setup block
-    // would also be correct if stricter pre-scheduler ISR-free operation is needed.
-    // Half-period of EXCAVATION_STEP_PERIOD_UP (1050µs → 525µs half-period).
+    DBG_CHECKPOINT(7);  // stepper timer
     s_stepTimer.begin(ISR_StepperTimer, 525);
+
+    DBG_CHECKPOINT(8);  // handing off to vTaskStartScheduler
 }

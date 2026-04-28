@@ -27,6 +27,9 @@ static void doorClose() {
 }
 
 void TaskMechanism(void*) {
+#if RTOS_SERIAL_DEBUG
+    Serial.println("[mechanism] task started");
+#endif
     bool      stopped    = true;
     DoorState doorState  = DoorState::CLOSED;
     uint32_t  doorStartMs = 0;

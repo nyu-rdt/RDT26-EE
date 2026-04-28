@@ -30,6 +30,9 @@ static float slew(float cur, float tgt, float maxDelta) {
 }
 
 void TaskMotorControl(void*) {
+#if RTOS_SERIAL_DEBUG
+    Serial.println("[motor_ctrl] task started");
+#endif
     float curLeft  = 0.0f, curRight  = 0.0f, curExcav = 0.0f;
     float tgtLeft  = 0.0f, tgtRight  = 0.0f, tgtExcav = 0.0f;
     bool  stopped  = true;
@@ -59,12 +62,14 @@ void TaskMotorControl(void*) {
             curLeft = curRight = curExcav = 0.0f;
         }
 
+#if !SIMULATE_CAN
         if (xSemaphoreTake(mCanTx, portMAX_DELAY) == pdTRUE) {
             sendCAN(0x4C, curLeft);    // CAN_ID_LEFT_MOTOR
             sendCAN(0x78, curRight);   // CAN_ID_RIGHT_MOTOR
             sendCAN(0x48, curExcav);   // CAN_ID_EXCAVATION_MOTOR
             xSemaphoreGive(mCanTx);
         }
+#endif
 
         vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(PERIOD_MOTOR_CTRL_MS));
     }
