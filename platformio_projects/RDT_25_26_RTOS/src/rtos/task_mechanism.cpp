@@ -93,6 +93,8 @@ void TaskMechanism(void*) {
             if (fault) Serial.println("[mechanism] string pot fault - check connection");
 #endif
 
+#endif
+
             // Stepper direction and enable
             if (vertDir != 0) {
                 digitalWrite(PIN_STEPPER_DIR,    (vertDir == 1) ? HIGH : LOW);
