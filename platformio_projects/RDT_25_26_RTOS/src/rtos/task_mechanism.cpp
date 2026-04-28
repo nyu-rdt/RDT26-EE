@@ -17,13 +17,13 @@ static void doorStop() {
 }
 static void doorOpen() {
     analogWrite(PIN_DEPO_DOOR_ENA, 128);
-    digitalWrite(PIN_DEPO_DOOR_IN1, HIGH);
-    digitalWrite(PIN_DEPO_DOOR_IN2, LOW);
+    digitalWrite(PIN_DEPO_DOOR_IN1, LOW);
+    digitalWrite(PIN_DEPO_DOOR_IN2, HIGH);
 }
 static void doorClose() {
     analogWrite(PIN_DEPO_DOOR_ENA, 128);
-    digitalWrite(PIN_DEPO_DOOR_IN1, LOW);
-    digitalWrite(PIN_DEPO_DOOR_IN2, HIGH);
+    digitalWrite(PIN_DEPO_DOOR_IN1, HIGH);
+    digitalWrite(PIN_DEPO_DOOR_IN2, LOW);
 }
 
 void TaskMechanism(void*) {
