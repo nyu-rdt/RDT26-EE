@@ -35,8 +35,15 @@ void TaskTelemetry(void*) {
         pkt[9] = 0xFF;
 #endif
 
-        // [10-13] load cells — not wired; sentinel
+        // [10-13] load cells — 0.1 kg/LSB, clamped 0-255
+#if SENSOR_LOAD_CELLS_ENABLED
+        for (int i = 0; i < 4; i++) {
+            float scaled = gSensorSnapshot.load_cells_kg[i] * 10.0f;
+            pkt[10 + i] = (uint8_t)constrain(scaled, 0.0f, 255.0f);
+        }
+#else
         pkt[10] = pkt[11] = pkt[12] = pkt[13] = 0xFF;
+#endif
 
         // [14] string pot
         pkt[14] = (uint8_t)constrain(gSensorSnapshot.string_pot_cm, 0.0f, 255.0f);
