@@ -6,11 +6,25 @@
 #include "rtos_config.h"
 
 void TaskDebug(void*) {
+    // LED on pin 13: blinks every PERIOD_DEBUG_MS regardless of Serial.
+    // If you see the LED blinking but no serial output, Serial is broken
+    // post-scheduler (flush hang or USB issue). If LED is dark, task never ran.
+    pinMode(13, OUTPUT);
+
+#if RTOS_SERIAL_DEBUG
+    Serial.println("[debug] task started");
+#endif
+
     TickType_t lastWake = xTaskGetTickCount();
+    bool ledState = false;
 
     for (;;) {
         vTaskDelayUntil(&lastWake, pdMS_TO_TICKS(PERIOD_DEBUG_MS));
 
+        ledState = !ledState;
+        digitalWriteFast(13, ledState);
+
+#if RTOS_DEBUG_INSTRUMENTATION
         EventBits_t safety = xEventGroupGetBits(egSafetyBits);
 
         Serial.printf(">safety_bits:%lu\n", (unsigned long)safety);
@@ -20,9 +34,12 @@ void TaskDebug(void*) {
         Serial.printf(">cmd_rejected:%lu\n",(unsigned long)diag_cmd_rejected_killswitch);
         Serial.printf(">cmd_invalid:%lu\n", (unsigned long)diag_cmd_invalid);
         Serial.printf(">timeouts:%lu\n",    (unsigned long)diag_timeout_events);
-
-#if RTOS_DEBUG_INSTRUMENTATION
         Serial.printf(">heap_free:%lu\n",   (unsigned long)xPortGetFreeHeapSize());
+#endif
+
+#if RTOS_SERIAL_DEBUG && TICK_IN_DEBUG
+        Serial.println("[debug] tick");
+        // No flush — let the USB interrupt drain the buffer naturally.
 #endif
     }
 }

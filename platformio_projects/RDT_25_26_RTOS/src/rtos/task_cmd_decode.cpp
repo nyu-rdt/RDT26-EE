@@ -14,6 +14,9 @@ static float speed(uint8_t param, float duty) {
 }
 
 void TaskCmdDecode(void*) {
+#if RTOS_SERIAL_DEBUG
+    Serial.println("[cmd] task started");
+#endif
     uint8_t raw;
     for (;;) {
         if (xQueueReceive(qI2cRxBytes, &raw, portMAX_DELAY) != pdTRUE) continue;
@@ -28,8 +31,15 @@ void TaskCmdDecode(void*) {
         bool isMotionGroup = (group >= GRP_LOCO_STOP && group <= GRP_DEPOSITION);
         if (hwEstop && isMotionGroup) {
             diag_cmd_rejected_killswitch++;
+#if RTOS_SERIAL_DEBUG
+            Serial.printf("[CMD] REJECTED (HW estop) raw=0x%02X grp=%u param=%u\n", raw, group, param);
+#endif
             continue;
         }
+
+#if RTOS_SERIAL_DEBUG
+        Serial.printf("[CMD] raw=0x%02X grp=%u param=%u\n", raw, group, param);
+#endif
 
         if (xSemaphoreTake(mDesiredState, pdMS_TO_TICKS(5)) != pdTRUE) continue;
 

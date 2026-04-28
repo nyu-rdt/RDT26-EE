@@ -7,6 +7,9 @@
 #include "rtos_config.h"
 
 void TaskSafety(void*) {
+#if RTOS_SERIAL_DEBUG
+    Serial.println("[safety] task started");
+#endif
     EventBits_t prevBits = 0;
     TickType_t  lastWake = xTaskGetTickCount();
 
@@ -42,10 +45,20 @@ void TaskSafety(void*) {
         bool newStop = (bits & SAFETY_ANY_STOP) && !(prevBits & SAFETY_ANY_STOP);
         if (newStop) {
             diag_safety_transitions++;
+#if RTOS_SERIAL_DEBUG
+            Serial.printf("[SAFETY] ESTOP ON  bits=0x%02lX (hw=%d sw=%d timeout=%d)\n",
+                          (unsigned long)bits,
+                          (bits & SAFETY_HW_ESTOP)       ? 1 : 0,
+                          (bits & SAFETY_SW_ESTOP)       ? 1 : 0,
+                          (bits & SAFETY_COMMS_TIMEOUT)  ? 1 : 0);
+#endif
             xTaskNotify(hMotorCtrlTask, 1U, eSetValueWithOverwrite);
             xTaskNotify(hMechanismTask, 1U, eSetValueWithOverwrite);
         } else if (!bits && prevBits) {
             // All stop bits cleared — notify release
+#if RTOS_SERIAL_DEBUG
+            Serial.printf("[SAFETY] ESTOP OFF — all clear\n");
+#endif
             xTaskNotify(hMotorCtrlTask, 0U, eSetValueWithOverwrite);
             xTaskNotify(hMechanismTask, 0U, eSetValueWithOverwrite);
         }

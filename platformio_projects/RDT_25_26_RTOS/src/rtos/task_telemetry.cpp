@@ -9,6 +9,9 @@
 static_assert(sizeof(gTelemetryBuf[0]) == 18, "packet size mismatch");
 
 void TaskTelemetry(void*) {
+#if RTOS_SERIAL_DEBUG
+    Serial.println("[telemetry] task started");
+#endif
     TickType_t lastWake = xTaskGetTickCount();
 
     for (;;) {

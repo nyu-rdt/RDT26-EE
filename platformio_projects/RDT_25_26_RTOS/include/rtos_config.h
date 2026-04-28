@@ -30,9 +30,20 @@
 #define PERIOD_TELEMETRY_MS    20
 #define PERIOD_DEBUG_MS        50
 
-// Diagnostics
-// Gate behind 0 for competition build.
+// Diagnostics — pick at most one.
+// RTOS_DEBUG_INSTRUMENTATION : Teleplot-format periodic stream (>key:val).
+//                              Use with the Teleplot VS Code extension.
+// RTOS_SERIAL_DEBUG          : Human-readable prints — startup banner,
+//                              per-command logs, e-stop transitions.
+//                              Waits for USB serial on boot (blocks until
+//                              monitor opens, so don't use in standalone runs).
 #define RTOS_DEBUG_INSTRUMENTATION 1
+#define RTOS_SERIAL_DEBUG          0
+#define TICK_IN_DEBUG 1
+
+#if RTOS_DEBUG_INSTRUMENTATION && RTOS_SERIAL_DEBUG
+#  error "Enable only one of RTOS_DEBUG_INSTRUMENTATION or RTOS_SERIAL_DEBUG, not both."
+#endif
 
 // Sensor feature flags
 // Each sensor can be toggled independently. When disabled the telemetry slot
@@ -42,7 +53,9 @@
 #define SENSOR_LOAD_CELLS_ENABLED 0   // load cells (not used until calibrated)
 #define SENSOR_STRING_POT_ENABLED 1   // excavation arm string potentiometer (always on)
 
-// Stall detection flag 
+#define SIMULATE_CAN 0
+
+// Stall detection flag
 // When 0: stall flags are never set; overcurrent bit in egSafetyBits stays
 // clear regardless of current readings. Telemetry stall bits send 0.
 // When 1: SafetyTask evaluates current thresholds and can set SAFETY_OVERCURRENT.

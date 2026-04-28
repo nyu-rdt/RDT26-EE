@@ -13,6 +13,9 @@ static void selectMuxChannel(uint8_t ch) {
 }
 
 void TaskSensor(void*) {
+#if RTOS_SERIAL_DEBUG
+    Serial.println("[sensor] task started");
+#endif
     pinMode(PIN_CURRENT_INPUT,  INPUT);
     pinMode(PIN_CURRENT_SEL0,   OUTPUT);
     pinMode(PIN_CURRENT_SEL1,   OUTPUT);
