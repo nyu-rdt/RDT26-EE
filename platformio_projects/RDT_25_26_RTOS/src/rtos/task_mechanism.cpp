@@ -34,6 +34,8 @@ void TaskMechanism(void*) {
     DoorState doorState  = DoorState::CLOSED;
     uint32_t  doorStartMs = 0;
     TickType_t lastWake  = xTaskGetTickCount();
+    bool strpotHighLatched = false;
+    bool strpotLowLatched  = false;
 
     for (;;) {
         uint32_t notif = 0;
@@ -56,6 +58,40 @@ void TaskMechanism(void*) {
                 vibCmd  = gDesiredState.depo_vib_cmd;
                 xSemaphoreGive(mDesiredState);
             }
+
+            // String pot over-travel and disconnect guard.
+            // Latches are only cleared once the arm moves away by STRPOT_HYST_CM,
+            // preventing a noisy dip at the limit from re-enabling movement.
+            // A fault (sensor railed high = disconnected) stops vertical entirely.
+#if SENSOR_STRING_POT_ENABLED
+            {
+                float potCm = gSensorSnapshot.string_pot_cm;
+                if (strpotHighLatched && potCm < (STRPOT_HIGHEST_CM - STRPOT_HYST_CM))
+                    strpotHighLatched = false;
+                if (strpotLowLatched  && potCm > (STRPOT_LOWEST_CM  + STRPOT_HYST_CM))
+                    strpotLowLatched  = false;
+                if (potCm >= STRPOT_HIGHEST_CM) {
+                    strpotHighLatched = true;
+#if SERIAL_DEBUG
+                    Serial.printf("[mechanism] string pot high latched at %0.2f cm\n", potCm);
+#endif
+                }
+                if (potCm <= STRPOT_LOWEST_CM) {
+                    strpotLowLatched = true;
+#if SERIAL_DEBUG
+                    Serial.printf("[mechanism] string pot low latched at %0.2f cm\n", potCm);
+#endif
+                }
+
+                bool fault = (potCm > STRPOT_FAULT_HIGH_CM);
+                if (fault ||
+                    (vertDir > 0 && strpotHighLatched) ||
+                    (vertDir < 0 && strpotLowLatched))
+                    vertDir = 0;
+            }
+#if SERIAL_DEBUG
+            if (fault) Serial.println("[mechanism] string pot fault - check connection");
+#endif
 
             // Stepper direction and enable
             if (vertDir != 0) {

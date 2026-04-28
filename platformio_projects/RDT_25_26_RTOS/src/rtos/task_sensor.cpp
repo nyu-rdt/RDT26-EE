@@ -42,8 +42,14 @@ void TaskSensor(void*) {
         selectMuxChannel(muxCh);
 
 #if SENSOR_STRING_POT_ENABLED
-        float rawPot = (float)analogRead(PIN_STRING_POT);
-        gSensorSnapshot.string_pot_cm = (rawPot * 37.125f / 1023.0f * 3.3f) + 3.511f;
+        float rawPot  = (float)analogRead(PIN_STRING_POT);
+        float measured = (rawPot * 37.125f / 1023.0f * 3.3f) + 3.511f;
+        // EMA — seed on first sample so the latch in TaskMechanism doesn't
+        // trip on a zero-initialized snapshot before the first real read.
+        static float strpotEma = -1.0f;
+        if (strpotEma < 0.0f) strpotEma = measured;
+        else strpotEma = STRPOT_EMA_ALPHA * measured + (1.0f - STRPOT_EMA_ALPHA) * strpotEma;
+        gSensorSnapshot.string_pot_cm = strpotEma;
 #endif
 
         gSensorSnapshot.relay_engaged = (digitalRead(PIN_RELAY_READ) == HIGH);
