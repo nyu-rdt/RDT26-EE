@@ -12,12 +12,13 @@
 // Self-contained test calibration values.
 static constexpr uint8_t HX711_DOUT_PINS[4] = {31, 33, 36, 37};
 static constexpr uint8_t HX711_CLK_PINS[4] = {32, 34, 35, 38};
-// static constexpr long HX711_OFFSETS[4] = {8286465L, 266032L, 76401L, 256867L};
-static constexpr float HX711_CAL_FACTORS[4] = {30.0f, 180.0f, 33.0f, 182.0f}; //{48, x, 41, x}
+// static constexpr long HX711_OFFSETS[4] = {155330L, 60071L, 191491L, 193401L}; //offset with depo bin off
+static constexpr float HX711_CAL_FACTORS[4] = {102.0f, 105.0f, 102.0f, 105.0f}; //inspired by last year
+// static constexpr float HX711_CAL_FACTORS[4] = {72.0f, 80.4f, 75.8f, 72.6f}; //arduino calibrated
 static constexpr uint8_t kLoadCellCount = 4;
 
 // Keep sample count aligned with sensors.cpp for comparable behavior.
-static constexpr uint8_t kSamplesPerRead = 10;
+static constexpr uint8_t kSamplesPerRead = 2;
 static constexpr unsigned long kPrintPeriodMs = 100;
 
 static HX711 scales[kLoadCellCount];
@@ -59,12 +60,15 @@ void loop()
         const long netCounts = rawAverage - offset;
         const float weight = static_cast<float>(netCounts) / scaleFactor;
         weights[i] = weight;
+        // const float filteredWeight = (weight < 0.0f) ? 0.0f : weight;
+        // weights[i] = filteredWeight;
 
         // Teleplot-compatible lines (one time-series per load cell).
         Serial.print(">LC");
         Serial.print(i + 1);
         Serial.print("_weight:");
         Serial.println(weight, 3);
+        // Serial.println(filteredWeight, 3);
     }
 
     const float totalWeight = weights[0] + weights[1] + weights[2] + weights[3];
