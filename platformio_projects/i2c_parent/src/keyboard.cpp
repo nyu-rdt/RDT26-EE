@@ -134,16 +134,19 @@ static void processKey(char key) {
             uint8_t buf[RESPONSE_BYTES] = {};
             uint8_t count = i2c_parent_requestData(buf, RESPONSE_BYTES);
             if (count >= RESPONSE_BYTES) {
-                // Packet layout matches child firmware DATA_PACKET_SIZE (18 bytes):
-                //   [0-7]  motor currents  (CURRENT_SENSE_ENABLED)
-                //   [8-9]  encoders        (ROTARY_ENCODERS_ENABLED)
-                //   [16]   flags: bit0=relay, bit1=3s_low, bit2=6s_low
-                Serial.print("[DATA] relay=");
-                Serial.print(buf[16] & 0x01 ? "ON" : "OFF");
-                Serial.print(" 3s_low=");
-                Serial.print(buf[16] & 0x02 ? "YES" : "no");
-                Serial.print(" 6s_low=");
-                Serial.print(buf[16] & 0x04 ? "YES" : "no");
+                // Packet layout (18 bytes) — matches task_telemetry.cpp:
+                //   [0-7]   motor currents: byte * (20.0/255.0) = amps
+                //   [8-9]   encoders: byte = degrees (clamped to 255)
+                //   [10-13] load cells: byte * 0.1 = kg
+                //   [14]    string pot: byte = cm
+                //   [15]    depo door state enum
+                //   [16]    flags: bit0=estop(relay off), bit1=overcurrent
+                //   [17]    sentinel 0xFF
+                Serial.print("[DATA]");
+                Serial.print(" estop=");   Serial.print(buf[16] & 0x01 ? "YES" : "no");
+                Serial.print(" overcurrent="); Serial.print(buf[16] & 0x02 ? "YES" : "no");
+                Serial.print(" | strpot(cm)="); Serial.print(buf[14]);
+                Serial.print(" door="); Serial.print(buf[15]);
 #if CURRENT_SENSE_ENABLED
                 Serial.print(" | currents(A):");
                 for (uint8_t i = 0; i < NUM_CURRENT_SENSORS; i++) {
@@ -154,11 +157,18 @@ static void processKey(char key) {
                 }
 #endif
 #if ROTARY_ENCODERS_ENABLED
-                Serial.print(" | encoders(deg): L=");
-                Serial.print(buf[8] == 0xFF ? "N/A" : String(buf[8] * (360.0f / 255.0f), 1).c_str());
+                Serial.print(" | enc(deg): L=");
+                Serial.print(buf[8] == 0xFF ? "N/A" : String((float)buf[8], 1).c_str());
                 Serial.print(" R=");
-                Serial.print(buf[9] == 0xFF ? "N/A" : String(buf[9] * (360.0f / 255.0f), 1).c_str());
+                Serial.print(buf[9] == 0xFF ? "N/A" : String((float)buf[9], 1).c_str());
 #endif
+                Serial.print(" | load(kg):");
+                for (uint8_t i = 0; i < 4; i++) {
+                    Serial.print(" LC");
+                    Serial.print(i);
+                    Serial.print("=");
+                    Serial.print(buf[10 + i] == 0xFF ? "N/A" : String(buf[10 + i] * 0.1f, 2).c_str());
+                }
                 Serial.println();
             } else {
                 Serial.print("[DATA] read failed, got ");
