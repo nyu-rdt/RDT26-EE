@@ -72,26 +72,26 @@ void TaskMechanism(void*) {
                     strpotLowLatched  = false;
                 if (potCm >= STRPOT_HIGHEST_CM) {
                     strpotHighLatched = true;
-#if SERIAL_DEBUG
+#if RTOS_SERIAL_DEBUG
                     Serial.printf("[mechanism] string pot high latched at %0.2f cm\n", potCm);
 #endif
                 }
                 if (potCm <= STRPOT_LOWEST_CM) {
                     strpotLowLatched = true;
-#if SERIAL_DEBUG
+#if RTOS_SERIAL_DEBUG
                     Serial.printf("[mechanism] string pot low latched at %0.2f cm\n", potCm);
 #endif
                 }
 
                 bool fault = (potCm > STRPOT_FAULT_HIGH_CM);
+#if RTOS_SERIAL_DEBUG
+                if (fault) Serial.println("[mechanism] string pot fault - check connection");
+#endif
                 if (fault ||
                     (vertDir > 0 && strpotHighLatched) ||
                     (vertDir < 0 && strpotLowLatched))
                     vertDir = 0;
             }
-#if SERIAL_DEBUG
-            if (fault) Serial.println("[mechanism] string pot fault - check connection");
-#endif
 
 #endif
 

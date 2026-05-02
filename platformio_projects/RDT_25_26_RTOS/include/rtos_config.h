@@ -48,6 +48,9 @@
 // Sensor feature flags
 // Each sensor can be toggled independently. When disabled the telemetry slot
 // for that sensor is filled with 0xFF (sentinel, matches superloop convention).
+#define ADC_RESOLUTION_BITS       10
+#define ADC_MAX_COUNT             ((1 << ADC_RESOLUTION_BITS) - 1)  // 1023 at 10-bit
+
 #define SENSOR_CURRENT_ENABLED    1   // 8-channel current mux (INA or shunt)
 #define SENSOR_ENCODERS_ENABLED   1   // rotary encoders (left + right wheels)
 #define SENSOR_LOAD_CELLS_ENABLED 1   // load cells (not used until calibrated)
