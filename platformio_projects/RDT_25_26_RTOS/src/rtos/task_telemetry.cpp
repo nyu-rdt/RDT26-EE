@@ -28,8 +28,8 @@ void TaskTelemetry(void*) {
 
         // [8-9] encoders
 #if SENSOR_ENCODERS_ENABLED
-        pkt[8] = (uint8_t)constrain(gSensorSnapshot.encoder_left_deg,  0.0f, 255.0f);
-        pkt[9] = (uint8_t)constrain(gSensorSnapshot.encoder_right_deg, 0.0f, 255.0f);
+        pkt[8] = (uint8_t)constrain(gSensorSnapshot.encoder_left_deg  * (255.0f / 360.0f), 0.0f, 255.0f);
+        pkt[9] = (uint8_t)constrain(gSensorSnapshot.encoder_right_deg * (255.0f / 360.0f), 0.0f, 255.0f);
 #else
         pkt[8] = 0xFF;
         pkt[9] = 0xFF;

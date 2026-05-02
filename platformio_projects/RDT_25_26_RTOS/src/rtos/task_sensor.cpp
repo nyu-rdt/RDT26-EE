@@ -21,6 +21,7 @@ void TaskSensor(void*) {
 #if RTOS_SERIAL_DEBUG
     Serial.println("[sensor] task started");
 #endif
+    analogReadResolution(ADC_RESOLUTION_BITS);
     pinMode(PIN_CURRENT_INPUT,  INPUT);
     pinMode(PIN_CURRENT_SEL0,   OUTPUT);
     pinMode(PIN_CURRENT_SEL1,   OUTPUT);
@@ -52,7 +53,7 @@ void TaskSensor(void*) {
         // Read channel selected on the previous tick (settle time = task period)
 #if SENSOR_CURRENT_ENABLED
         float raw = (float)analogRead(PIN_CURRENT_INPUT);
-        gSensorSnapshot.motor_currents[muxCh] = raw * (33.0f / 1023.0f);
+        gSensorSnapshot.motor_currents[muxCh] = raw * (33.0f / (float)ADC_MAX_COUNT);
 #endif
 
         // Advance mux to next channel; it will be read next tick after settling
@@ -61,7 +62,7 @@ void TaskSensor(void*) {
 
 #if SENSOR_STRING_POT_ENABLED
         float rawPot  = (float)analogRead(PIN_STRING_POT);
-        float measured = (rawPot * 37.125f / 1023.0f * 3.3f) + 3.511f;
+        float measured = (rawPot * 37.125f / (float)ADC_MAX_COUNT * 3.3f) + 3.511f;
         // EMA — seed on first sample so the latch in TaskMechanism doesn't
         // trip on a zero-initialized snapshot before the first real read.
         static float strpotEma = -1.0f;

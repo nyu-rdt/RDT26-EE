@@ -158,9 +158,9 @@ static void processKey(char key) {
 #endif
 #if ROTARY_ENCODERS_ENABLED
                 Serial.print(" | enc(deg): L=");
-                Serial.print(buf[8] == 0xFF ? "N/A" : String((float)buf[8], 1).c_str());
+                Serial.print(buf[8] == 0xFF ? "N/A" : String(buf[8] * (360.0f / 255.0f), 1).c_str());
                 Serial.print(" R=");
-                Serial.print(buf[9] == 0xFF ? "N/A" : String((float)buf[9], 1).c_str());
+                Serial.print(buf[9] == 0xFF ? "N/A" : String(buf[9] * (360.0f / 255.0f), 1).c_str());
 #endif
                 Serial.print(" | load(kg):");
                 for (uint8_t i = 0; i < 4; i++) {
