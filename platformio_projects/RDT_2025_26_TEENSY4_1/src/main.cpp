@@ -117,7 +117,6 @@ void ROVER_update() {
     DEBUG_Update();
 #endif
 
-lastCommandTime = millis(); // Prevent timeout while processing commands and updating subsystems
 }
 
 static void receiveEvent(int numBytes) {
