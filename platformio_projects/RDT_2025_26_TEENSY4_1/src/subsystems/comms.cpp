@@ -78,6 +78,7 @@ static void requestEvent() {
 #endif
 
 #if ROTARY_ENCODERS_ENABLED
+    // const float* encoderAngles = ROTARY_ENCODER_GetBuffer();
     pkt[8] = (uint8_t)(ROTARY_ENCODER_getEncoderAngle(1) * 255.0f / 360.0f);
     pkt[9] = (uint8_t)(ROTARY_ENCODER_getEncoderAngle(2) * 255.0f / 360.0f);
 #else

@@ -6,6 +6,9 @@
 volatile long count1 = 0;
 volatile long count2 = 0;
 
+float encoderBuffer[2] = {0.0f, 0.0f};
+unsigned long last_channel_switch_ms = 0;
+
 static void isr1A() { count1 += (digitalRead(ENC1_A) == digitalRead(ENC1_B)) ? -1 : +1; }
 static void isr1B() { count1 += (digitalRead(ENC1_A) != digitalRead(ENC1_B)) ? -1 : +1; }
 static void isr2A() { count2 += (digitalRead(ENC2_A) == digitalRead(ENC2_B)) ? -1 : +1; }
@@ -56,3 +59,16 @@ float ROTARY_ENCODER_getEncoderAngle(uint8_t encoderNum) {
     if (angle < 0) angle += 360.0f;
     return angle;
 }
+
+// void ROTARY_ENCODER_Update() {
+//     unsigned long now = millis();
+//     if (now - last_channel_switch_ms >= CHANNEL_SETTLE_MS) {
+//        encoderBuffer[0] = ROTARY_ENCODER_getEncoderAngle(1);
+//        encoderBuffer[1] = ROTARY_ENCODER_getEncoderAngle(2);
+//        last_channel_switch_ms = now;
+//     }
+// }
+
+// const float* ROTARY_ENCODER_GetBuffer() {
+//     return encoderBuffer;
+// }

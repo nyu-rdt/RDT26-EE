@@ -9,3 +9,5 @@ void COMMS_Init();
 // from current subsystem state and stores it safely for the ISR to read.
 // Must NOT be called from ISR context.
 void COMMS_UpdateFlags();
+
+void requestEvent();  // I2C onRequest callback  

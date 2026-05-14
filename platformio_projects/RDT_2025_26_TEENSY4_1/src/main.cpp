@@ -29,7 +29,10 @@ static bool killSwitchActive = false;
 static GroupHandler groups[16] = {nullptr};
 
 void setup()  { ROVER_init(); }
-void loop()   { ROVER_update(); }
+void loop()   { 
+    ROVER_update();
+    requestEvent(); 
+}
 
 void ROVER_init() {
     Serial.begin(115200);
@@ -113,6 +116,9 @@ void ROVER_update() {
 #endif
     DEPO_Update();
     COMMS_UpdateFlags();
+// #if ROTARY_ENCODERS_ENABLED
+//     ROTARY_ENCODER_Update();
+// #endif
 #if PLOT_DATA
     DEBUG_Update();
 #endif
