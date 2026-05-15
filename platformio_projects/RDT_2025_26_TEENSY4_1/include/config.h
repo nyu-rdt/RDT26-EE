@@ -51,7 +51,7 @@
 #define MAX_SPEED_DELTA_PER_TICK    0.01f
 
 // ── Excavation ────────────────────────────────────────────────────────────────
-#define EXCAVATION_DUTY_CYCLE       0.4f
+#define EXCAVATION_DUTY_CYCLE       0.6f // prev: 0.4f
 #define MAX_EXCAV_DELTA_PER_TICK    0.01f
 // ~900 µs is the no-load speed limit (established by stepper_test).
 // 1000 µs gives margin; tune down toward 900 µs only after verifying reliable
